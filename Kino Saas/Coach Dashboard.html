@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kino — Koç Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="ui.css" />
+<link rel="stylesheet" href="theme.css" />
+<style>
+  /* Density variants */
+  html[data-density="compact"] .content { gap: 18px; padding-top: 22px; }
+  html[data-density="compact"] .stat-card { padding: 14px 14px 12px; gap: 10px; }
+  html[data-density="compact"] .stat-value { font-size: 36px; }
+  html[data-density="compact"] .feed-item { padding: 10px 18px; }
+  html[data-density="compact"] .student-row { padding: 8px 18px; }
+  html[data-density="compact"] .greeting h1 { font-size: 30px; }
+  html[data-density="compact"] .nudge { padding: 14px 16px; }
+  html[data-density="compact"] .page-title h1 { font-size: 30px; }
+
+  /* Role switcher (topbar) */
+  .role-switch {
+    display: inline-flex;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 3px;
+    position: relative;
+  }
+  .role-switch button {
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 30px; padding: 0 10px;
+    font-size: 12.5px; font-weight: 600;
+    color: var(--muted);
+    border-radius: 7px;
+    transition: color 160ms;
+  }
+  .role-switch button.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  @media (max-width: 980px) {
+    .role-switch button { padding: 0 8px; }
+    .role-switch button span,
+    .role-switch button:not(.active) { padding: 0 7px; }
+    .topbar-actions .btn-primary span { display: none; }
+    .topbar-actions .btn-primary { padding: 0 12px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="helpers.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="charts.jsx"></script>
+<script type="text/babel" src="sidebar.jsx"></script>
+<script type="text/babel" src="stats.jsx"></script>
+<script type="text/babel" src="panels.jsx"></script>
+<script type="text/babel" src="screens/coach-dashboard.jsx"></script>
+<script type="text/babel" src="screens/students.jsx"></script>
+<script type="text/babel" src="screens/weekly.jsx"></script>
+<script type="text/babel" src="screens/trials.jsx"></script>
+<script type="text/babel" src="screens/lessons.jsx"></script>
+<script type="text/babel" src="screens/chat.jsx"></script>
+<script type="text/babel" src="screens/notes.jsx"></script>
+<script type="text/babel" src="screens/student-detail.jsx"></script>
+<script type="text/babel" src="screens/student-dashboard.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+
+</body>
+</html>

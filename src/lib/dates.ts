@@ -1,0 +1,167 @@
+/** Yerel saat diliminde YYYY-MM-DD (UTC kayması olmadan) */
+export function toLocalDateISO(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** Bu haftanın Pazartesi günü (00:00 yerel) */
+export function getWeekStartDate(d: Date = new Date()): Date {
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+/** Bu haftanın Pazar günü (Pazartesi + 6 gün) */
+export function getWeekEndDate(d: Date = new Date()): Date {
+  const sunday = getWeekStartDate(d);
+  sunday.setDate(sunday.getDate() + 6);
+  return sunday;
+}
+
+export function getWeekStartISO(d: Date = new Date()): string {
+  return toLocalDateISO(getWeekStartDate(d));
+}
+
+export function getWeekEndISO(d: Date = new Date()): string {
+  return toLocalDateISO(getWeekEndDate(d));
+}
+
+export function todayLocalISO(): string {
+  return toLocalDateISO();
+}
+
+/**
+ * Sohbet mesajları için akıllı saat/tarih biçimi:
+ * - Bugün: "14:32"
+ * - Dün: "Dün 14:32"
+ * - Bu yıl: "12 Oca 14:32"
+ * - Diğer: "12 Oca 2024 14:32"
+ */
+/** Öğrenci son aktiflik etiketi: göreli süre + saat/tarih */
+export function formatLastActive(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  const when = formatChatTimestamp(date.toISOString());
+
+  if (mins < 1) return `Az önce · ${when}`;
+  if (mins < 60) return `${mins} dk önce · ${when}`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} sa önce · ${when}`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} gün önce · ${when}`;
+  return when;
+}
+
+export function formatChatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const time = d.toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (msgDay.getTime() === today.getTime()) return time;
+  if (msgDay.getTime() === yesterday.getTime()) return `Dün ${time}`;
+
+  const dateFmt: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "short",
+  };
+  if (d.getFullYear() !== now.getFullYear()) {
+    dateFmt.year = "numeric";
+  }
+  return `${d.toLocaleDateString("tr-TR", dateFmt)} ${time}`;
+}
+
+export function formatTRDate(iso: string): string {
+  const [y, m, day] = iso.split("-").map(Number);
+  return new Date(y, m - 1, day).toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** "YYYY-MM-DD" hafta başlangıcı verildiğinde 6 gün sonrasının ISO'sunu döner */
+export function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toLocalDateISO(date);
+}
+
+/**
+ * Hafta aralığını TR formatında biçimler.
+ * Örn: "12 - 18 Oca 2025" veya "29 Oca - 4 Şub 2025"
+ */
+export function formatWeekRange(weekStartISO: string): string {
+  const endISO = addDaysISO(weekStartISO, 6);
+  const [sy, sm, sd] = weekStartISO.split("-").map(Number);
+  const [ey, em, ed] = endISO.split("-").map(Number);
+  const start = new Date(sy, sm - 1, sd);
+  const end = new Date(ey, em - 1, ed);
+
+  const monthFmt = new Intl.DateTimeFormat("tr-TR", { month: "short" });
+  const startMonth = monthFmt.format(start);
+  const endMonth = monthFmt.format(end);
+
+  if (sy === ey && sm === em) {
+    return `${sd} - ${ed} ${endMonth} ${ey}`;
+  }
+  if (sy === ey) {
+    return `${sd} ${startMonth} - ${ed} ${endMonth} ${ey}`;
+  }
+  return `${sd} ${startMonth} ${sy} - ${ed} ${endMonth} ${ey}`;
+}
+
+function dateSortKey(iso: string): number {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return 0;
+  return y * 10000 + m * 100 + d;
+}
+
+/** YYYY-MM-DD tarihlerine göre azalan sıralama (bugüne en yakın önce) */
+export function compareDateDesc(
+  dateA: string,
+  dateB: string,
+  createdAtA?: string,
+  createdAtB?: string
+): number {
+  const byDate = dateSortKey(dateB) - dateSortKey(dateA);
+  if (byDate !== 0) return byDate;
+  if (createdAtA && createdAtB) {
+    return new Date(createdAtB).getTime() - new Date(createdAtA).getTime();
+  }
+  return 0;
+}
+
+export function sortByDateDesc<T>(
+  items: T[],
+  getDate: (item: T) => string,
+  getCreatedAt?: (item: T) => string | undefined
+): T[] {
+  return [...items].sort((a, b) =>
+    compareDateDesc(getDate(a), getDate(b), getCreatedAt?.(a), getCreatedAt?.(b))
+  );
+}
+
+/** YYYY-MM-DD tarihlerine göre artan sıralama (en eski önce) */
+export function sortByDateAsc<T>(
+  items: T[],
+  getDate: (item: T) => string,
+  getCreatedAt?: (item: T) => string | undefined
+): T[] {
+  return [...items].sort((a, b) =>
+    -compareDateDesc(getDate(a), getDate(b), getCreatedAt?.(a), getCreatedAt?.(b))
+  );
+}

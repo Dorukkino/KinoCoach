@@ -1,0 +1,41 @@
+/* Dark theme — overrides */
+html[data-theme="dark"] {
+  --bg: #14130F;
+  --bg-elev: #1A1916;
+  --card: #1F1E1A;
+  --border: #2A2924;
+  --border-strong: #36342E;
+  --ink: #F5F2EA;
+  --ink-2: #D6D2C7;
+  --muted: #908B7E;
+  --muted-2: #6B675C;
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-hover: 0 1px 0 rgba(0, 0, 0, 0.2), 0 14px 30px -16px rgba(0, 0, 0, 0.45), 0 4px 10px -4px rgba(0, 0, 0, 0.2);
+}
+html[data-theme="dark"] .topbar { background: rgba(20,19,15,0.85); }
+html[data-theme="dark"] .nav-item.active { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .nav-item.active .nav-icon { color: #14130F; }
+html[data-theme="dark"] .nav-item.active .nav-badge { background: rgba(20,19,15,0.16); color: #14130F; }
+html[data-theme="dark"] .btn-primary { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .btn-primary:hover { background: #fff; }
+html[data-theme="dark"] .chat-bubble.me { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .chat-bubble.me .chat-time { color: rgba(20,19,15,0.55); }
+html[data-theme="dark"] .nudge { background: linear-gradient(180deg, #2A2924, #1F1E1A); }
+html[data-theme="dark"] .lg-total { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .chat-send { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .chat-send:hover { background: #fff; }
+html[data-theme="dark"] .modal-bg { background: rgba(0,0,0,0.55); }
+html[data-theme="dark"] .feed-tag { background: var(--card); border-color: var(--card); }
+html[data-theme="dark"] .check-mark { background: var(--bg-elev); border-color: var(--border-strong); }
+html[data-theme="dark"] .search input:focus,
+html[data-theme="dark"] .input:focus,
+html[data-theme="dark"] .chat-composer input:focus { box-shadow: 0 0 0 3px rgba(245,242,234,0.08); }
+html[data-theme="dark"] .motiv-action { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .motiv-action:hover { background: #fff; }
+html[data-theme="dark"] .motivation-card {
+  background: linear-gradient(180deg, oklch(0.25 0.04 180), var(--bg-elev));
+}
+html[data-theme="dark"] .quote .who { color: rgba(245,242,234,0.55); }
+html[data-theme="dark"] .brand-mark { background: #F5F2EA; color: #14130F; }
+html[data-theme="dark"] .tab-btn.active::after { background: #F5F2EA; }
+html[data-theme="dark"] .search kbd { background: var(--bg-elev); border-color: var(--border); }

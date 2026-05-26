@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kino — Eğitim koçluğunu tek panelden yönetin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8F7F4;
+  --bg-elev: #FDFCFA;
+  --card: #FFFFFF;
+  --border: #ECE9E3;
+  --border-strong: #DFDBD3;
+  --ink: #1A1A17;
+  --ink-2: #3D3D38;
+  --muted: #807C72;
+  --muted-2: #A8A39A;
+  --accent: oklch(0.6 0.07 180);
+  --accent-soft: oklch(0.96 0.025 180);
+  --accent-ink: oklch(0.4 0.07 180);
+  --good: oklch(0.68 0.12 150);
+  --warn: oklch(0.78 0.12 80);
+  --risk: oklch(0.65 0.16 25);
+  --font: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; letter-spacing: -0.005em; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: none; background: none; padding: 0; color: inherit; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(248,247,244,0.8);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner { display: flex; align-items: center; height: 64px; gap: 32px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+.brand-mark { width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: #fff; display: grid; place-items: center; font-family: var(--font-serif); font-size: 18px; }
+.nav-links { display: flex; gap: 28px; margin-left: 20px; }
+.nav-links a { font-size: 13.5px; color: var(--muted); font-weight: 500; transition: color 120ms; }
+.nav-links a:hover { color: var(--ink); }
+.nav-cta { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 10px; font-size: 13.5px; font-weight: 600; transition: background 120ms, transform 80ms, box-shadow 120ms; white-space: nowrap; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: #000; }
+.btn-ghost { color: var(--ink-2); }
+.btn-ghost:hover { background: var(--bg-elev); }
+.btn-outline { background: var(--card); color: var(--ink); border: 1px solid var(--border-strong); }
+.btn-outline:hover { background: var(--bg-elev); }
+.btn-lg { height: 46px; padding: 0 22px; font-size: 14.5px; border-radius: 11px; }
+
+/* HERO */
+.hero { padding: 88px 0 64px; position: relative; overflow: hidden; }
+.hero-inner { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 11px 5px 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; font-size: 12px; color: var(--ink-2); font-weight: 500;
+  margin-bottom: 22px;
+}
+.hero-eyebrow .pill { background: var(--accent-soft); color: var(--accent-ink); padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.hero h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  margin: 0 0 22px;
+  text-wrap: balance;
+}
+.hero h1 em { font-style: italic; color: var(--muted); }
+.hero .lede { font-size: 17.5px; color: var(--ink-2); line-height: 1.5; margin: 0 0 32px; max-width: 540px; text-wrap: pretty; }
+.hero-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.hero-meta { display: flex; gap: 24px; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border); }
+.hero-meta div { display: flex; flex-direction: column; gap: 2px; }
+.hero-meta .n { font-family: var(--font-serif); font-size: 28px; color: var(--ink); line-height: 1; }
+.hero-meta .l { font-size: 12px; color: var(--muted); }
+
+/* Hero visual — mock dashboard */
+.hero-visual {
+  position: relative;
+  height: 520px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--bg-elev), var(--bg));
+  border: 1px solid var(--border);
+  padding: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -30px rgba(20,20,16,.12), 0 12px 28px -16px rgba(20,20,16,.08);
+}
+.hv-window {
+  background: var(--card);
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  height: 100%;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  overflow: hidden;
+}
+.hv-side {
+  background: var(--bg-elev);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 12px 0; gap: 4px;
+}
+.hv-side .b { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); margin-bottom: 8px; }
+.hv-side .i { width: 26px; height: 26px; border-radius: 7px; background: var(--bg); display: grid; place-items: center; color: var(--muted); }
+.hv-side .i.active { background: var(--ink); color: #fff; }
+.hv-side .i svg { width: 14px; height: 14px; }
+.hv-main { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.hv-row { display: flex; gap: 10px; }
+.hv-stat { flex: 1; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; padding: 10px 11px; }
+.hv-stat .l { font-size: 9px; color: var(--muted); }
+.hv-stat .v { font-family: var(--font-serif); font-size: 22px; line-height: 1.1; margin-top: 2px; }
+.hv-stat .v .u { font-family: var(--font); font-size: 11px; color: var(--muted); }
+.hv-stat.acc .v { color: var(--accent-ink); }
+.hv-chart { flex: 1; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.hv-chart-top { display: flex; justify-content: space-between; align-items: center; }
+.hv-chart-top .t { font-size: 10px; font-weight: 600; }
+.hv-chart-top .b { font-size: 9px; color: var(--muted); }
+.hv-chart svg { flex: 1; width: 100%; }
+.hv-students { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.hv-st { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; background: var(--card); }
+.hv-st .av { width: 18px; height: 18px; border-radius: 50%; }
+.hv-st .nm { font-size: 10.5px; font-weight: 600; flex: 1; }
+.hv-st .dot { width: 5px; height: 5px; border-radius: 50%; }
+.hv-st .pct { font-size: 9.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.hero-bg {
+  position: absolute; top: -20%; right: -10%; width: 60%; height: 80%;
+  background: radial-gradient(circle, var(--accent-soft), transparent 60%);
+  filter: blur(40px); opacity: 0.6; pointer-events: none; z-index: -1;
+}
+
+/* Trust strip */
+.trust {
+  padding: 8px 0 64px;
+  display: flex; align-items: center; justify-content: center; gap: 40px;
+  font-family: var(--font-serif); font-size: 22px; color: var(--muted-2);
+  letter-spacing: -0.01em;
+}
+.trust span:first-child { font-family: var(--font); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); font-weight: 600; }
+
+/* Features */
+.section { padding: 80px 0; }
+.section-head { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 640px; margin: 0 auto 48px; gap: 16px; }
+.eyebrow { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent-ink); font-weight: 700; }
+.section h2 { font-family: var(--font-serif); font-weight: 400; font-size: 44px; line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.section h2 em { font-style: italic; color: var(--muted); }
+.section-head p { font-size: 16px; color: var(--ink-2); margin: 0; line-height: 1.55; text-wrap: pretty; }
+
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.feature {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 24px; display: flex; flex-direction: column; gap: 14px;
+  transition: transform 200ms, box-shadow 200ms, border-color 200ms;
+}
+.feature:hover { transform: translateY(-3px); box-shadow: 0 18px 36px -20px rgba(20,20,16,.16); border-color: var(--border-strong); }
+.feature-ico { width: 40px; height: 40px; border-radius: 11px; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; }
+.feature h3 { margin: 0; font-size: 16px; letter-spacing: -0.01em; }
+.feature p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+.feature-tag { font-size: 11px; font-weight: 600; color: var(--accent-ink); margin-top: auto; padding-top: 6px; display: inline-flex; align-items: center; gap: 4px; }
+
+/* Quote */
+.quote {
+  background: var(--ink); color: #F5F2EA; border-radius: 20px; padding: 56px;
+  display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; margin: 40px 0;
+  position: relative; overflow: hidden;
+}
+.quote::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 30%, rgba(180,200,195,.16), transparent 50%); pointer-events: none; }
+.quote q { font-family: var(--font-serif); font-style: italic; font-size: 30px; line-height: 1.25; letter-spacing: -0.015em; quotes: none; display: block; max-width: 720px; }
+.quote q::before, .quote q::after { content: ""; }
+.quote .who { font-size: 12.5px; color: rgba(245,242,234,.65); margin-top: 14px; }
+.quote .who b { color: #fff; }
+.quote-mark { font-family: var(--font-serif); font-size: 140px; line-height: 0.6; color: rgba(255,255,255,0.1); align-self: start; }
+
+/* CTA */
+.cta-band {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 48px; display: flex; align-items: center; justify-content: space-between; gap: 32px;
+}
+.cta-band h2 { font-family: var(--font-serif); font-size: 38px; margin: 0 0 10px; letter-spacing: -0.02em; }
+.cta-band p { margin: 0; color: var(--muted); }
+
+/* Footer */
+footer { padding: 56px 0 36px; border-top: 1px solid var(--border); margin-top: 40px; }
+.foot-inner { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; }
+.foot-brand p { color: var(--muted); font-size: 13px; margin: 12px 0 0; max-width: 280px; line-height: 1.5; }
+footer h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 14px; font-weight: 700; }
+.foot-links { display: flex; flex-direction: column; gap: 9px; }
+.foot-links a { font-size: 13.5px; color: var(--ink-2); transition: color 120ms; }
+.foot-links a:hover { color: var(--ink); }
+.foot-bottom {
+  margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: var(--muted);
+}
+
+@media (max-width: 980px) {
+  .hero { padding: 56px 0 32px; }
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero h1 { font-size: 48px; }
+  .feature-grid { grid-template-columns: repeat(2, 1fr); }
+  .cta-band { flex-direction: column; align-items: flex-start; padding: 32px; }
+  .quote { grid-template-columns: 1fr; padding: 36px; }
+  .quote q { font-size: 24px; }
+  .foot-inner { grid-template-columns: 1fr 1fr; }
+  .nav-links { display: none; }
+  .trust { flex-wrap: wrap; gap: 18px; }
+}
+@media (max-width: 600px) {
+  .feature-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 38px; }
+  .section h2 { font-size: 32px; }
+  .container { padding: 0 20px; }
+  .hero-visual { height: 380px; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="Landing.html" class="brand">
+      <span class="brand-mark">k</span>
+      <span>Kino</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Özellikler</a>
+      <a href="#about">Nasıl çalışır</a>
+      <a href="#pricing">Fiyatlandırma</a>
+      <a href="#blog">Blog</a>
+    </div>
+    <div class="nav-cta">
+      <a href="Login.html" class="btn btn-ghost">Giriş Yap</a>
+      <a href="Coach Dashboard.html" class="btn btn-primary">Hemen Başla</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-inner">
+    <div>
+      <div class="hero-eyebrow">
+        <span class="pill">Yeni</span>
+        <span>YKS 2026 hazırlık takvimi yayında</span>
+      </div>
+      <h1>Eğitim koçluğu sürecinizi <em>tek panelden yönetin.</em></h1>
+      <p class="lede">Öğrencilerinizi yönetin, haftalık program hazırlayın, net gelişimini takip edin ve iletişimi tek yerde toplayın — kalem ve Excel'i bırakın, koçluğa odaklanın.</p>
+      <div class="hero-actions">
+        <a href="Coach Dashboard.html" class="btn btn-primary btn-lg">
+          Hemen Başla
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="Login.html" class="btn btn-outline btn-lg">Giriş Yap</a>
+      </div>
+      <div class="hero-meta">
+        <div><span class="n">2.400+</span><span class="l">Aktif koç</span></div>
+        <div><span class="n">38K</span><span class="l">Takip edilen öğrenci</span></div>
+        <div><span class="n">4.9</span><span class="l">Memnuniyet (5 üzerinden)</span></div>
+      </div>
+    </div>
+
+    <!-- Mock dashboard preview -->
+    <div class="hero-visual">
+      <div class="hv-window">
+        <aside class="hv-side">
+          <div class="b"></div>
+          <div class="i active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="11" width="7" height="10" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+          <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M3 20c1-3 3-5 6-5s5 2 6 5"/></svg></div>
+          <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+          <div class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg></div>
+        </aside>
+        <main class="hv-main">
+          <div class="hv-row">
+            <div class="hv-stat"><div class="l">Öğrenci</div><div class="v">24</div></div>
+            <div class="hv-stat acc"><div class="l">Görev tamamlama</div><div class="v">78<span class="u">%</span></div></div>
+            <div class="hv-stat"><div class="l">Bekleyen mesaj</div><div class="v">12</div></div>
+          </div>
+          <div class="hv-chart">
+            <div class="hv-chart-top">
+              <span class="t">AYT Matematik gelişimi</span>
+              <span class="b">Son 8 hafta</span>
+            </div>
+            <svg viewBox="0 0 240 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="oklch(0.7 0.08 180)" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="oklch(0.7 0.08 180)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,60 L34,52 L68,55 L102,42 L136,35 L170,30 L204,22 L240,18 L240,80 L0,80 Z" fill="url(#g)"/>
+              <path d="M0,60 L34,52 L68,55 L102,42 L136,35 L170,30 L204,22 L240,18" fill="none" stroke="oklch(0.55 0.08 180)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="240" cy="18" r="3" fill="oklch(0.55 0.08 180)"/>
+            </svg>
+          </div>
+          <div class="hv-students">
+            <div class="hv-st"><div class="av" style="background: linear-gradient(135deg,#D4B98C,#B89968)"></div><div class="nm">Ahmet Y.</div><span class="dot" style="background: var(--good)"></span><span class="pct">92%</span></div>
+            <div class="hv-st"><div class="av" style="background: linear-gradient(135deg,#A8B5A1,#7E8E78)"></div><div class="nm">Ayşe D.</div><span class="dot" style="background: var(--warn)"></span><span class="pct">64%</span></div>
+            <div class="hv-st"><div class="av" style="background: linear-gradient(135deg,#C9A4A0,#A47873)"></div><div class="nm">Mehmet A.</div><span class="dot" style="background: var(--risk)"></span><span class="pct">34%</span></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container trust">
+  <span>Türkiye'nin önde gelen kurslarında kullanılıyor</span>
+  <span>Final</span>
+  <span>Bilfen</span>
+  <span>FRM</span>
+  <span>Sınav</span>
+  <span>Doğa</span>
+</div>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Özellikler</span>
+      <h2>Koçluğun her adımı için <em>tek bir panel.</em></h2>
+      <p>Excel tablolarına, WhatsApp gruplarına ve dağınık notlara veda edin. Kino her şeyi tek yerde toplar.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M3 20c.5-3.4 3.1-5.4 6-5.4S14.5 16.6 15 20"/><circle cx="17" cy="9.5" r="2.5"/><path d="M16 14.6c2.5.2 4.4 1.8 4.8 4.4"/></svg></div>
+        <h3>Öğrenci Yönetimi</h3>
+        <p>Tek tıkla profil açın, durum renklerine göre filtreleyin, hızlı not düşün — bir bakışta koç odaklı görünüm.</p>
+        <span class="feature-tag">24 öğrenciye kadar pro plan →</span>
+      </div>
+      <div class="feature">
+        <div class="feature-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <h3>Haftalık Program Takibi</h3>
+        <p>7×10 hücreli program editörü ile dakikalar içinde haftalık plan oluşturun. Öğrenci yaptıkça checkbox dolar.</p>
+        <span class="feature-tag">Geçmiş haftaları arşivleyin →</span>
+      </div>
+      <div class="feature">
+        <div class="feature-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m4 16 5-5 4 4 7-9"/><path d="M14 6h6v6"/></svg></div>
+        <h3>Net Takibi</h3>
+        <p>Deneme ve ders netlerini grafiklerle izleyin. Düşüşleri risk olarak işaretleyin, gelişimi zamanla karşılaştırın.</p>
+        <span class="feature-tag">Ders bazlı line chart →</span>
+      </div>
+      <div class="feature">
+        <div class="feature-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/></svg></div>
+        <h3>Chat Sistemi</h3>
+        <p>Öğrencilerle gerçek zamanlı sohbet. PDF, fotoğraf ve emoji desteği; tüm yazışmalar profille birleşik.</p>
+        <span class="feature-tag">Okundu bilgisi →</span>
+      </div>
+      <div class="feature">
+        <div class="feature-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></div>
+        <h3>Motivasyon Mesajları</h3>
+        <p>Tek tıkla öğrenci dashboard'una motivasyon kartı düşürün. Düştüğü anda yakalayın, ivmeyi koruyun.</p>
+        <span class="feature-tag">Hazır şablonlar →</span>
+      </div>
+      <div class="feature">
+        <div class="feature-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="11" width="7" height="10" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+        <h3>Performans Analizi</h3>
+        <p>Görev tamamlama, net trendi ve risk skoru — her öğrenci için otomatik üretilen haftalık özet rapor.</p>
+        <span class="feature-tag">PDF olarak indirin →</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <div class="quote">
+      <div>
+        <q>Bir önceki seneye göre öğrenci başına ayırdığım takip süresini yarıya indirdim. Sınav kaygısı yaşayan üç öğrencimi bu sayede zamanında fark ettim.</q>
+        <div class="who"><b>Esra Tekin</b> — YKS Sayısal Koçu, İzmir</div>
+      </div>
+      <div class="quote-mark">"</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 24px;" id="pricing">
+  <div class="container">
+    <div class="cta-band">
+      <div>
+        <h2>Bugün başlayın, ilk hafta ücretsiz.</h2>
+        <p>Kredi kartı gerekmez. 24 öğrenciye kadar Pro plan, 14 gün boyunca açık.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <a href="Coach Dashboard.html" class="btn btn-primary btn-lg">Hemen Başla</a>
+        <a href="Login.html" class="btn btn-outline btn-lg">Giriş Yap</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-inner">
+      <div class="foot-brand">
+        <a href="Landing.html" class="brand">
+          <span class="brand-mark">k</span>
+          <span>Kino</span>
+        </a>
+        <p>Eğitim koçları ve öğrenciler için modern bir takip platformu. İstanbul'da tasarlandı.</p>
+      </div>
+      <div>
+        <h4>Ürün</h4>
+        <div class="foot-links">
+          <a href="#">Özellikler</a>
+          <a href="#">Fiyatlandırma</a>
+          <a href="#">Yenilikler</a>
+          <a href="#">Yol haritası</a>
+        </div>
+      </div>
+      <div>
+        <h4>Şirket</h4>
+        <div class="foot-links">
+          <a href="#">Hakkımızda</a>
+          <a href="#">Blog</a>
+          <a href="#">Kariyer</a>
+          <a href="#">İletişim</a>
+        </div>
+      </div>
+      <div>
+        <h4>Yasal</h4>
+        <div class="foot-links">
+          <a href="#">Gizlilik Politikası</a>
+          <a href="#">Kullanım Şartları</a>
+          <a href="#">KVKK</a>
+          <a href="#">Çerezler</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Kino Eğitim Teknolojileri</span>
+      <span style="font-family: var(--font-mono); font-size: 11px;">v1.0.0 · stabil</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

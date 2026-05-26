@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kino — Giriş</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8F7F4;
+  --bg-elev: #FDFCFA;
+  --card: #FFFFFF;
+  --border: #ECE9E3;
+  --border-strong: #DFDBD3;
+  --ink: #1A1A17;
+  --ink-2: #3D3D38;
+  --muted: #807C72;
+  --muted-2: #A8A39A;
+  --accent: oklch(0.6 0.07 180);
+  --accent-soft: oklch(0.96 0.025 180);
+  --accent-ink: oklch(0.4 0.07 180);
+  --risk: oklch(0.6 0.16 25);
+  --font: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  letter-spacing: -0.005em;
+}
+button { font: inherit; cursor: pointer; border: none; background: none; padding: 0; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+.top { padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+.brand-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--ink); color: #fff; display: grid; place-items: center; font-family: var(--font-serif); font-size: 19px; }
+.top-link { font-size: 13px; color: var(--muted); }
+.top-link a { color: var(--ink); font-weight: 600; }
+.top-link a:hover { text-decoration: underline; }
+
+.wrap {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 40px 36px 32px;
+  box-shadow: 0 30px 60px -32px rgba(20,20,16,0.16), 0 6px 18px -10px rgba(20,20,16,0.05);
+  position: relative;
+}
+.card h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 6px;
+}
+.card .sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0 0 28px;
+}
+
+.form { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.input-wrap { position: relative; }
+.input {
+  width: 100%;
+  height: 44px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 0 14px 0 40px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+}
+.input:hover { background: var(--card); border-color: var(--border-strong); }
+.input:focus {
+  outline: none;
+  background: var(--card);
+  border-color: var(--ink-2);
+  box-shadow: 0 0 0 3px rgba(26,26,23,0.06);
+}
+.input::placeholder { color: var(--muted-2); }
+.input-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted-2); pointer-events: none; }
+.field.error .input { border-color: var(--risk); box-shadow: 0 0 0 3px oklch(0.6 0.16 25 / 0.08); }
+.eye {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center;
+  color: var(--muted); transition: background 120ms;
+}
+.eye:hover { background: var(--bg); color: var(--ink); }
+
+.row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 2px; }
+.check {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--ink-2); cursor: pointer; user-select: none;
+}
+.check input { display: none; }
+.check .box {
+  width: 16px; height: 16px; border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elev);
+  display: grid; place-items: center;
+  transition: background 120ms, border-color 120ms;
+}
+.check input:checked + .box { background: var(--ink); border-color: var(--ink); }
+.check input:checked + .box::after {
+  content: "";
+  width: 9px; height: 5px;
+  border: 2px solid #fff;
+  border-top: 0; border-right: 0;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.forgot { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
+.forgot:hover { text-decoration: underline; }
+
+.submit {
+  margin-top: 8px;
+  width: 100%;
+  height: 46px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 11px;
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 120ms, transform 80ms;
+}
+.submit:hover { background: #000; }
+.submit:active { transform: translateY(1px); }
+
+.divider {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11.5px; color: var(--muted-2);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin: 22px 0 18px;
+}
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+.role-toggle {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 4px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.role-toggle::before {
+  content: ""; position: absolute;
+  top: 4px; bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background: var(--card);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(20,20,16,0.04);
+  transition: transform 220ms cubic-bezier(.4,0,.2,1);
+}
+.role-toggle[data-role="student"]::before { transform: translateX(100%); }
+.role-toggle button {
+  position: relative; z-index: 1;
+  height: 36px; font-size: 13px; font-weight: 600; color: var(--muted);
+  border-radius: 8px; transition: color 160ms;
+}
+.role-toggle[data-role="coach"] button:first-child,
+.role-toggle[data-role="student"] button:last-child { color: var(--ink); }
+
+.foot-cta {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 22px 0 0;
+}
+.foot-cta a { color: var(--ink); font-weight: 600; }
+.foot-cta a:hover { text-decoration: underline; }
+
+footer {
+  padding: 24px 32px;
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted-2);
+}
+
+@media (max-width: 480px) {
+  .card { padding: 32px 24px 24px; border-radius: 14px; }
+  .top { padding: 22px 20px; }
+  footer { padding: 18px 20px; flex-direction: column; gap: 6px; align-items: center; }
+}
+
+/* Background ambience */
+.amb {
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(60% 40% at 15% 20%, oklch(0.96 0.025 180 / 0.6), transparent 60%),
+    radial-gradient(50% 40% at 85% 80%, oklch(0.96 0.03 50 / 0.5), transparent 60%);
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="amb"></div>
+
+<header class="top">
+  <a href="Landing.html" class="brand">
+    <span class="brand-mark">k</span>
+    <span>Kino</span>
+  </a>
+  <div class="top-link">Hesabınız yok mu? <a href="Landing.html">Hemen başla</a></div>
+</header>
+
+<main class="wrap">
+  <div class="card">
+    <h1>Tekrar hoş geldin.</h1>
+    <p class="sub">Devam etmek için Kino hesabına giriş yap.</p>
+
+    <div class="role-toggle" data-role="coach" id="roleToggle">
+      <button type="button" data-r="coach">Koç</button>
+      <button type="button" data-r="student">Öğrenci</button>
+    </div>
+
+    <form class="form" onsubmit="event.preventDefault(); document.getElementById('go').click();">
+      <div class="field">
+        <label class="label" for="email">E‑posta</label>
+        <div class="input-wrap">
+          <svg class="input-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          <input id="email" class="input" type="email" placeholder="ornek@kino.app" autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="pass">Şifre</label>
+        <div class="input-wrap">
+          <svg class="input-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <input id="pass" class="input" type="password" placeholder="••••••••" autocomplete="current-password" />
+          <button class="eye" type="button" id="eyeBtn" aria-label="Şifreyi göster">
+            <svg id="eyeOn" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg id="eyeOff" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M3 3l18 18M10.6 6.1A9.7 9.7 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.6 4.2M6.1 6.1C3.4 8 2 12 2 12s3.5 6 10 6c1.8 0 3.5-.5 5-1.3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="row-between">
+        <label class="check">
+          <input type="checkbox" checked />
+          <span class="box"></span>
+          <span>Beni hatırla</span>
+        </label>
+        <a class="forgot" href="#">Şifremi unuttum</a>
+      </div>
+
+      <a href="Coach Dashboard.html" class="submit" id="go">
+        Giriş Yap
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </form>
+
+    <div class="foot-cta">
+      Yeni misin? <a href="Landing.html">Ücretsiz hesap aç</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 Kino Eğitim Teknolojileri</span>
+  <span>tr · Türkçe</span>
+</footer>
+
+<script>
+  const toggle = document.getElementById('roleToggle');
+  const go = document.getElementById('go');
+  toggle.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const r = b.dataset.r;
+    toggle.dataset.role = r;
+    go.href = r === 'coach' ? 'Coach Dashboard.html' : 'Coach Dashboard.html#/student/dashboard';
+  }));
+  const eyeBtn = document.getElementById('eyeBtn');
+  const pass = document.getElementById('pass');
+  const on = document.getElementById('eyeOn');
+  const off = document.getElementById('eyeOff');
+  eyeBtn.addEventListener('click', () => {
+    const showing = pass.type === 'text';
+    pass.type = showing ? 'password' : 'text';
+    on.style.display = showing ? '' : 'none';
+    off.style.display = showing ? 'none' : '';
+  });
+</script>
+</body>
+</html>
