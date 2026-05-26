@@ -38,6 +38,8 @@ export class AcceptInvitationUseCase {
     const engagement = await this.engagements.create({
       studentId: invitation.studentId,
       coachId: invitation.coachId,
+      gradeAtStart: student.grade ?? undefined,
+      track: student.track ?? undefined,
     });
     await this.invitations.markAccepted(invitation.id);
     return engagement;

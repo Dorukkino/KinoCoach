@@ -89,6 +89,13 @@ export class InviteStudentByEmailUseCase {
       if (active) {
         throw new StudentAlreadyEngagedError();
       }
+
+      studentProfile = await this.students.update(studentProfile.id, {
+        name: input.name,
+        grade: input.grade,
+        track: input.track,
+      });
+
       const token = generateToken();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       const invitation = await this.invitations.create({
