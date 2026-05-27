@@ -25,7 +25,7 @@ const getStudentLayoutData = cache(async () => {
     }
   }
 
-  return { userName: student?.name ?? "Öğrenci" };
+  return { userId: session.userId, userName: student?.name ?? "Öğrenci" };
 });
 
 export default async function StudentLayout({
@@ -33,10 +33,10 @@ export default async function StudentLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userName } = await getStudentLayoutData();
+  const { userId, userName } = await getStudentLayoutData();
 
   return (
-    <AppShell role="student" userName={userName} pageTitle="">
+    <AppShell role="student" userId={userId} userName={userName} pageTitle="">
       {children}
     </AppShell>
   );

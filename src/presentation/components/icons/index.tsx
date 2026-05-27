@@ -62,6 +62,17 @@ export const Icons = {
       <path d="M12 5v14M5 12h14" />
     </svg>
   ),
+  Bell: (p: IconProps) => (
+    <svg viewBox="0 0 24 24" width={18} height={18} {...stroke} {...p}>
+      <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+      <path d="M13.7 21a2 2 0 01-3.4 0" />
+    </svg>
+  ),
+  Close: (p: IconProps) => (
+    <svg viewBox="0 0 24 24" width={14} height={14} {...stroke} {...p}>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  ),
 };
 
 export type NavIconKey = keyof typeof Icons;

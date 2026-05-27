@@ -10,7 +10,7 @@ const getCoachLayoutData = cache(async () => {
   if (!session.role.isCoach()) redirect("/student/dashboard");
 
   const profile = await container.users.findById(session.userId);
-  return { userName: profile?.fullName ?? "Koç" };
+  return { userId: session.userId, userName: profile?.fullName ?? "Koç" };
 });
 
 export default async function CoachLayout({
@@ -18,10 +18,10 @@ export default async function CoachLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userName } = await getCoachLayoutData();
+  const { userId, userName } = await getCoachLayoutData();
 
   return (
-    <AppShell role="coach" userName={userName} pageTitle="">
+    <AppShell role="coach" userId={userId} userName={userName} pageTitle="">
       {children}
     </AppShell>
   );

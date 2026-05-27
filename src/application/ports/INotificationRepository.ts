@@ -15,6 +15,8 @@ export interface INotificationRepository {
   countUnread(userId: string): Promise<number>;
   markAsRead(id: string, userId: string): Promise<void>;
   markAllAsRead(userId: string): Promise<void>;
+  delete(id: string, userId: string): Promise<void>;
+  deleteAll(userId: string): Promise<void>;
   existsByTypeAndMetadata(
     userId: string,
     type: NotificationTypeValue,

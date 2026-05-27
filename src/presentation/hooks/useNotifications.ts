@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   countUnreadNotificationsAction,
+  deleteAllNotificationsAction,
+  deleteNotificationAction,
   listNotificationsAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
@@ -50,6 +52,19 @@ export function useNotifications(userId: string) {
     await reload();
   }, [reload]);
 
+  const deleteOne = useCallback(
+    async (id: string) => {
+      await deleteNotificationAction(id);
+      await reload();
+    },
+    [reload]
+  );
+
+  const deleteAll = useCallback(async () => {
+    await deleteAllNotificationsAction();
+    await reload();
+  }, [reload]);
+
   return {
     items,
     unreadCount,
@@ -57,5 +72,7 @@ export function useNotifications(userId: string) {
     reload,
     markRead,
     markAllRead,
+    deleteOne,
+    deleteAll,
   };
 }

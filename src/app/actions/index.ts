@@ -56,4 +56,6 @@ export {
   countUnreadNotificationsAction,
   markNotificationReadAction,
   markAllNotificationsReadAction,
+  deleteNotificationAction,
+  deleteAllNotificationsAction,
 } from "./notifications";

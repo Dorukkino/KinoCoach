@@ -68,6 +68,23 @@ export class SupabaseNotificationRepository implements INotificationRepository {
     if (error) throw new Error(error.message);
   }
 
+  async delete(id: string, userId: string) {
+    const { error } = await this.supabase
+      .from("notifications")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+  }
+
+  async deleteAll(userId: string) {
+    const { error } = await this.supabase
+      .from("notifications")
+      .delete()
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+  }
+
   async existsByTypeAndMetadata(
     userId: string,
     type: NotificationTypeValue,

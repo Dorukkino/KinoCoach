@@ -49,6 +49,7 @@ import { ListArchivedStudentsForCoachUseCase } from "@/application/use-cases/Lis
 import { SendNotificationUseCase } from "@/application/use-cases/SendNotificationUseCase";
 import { ListNotificationsForUserUseCase } from "@/application/use-cases/ListNotificationsForUserUseCase";
 import { MarkNotificationAsReadUseCase } from "@/application/use-cases/MarkNotificationAsReadUseCase";
+import { DeleteNotificationUseCase } from "@/application/use-cases/DeleteNotificationUseCase";
 import { SendWeeklyReminderUseCase } from "@/application/use-cases/SendWeeklyReminderUseCase";
 import { CalculateStudentStatusService } from "@/application/services/CalculateStudentStatusService";
 import { ChartDataService } from "@/application/services/ChartDataService";
@@ -108,6 +109,7 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
 
   const listNotifications = new ListNotificationsForUserUseCase(notifications);
   const markNotificationRead = new MarkNotificationAsReadUseCase(notifications);
+  const deleteNotification = new DeleteNotificationUseCase(notifications);
   const sendWeeklyReminder =
     sendNotification && adminEngagements && adminNotifications
       ? new SendWeeklyReminderUseCase(
@@ -216,6 +218,7 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     upsertLessonNet: new UpsertLessonNetUseCase(lessonNets, engagements, students),
     listNotifications,
     markNotificationRead,
+    deleteNotification,
     sendWeeklyReminder,
   };
 }

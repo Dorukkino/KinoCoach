@@ -24,3 +24,15 @@ export async function markAllNotificationsReadAction() {
   await container.markNotificationRead.markAll(session.userId);
   revalidatePath("/", "layout");
 }
+
+export async function deleteNotificationAction(id: string) {
+  const { container, session } = await requireSession();
+  await container.deleteNotification.execute(id, session.userId);
+  revalidatePath("/", "layout");
+}
+
+export async function deleteAllNotificationsAction() {
+  const { container, session } = await requireSession();
+  await container.deleteNotification.deleteAll(session.userId);
+  revalidatePath("/", "layout");
+}

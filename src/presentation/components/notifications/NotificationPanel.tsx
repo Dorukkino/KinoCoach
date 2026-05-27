@@ -1,18 +1,30 @@
 "use client";
 
-import { useNotifications } from "@/presentation/hooks/useNotifications";
+import { NotificationDto } from "@/application/dto";
+import { Icons } from "@/presentation/components/icons";
 
 interface NotificationPanelProps {
-  userId: string;
+  items: NotificationDto[];
+  unreadCount: number;
+  loading: boolean;
+  markRead: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
+  deleteOne: (id: string) => Promise<void>;
+  deleteAll: () => Promise<void>;
 }
 
-export function NotificationPanel({ userId }: NotificationPanelProps) {
-  const { items, unreadCount, loading, markRead, markAllRead } =
-    useNotifications(userId);
-
+export function NotificationPanel({
+  items,
+  unreadCount,
+  loading,
+  markRead,
+  markAllRead,
+  deleteOne,
+  deleteAll,
+}: NotificationPanelProps) {
   if (loading) {
     return (
-      <div className="panel p-4 text-sm text-[var(--muted)]">
+      <div className="panel p-4 text-sm text-[var(--muted)]" style={{ minWidth: 320 }}>
         Bildirimler yükleniyor…
       </div>
     );
@@ -29,15 +41,26 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
             </span>
           )}
         </span>
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            className="text-xs text-[var(--accent-ink)] hover:underline"
-            onClick={() => void markAllRead()}
-          >
-            Tümünü okundu işaretle
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              className="text-xs text-[var(--accent-ink)] hover:underline"
+              onClick={() => void markAllRead()}
+            >
+              Tümünü okundu işaretle
+            </button>
+          )}
+          {items.length > 0 && (
+            <button
+              type="button"
+              className="text-xs text-[var(--muted)] hover:text-[var(--risk)] hover:underline"
+              onClick={() => void deleteAll()}
+            >
+              Tümünü sil
+            </button>
+          )}
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -49,25 +72,37 @@ export function NotificationPanel({ userId }: NotificationPanelProps) {
           {items.map((n) => (
             <li
               key={n.id}
-              className={`px-4 py-3 text-sm ${
+              className={`group px-4 py-3 text-sm ${
                 n.isRead ? "opacity-70" : "bg-[var(--bg-elev)]"
               }`}
             >
-              <div className="font-medium">{n.title}</div>
-              <p className="text-[var(--muted)] mt-1 leading-snug">{n.message}</p>
-              <div className="flex items-center justify-between mt-2 gap-2">
-                <span className="text-xs text-[var(--muted-2)]">
-                  {new Date(n.createdAt).toLocaleString("tr-TR")}
-                </span>
-                {!n.isRead && (
-                  <button
-                    type="button"
-                    className="text-xs text-[var(--accent-ink)] hover:underline shrink-0"
-                    onClick={() => void markRead(n.id)}
-                  >
-                    Okundu
-                  </button>
-                )}
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium">{n.title}</div>
+                  <p className="text-[var(--muted)] mt-1 leading-snug">{n.message}</p>
+                  <div className="flex items-center justify-between mt-2 gap-2">
+                    <span className="text-xs text-[var(--muted-2)]">
+                      {new Date(n.createdAt).toLocaleString("tr-TR")}
+                    </span>
+                    {!n.isRead && (
+                      <button
+                        type="button"
+                        className="text-xs text-[var(--accent-ink)] hover:underline shrink-0"
+                        onClick={() => void markRead(n.id)}
+                      >
+                        Okundu
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="notification-delete-btn shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Bildirimi sil"
+                  onClick={() => void deleteOne(n.id)}
+                >
+                  <Icons.Close width={14} height={14} />
+                </button>
               </div>
             </li>
           ))}

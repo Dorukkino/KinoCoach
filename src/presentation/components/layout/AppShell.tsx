@@ -4,14 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Sidebar } from "./Sidebar";
 import { signOutAction } from "@/app/actions/auth";
+import { NotificationBell } from "@/presentation/components/notifications/NotificationBell";
 
 export function AppShell({
   role,
+  userId,
   userName,
   pageTitle,
   children,
 }: {
   role: "coach" | "student";
+  userId: string;
   userName: string;
   pageTitle: string;
   children: React.ReactNode;
@@ -39,7 +42,8 @@ export function AppShell({
       <div className="main">
         <header className="topbar">
           <h2 className="text-sm font-semibold m-0">{pageTitle}</h2>
-          <div className="ml-auto">
+          <div className="topbar-actions">
+            <NotificationBell userId={userId} />
             <button
               type="button"
               className="btn btn-outline text-xs"
