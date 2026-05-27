@@ -180,7 +180,12 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
         )
       : null,
     declineInvitation: new DeclineInvitationUseCase(invitations, students),
-    createWeeklyProgram: new CreateWeeklyProgramUseCase(programs, engagements),
+    createWeeklyProgram: new CreateWeeklyProgramUseCase(
+      programs,
+      engagements,
+      students,
+      sendNotification ?? undefined
+    ),
     updateWeeklyCompletion: new UpdateWeeklyProgramCompletionUseCase(
       programs,
       students,
@@ -188,14 +193,14 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     ),
     getWeeklyProgram: new GetWeeklyProgramUseCase(programs, engagements),
     listStudentWeeks: new ListStudentWeeksUseCase(programs, engagements),
-    updateExamResult: new UpdateExamResultUseCase(exams, students),
-    listExamResults: new ListExamResultsUseCase(exams),
-    sendMessage: new SendMessageUseCase(
-      messages,
-      storage,
-      sendNotification ?? undefined,
-      adminUsersForNotify ?? users
+    updateExamResult: new UpdateExamResultUseCase(
+      exams,
+      students,
+      engagements,
+      sendNotification ?? undefined
     ),
+    listExamResults: new ListExamResultsUseCase(exams),
+    sendMessage: new SendMessageUseCase(messages, storage),
     listMessages: new ListMessagesUseCase(messages),
     upsertCoachNote: new UpsertCoachNoteUseCase(notes, engagements),
     getCoachNote: new GetCoachNoteUseCase(notes, engagements),
@@ -215,7 +220,12 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     ),
     getMotivation: new GetMotivationForStudentUseCase(motivation, engagements),
     getLessonNet: new GetLessonNetUseCase(lessonNets, engagements),
-    upsertLessonNet: new UpsertLessonNetUseCase(lessonNets, engagements, students),
+    upsertLessonNet: new UpsertLessonNetUseCase(
+      lessonNets,
+      engagements,
+      students,
+      sendNotification ?? undefined
+    ),
     listNotifications,
     markNotificationRead,
     deleteNotification,

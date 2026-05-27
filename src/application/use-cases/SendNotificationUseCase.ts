@@ -16,7 +16,6 @@ export interface SendNotificationInput {
 }
 
 const EMAIL_ENABLED_TYPES = new Set<NotificationTypeValue>([
-  NotificationType.NEW_MESSAGE,
   NotificationType.NEW_MOTIVATION,
   NotificationType.NEW_INVITATION,
   NotificationType.INVITATION_ACCEPTED,

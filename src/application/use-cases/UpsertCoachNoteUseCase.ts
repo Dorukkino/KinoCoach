@@ -26,6 +26,7 @@ export class UpsertCoachNoteUseCase {
       studentId,
       note
     );
+
     return {
       id: result.id,
       studentId: result.studentId,

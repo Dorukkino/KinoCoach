@@ -15,8 +15,15 @@ export async function createExamResultAction(
   scores: { turkish: number; math: number; science: number; social: number; english?: number | null },
   note = ""
 ) {
-  const { container } = await requireSession();
-  await container.updateExamResult.create(studentId, new Date(date), scores, note);
+  const { container, session } = await requireSession();
+  const createdBy = session.role.isCoach() ? "coach" : "student";
+  await container.updateExamResult.create(
+    studentId,
+    new Date(date),
+    scores,
+    note,
+    createdBy
+  );
   revalidatePath("/coach/exams");
   revalidatePath(`/coach/students/${studentId}`);
   revalidatePath("/student/exams");

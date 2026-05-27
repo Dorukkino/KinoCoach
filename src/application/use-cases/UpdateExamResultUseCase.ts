@@ -1,22 +1,78 @@
 import { IExamResultRepository } from "../ports/IExamResultRepository";
 import { IStudentRepository } from "../ports/IStudentRepository";
+import { IEngagementRepository } from "../ports/IEngagementRepository";
 import { ExamScoresProps } from "@/domain/value-objects/ExamScores";
 import { ExamResultDto } from "../dto";
+import { SendNotificationUseCase } from "./SendNotificationUseCase";
+import { NotificationType } from "@/domain/value-objects/NotificationType";
+import { NoActiveEngagementError } from "@/domain/errors/EngagementErrors";
+
+export type ExamResultCreatedBy = "coach" | "student";
 
 export class UpdateExamResultUseCase {
   constructor(
     private readonly exams: IExamResultRepository,
-    private readonly students: IStudentRepository
+    private readonly students: IStudentRepository,
+    private readonly engagements: IEngagementRepository,
+    private readonly sendNotification?: SendNotificationUseCase
   ) {}
 
   async create(
     studentId: string,
     date: Date,
     scores: ExamScoresProps,
-    note = ""
+    note = "",
+    createdBy: ExamResultCreatedBy = "coach"
   ): Promise<ExamResultDto> {
     const result = await this.exams.create(studentId, date, scores, note);
     await this.students.touchLastActive(studentId);
+
+    if (this.sendNotification) {
+      try {
+        const student = await this.students.findById(studentId);
+        if (!student) return this.toDto(result);
+
+        const total =
+          scores.turkish +
+          scores.math +
+          scores.science +
+          scores.social +
+          (scores.english ?? 0);
+        const dateLabel = date.toLocaleDateString("tr-TR");
+
+        if (createdBy === "coach") {
+          await this.sendNotification.execute({
+            userId: student.userId,
+            title: "Yeni deneme sonucunuz eklendi",
+            message: `${dateLabel} tarihli deneme sonucunuz koçunuz tarafından kaydedildi. Toplam net: ${total}.`,
+            type: NotificationType.NEW_EXAM_RESULT,
+            metadata: {
+              studentId,
+              examResultId: result.id,
+              href: "/student/exams",
+            },
+          });
+        } else {
+          const engagement = await this.engagements.findActiveByStudent(studentId);
+          if (!engagement) throw new NoActiveEngagementError();
+
+          await this.sendNotification.execute({
+            userId: engagement.coachId,
+            title: "Öğrenci deneme sonucu ekledi",
+            message: `${student.name} ${dateLabel} tarihli deneme sonucunu ekledi. Toplam net: ${total}.`,
+            type: NotificationType.NEW_EXAM_RESULT,
+            metadata: {
+              studentId,
+              examResultId: result.id,
+              href: `/coach/students/${studentId}`,
+            },
+          });
+        }
+      } catch {
+        // Bildirim hatası sınav kaydını geri almaz
+      }
+    }
+
     return this.toDto(result);
   }
 

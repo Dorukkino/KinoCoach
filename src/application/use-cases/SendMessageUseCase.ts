@@ -1,16 +1,11 @@
 import { IMessageRepository } from "../ports/IMessageRepository";
 import { IStorageService } from "../ports/IStorageService";
-import { IUserRepository } from "../ports/IUserRepository";
 import { MessageDto } from "../dto";
-import { SendNotificationUseCase } from "./SendNotificationUseCase";
-import { NotificationType } from "@/domain/value-objects/NotificationType";
 
 export class SendMessageUseCase {
   constructor(
     private readonly messages: IMessageRepository,
-    private readonly storage?: IStorageService,
-    private readonly sendNotification?: SendNotificationUseCase,
-    private readonly users?: IUserRepository
+    private readonly storage?: IStorageService
   ) {}
 
   async execute(input: {
@@ -33,28 +28,6 @@ export class SendMessageUseCase {
       input.content,
       attachmentUrl
     );
-
-    if (this.sendNotification) {
-      try {
-        const receiver = await this.users?.findById(input.receiverId);
-        const href = receiver?.role.isCoach() ? "/coach/chat" : "/student/chat";
-        await this.sendNotification.execute({
-          userId: input.receiverId,
-          title: "Yeni mesajınız var",
-          message: input.content.trim()
-            ? input.content.slice(0, 200)
-            : "Size yeni bir mesaj gönderildi.",
-          type: NotificationType.NEW_MESSAGE,
-          metadata: {
-            senderId: input.senderId,
-            messageId: msg.id,
-            href,
-          },
-        });
-      } catch {
-        // Bildirim hatası mesaj gönderimini geri almaz
-      }
-    }
 
     return {
       id: msg.id,
