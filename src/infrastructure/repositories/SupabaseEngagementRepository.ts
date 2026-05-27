@@ -5,13 +5,16 @@ import {
 } from "@/application/ports/IEngagementRepository";
 import { mapEngagementRow } from "../supabase/mappers";
 
+const ENGAGEMENT_COLUMNS =
+  "id, student_id, coach_id, status, started_at, ended_at, end_reason, school_level, grade_at_start, track";
+
 export class SupabaseEngagementRepository implements IEngagementRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async findById(id: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")
-      .select("*")
+      .select(ENGAGEMENT_COLUMNS)
       .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
@@ -21,7 +24,7 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
   async findActiveByStudent(studentId: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")
-      .select("*")
+      .select(ENGAGEMENT_COLUMNS)
       .eq("student_id", studentId)
       .eq("status", "active")
       .maybeSingle();
@@ -32,7 +35,7 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
   async findActiveByCoach(coachId: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")
-      .select("*")
+      .select(ENGAGEMENT_COLUMNS)
       .eq("coach_id", coachId)
       .eq("status", "active")
       .order("started_at", { ascending: false });
@@ -43,7 +46,7 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
   async findHistoricalByCoach(coachId: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")
-      .select("*")
+      .select(ENGAGEMENT_COLUMNS)
       .eq("coach_id", coachId)
       .neq("status", "active")
       .order("ended_at", { ascending: false });
@@ -54,7 +57,7 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
   async findAllByStudent(studentId: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")
-      .select("*")
+      .select(ENGAGEMENT_COLUMNS)
       .eq("student_id", studentId)
       .order("started_at", { ascending: false });
     if (error || !data) return [];
@@ -64,7 +67,7 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
   async findActiveByCoachAndStudent(coachId: string, studentId: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")
-      .select("*")
+      .select(ENGAGEMENT_COLUMNS)
       .eq("coach_id", coachId)
       .eq("student_id", studentId)
       .eq("status", "active")

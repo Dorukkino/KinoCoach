@@ -1,15 +1,11 @@
-import {
-  listActiveStudentsAction,
-  listArchivedStudentsAction,
-} from "@/app/actions/students";
-import { StudentsPageClient } from "./StudentsPageClient";
+import { Suspense } from "react";
+import { StudentsPageContent } from "./StudentsPageContent";
+import { StudentsListSkeleton } from "@/presentation/components/skeletons";
 
-export default async function CoachStudentsPage() {
-  const [active, archived] = await Promise.all([
-    listActiveStudentsAction(),
-    listArchivedStudentsAction(),
-  ]);
+export default function CoachStudentsPage() {
   return (
-    <StudentsPageClient initialActive={active} initialArchived={archived} />
+    <Suspense fallback={<StudentsListSkeleton />}>
+      <StudentsPageContent />
+    </Suspense>
   );
 }

@@ -9,7 +9,7 @@ export class SupabaseExamResultRepository implements IExamResultRepository {
   async findByStudentId(studentId: string) {
     const { data, error } = await this.supabase
       .from("exam_results")
-      .select("*")
+      .select("id, student_id, exam_date, scores_json, note, created_at")
       .eq("student_id", studentId)
       .order("exam_date", { ascending: false })
       .order("created_at", { ascending: false });

@@ -33,6 +33,7 @@ import { ListMessagesUseCase } from "@/application/use-cases/ListMessagesUseCase
 import { UpsertCoachNoteUseCase } from "@/application/use-cases/UpsertCoachNoteUseCase";
 import { GetCoachNoteUseCase } from "@/application/use-cases/GetCoachNoteUseCase";
 import { ListCoachNotesUseCase } from "@/application/use-cases/ListCoachNotesUseCase";
+import { GetCoachNotesPageUseCase } from "@/application/use-cases/GetCoachNotesPageUseCase";
 import { SetMotivationMessageUseCase } from "@/application/use-cases/SetMotivationMessageUseCase";
 import { GetMotivationForStudentUseCase } from "@/application/use-cases/GetMotivationForStudentUseCase";
 import { GetLessonNetUseCase } from "@/application/use-cases/GetLessonNetUseCase";
@@ -145,6 +146,13 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     upsertCoachNote: new UpsertCoachNoteUseCase(notes, engagements),
     getCoachNote: new GetCoachNoteUseCase(notes, engagements),
     listCoachNotes: new ListCoachNotesUseCase(notes, students, engagements),
+    getCoachNotesPage: new GetCoachNotesPageUseCase(
+      notes,
+      students,
+      engagements,
+      statusMapper,
+      lastActivityQuery
+    ),
     setMotivation: new SetMotivationMessageUseCase(motivation, engagements),
     getMotivation: new GetMotivationForStudentUseCase(motivation, engagements),
     getLessonNet: new GetLessonNetUseCase(lessonNets, engagements),

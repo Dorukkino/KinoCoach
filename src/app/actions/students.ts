@@ -29,8 +29,10 @@ export async function inviteStudentAction(input: {
   if (!container.inviteStudent) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY tanımlı değil");
   }
-  await ensureCoachProfile(container, session);
-  const siteUrl = await resolveSiteUrl();
+  const [, siteUrl] = await Promise.all([
+    ensureCoachProfile(container, session),
+    resolveSiteUrl(),
+  ]);
   const inviteRedirectTo = `${siteUrl}/auth/update-password?mode=invite`;
   const result = await container.inviteStudent.execute({
     coachId: session.userId,

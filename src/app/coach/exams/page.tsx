@@ -1,14 +1,9 @@
-import { createServerContainer } from "@/infrastructure/di/container";
-import { redirect } from "next/navigation";
-import Link from "next/link";
+import { Suspense } from "react";
 import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
+import { StudentLinkListSkeleton } from "@/presentation/components/skeletons";
+import { CoachExamsContent } from "./CoachExamsContent";
 
-export default async function CoachExamsPage() {
-  const c = await createServerContainer();
-  const session = await c.auth.getSession();
-  if (!session) redirect("/login");
-  const students = await c.listActiveStudents.execute(session.userId);
-
+export default function CoachExamsPage() {
   return (
     <div className="screen">
       <RealtimeRouteRefresh
@@ -21,18 +16,9 @@ export default async function CoachExamsPage() {
           <p>Öğrenci detayından deneme ekleyin ve grafikleri görün</p>
         </div>
       </div>
-      <ul className="list-none p-0 m-0 flex flex-col gap-2">
-        {students.map((s) => (
-          <li key={s.id}>
-            <Link
-              href={`/coach/students/${s.id}`}
-              className="panel p-4 block"
-            >
-              {s.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <Suspense fallback={<StudentLinkListSkeleton />}>
+        <CoachExamsContent />
+      </Suspense>
     </div>
   );
 }

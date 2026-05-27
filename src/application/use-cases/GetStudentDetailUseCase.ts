@@ -21,20 +21,20 @@ export class GetStudentDetailUseCase {
     studentId: string,
     coachId?: string
   ): Promise<StudentDetailDto | null> {
-    const student = await this.students.findById(studentId);
+    const [student, lastActivityMap, activeEngagement] = await Promise.all([
+      this.students.findById(studentId),
+      this.lastActivity.findLatestByStudentIds([studentId]),
+      coachId
+        ? this.engagements.findActiveByCoachAndStudent(coachId, studentId)
+        : this.engagements.findActiveByStudent(studentId),
+    ]);
+
     if (!student) return null;
 
-    const lastActivityMap = await this.lastActivity.findLatestByStudentIds([
-      studentId,
-    ]);
     const card = this.statusMapper.toCardDto(
       student,
       lastActivityMap.get(studentId) ?? student.lastActiveAt
     );
-
-    const activeEngagement = coachId
-      ? await this.engagements.findActiveByCoachAndStudent(coachId, studentId)
-      : await this.engagements.findActiveByStudent(studentId);
 
     return {
       ...card,

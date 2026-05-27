@@ -1,14 +1,9 @@
-import { listCoachNotesAction } from "@/app/actions/notes";
-import { listActiveStudentsAction } from "@/app/actions/students";
+import { Suspense } from "react";
 import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
-import { CoachNotesClient } from "./CoachNotesClient";
+import { CoachNotesContent } from "./CoachNotesContent";
+import { NotesPageSkeleton } from "@/presentation/components/skeletons";
 
-export default async function CoachNotesPage() {
-  const [students, notes] = await Promise.all([
-    listActiveStudentsAction(),
-    listCoachNotesAction(),
-  ]);
-
+export default function CoachNotesPage() {
   return (
     <div className="screen">
       <RealtimeRouteRefresh
@@ -21,8 +16,9 @@ export default async function CoachNotesPage() {
           <p>Öğrenci bazlı özel koç notları</p>
         </div>
       </div>
-
-      <CoachNotesClient students={students} notes={notes} />
+      <Suspense fallback={<NotesPageSkeleton />}>
+        <CoachNotesContent />
+      </Suspense>
     </div>
   );
 }

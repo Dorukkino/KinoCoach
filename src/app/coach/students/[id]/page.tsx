@@ -1,14 +1,24 @@
-import { getStudentDetailAction } from "@/app/actions/students";
-import { notFound } from "next/navigation";
-import { StudentDetailClient } from "./StudentDetailClient";
+import { Suspense } from "react";
+import { StudentDetailContent } from "./StudentDetailContent";
+import { StudentDetailSkeleton } from "@/presentation/components/skeletons";
 
-export default async function StudentDetailPage({
+export default function StudentDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<StudentDetailSkeleton />}>
+      <StudentDetailPageInner params={params} />
+    </Suspense>
+  );
+}
+
+async function StudentDetailPageInner({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const student = await getStudentDetailAction(id);
-  if (!student) notFound();
-  return <StudentDetailClient student={student} />;
+  return <StudentDetailContent studentId={id} />;
 }

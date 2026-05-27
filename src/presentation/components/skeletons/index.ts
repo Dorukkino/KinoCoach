@@ -1,0 +1,9 @@
+export { GenericPageSkeleton } from "./GenericPageSkeleton";
+export { CoachDashboardSkeleton } from "./CoachDashboardSkeleton";
+export { StudentDashboardSkeleton } from "./StudentDashboardSkeleton";
+export { StudentsListSkeleton } from "./StudentsListSkeleton";
+export { StudentDetailSkeleton } from "./StudentDetailSkeleton";
+export { StudentLinkListSkeleton } from "./StudentLinkListSkeleton";
+export { ChatPageSkeleton } from "./ChatPageSkeleton";
+export { NotesPageSkeleton } from "./NotesPageSkeleton";
+export { WeeklyGridSkeleton } from "./WeeklyGridSkeleton";

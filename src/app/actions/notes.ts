@@ -45,6 +45,11 @@ export async function getCoachNoteAction(studentId: string) {
   return container.getCoachNote.execute(session.userId, studentId);
 }
 
+export async function getCoachNotesPageDataAction() {
+  const { container, session } = await requireCoach();
+  return container.getCoachNotesPage.execute(session.userId);
+}
+
 export async function listCoachNotesAction() {
   const { container, session } = await requireCoach();
   return container.listCoachNotes.execute(session.userId);

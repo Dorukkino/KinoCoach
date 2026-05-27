@@ -13,6 +13,7 @@ import {
 import { WeeklyProgramDto } from "@/application/dto";
 import { Grid7x10, TaskCell } from "@/domain/value-objects/Grid7x10";
 import { getWeekStartISO } from "@/lib/dates";
+import { WeeklyGridSkeleton } from "@/presentation/components/skeletons/WeeklyGridSkeleton";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 interface PendingCell {
@@ -125,7 +126,7 @@ export function StudentWeeklyTab({
       </div>
 
       {!program ? (
-        <p className="text-sm text-[var(--muted)]">Yükleniyor…</p>
+        <WeeklyGridSkeleton />
       ) : (
         <WeeklyGrid
           grid={program.grid}

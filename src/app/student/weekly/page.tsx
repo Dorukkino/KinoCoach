@@ -1,11 +1,8 @@
-import { getCurrentStudentRecordAction } from "@/app/actions/dashboard";
-import { redirect } from "next/navigation";
-import { StudentWeeklyTab } from "@/app/coach/students/[id]/tabs/StudentWeeklyTab";
+import { Suspense } from "react";
+import { StudentWeeklyContent } from "./StudentWeeklyContent";
+import { WeeklyGridSkeleton } from "@/presentation/components/skeletons";
 
-export default async function StudentWeeklyPage() {
-  const student = await getCurrentStudentRecordAction();
-  if (!student) redirect("/login");
-
+export default function StudentWeeklyPage() {
   return (
     <div className="screen">
       <div className="page-head">
@@ -14,7 +11,9 @@ export default async function StudentWeeklyPage() {
           <p>Görevleri tamamladıkça işaretleyin</p>
         </div>
       </div>
-      <StudentWeeklyTab studentId={student.id} role="student" />
+      <Suspense fallback={<WeeklyGridSkeleton />}>
+        <StudentWeeklyContent />
+      </Suspense>
     </div>
   );
 }

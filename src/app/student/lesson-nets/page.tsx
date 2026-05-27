@@ -1,11 +1,8 @@
-import { getCurrentStudentRecordAction } from "@/app/actions/dashboard";
-import { redirect } from "next/navigation";
-import { StudentLessonNetClient } from "./StudentLessonNetClient";
+import { Suspense } from "react";
+import { StudentLessonNetsContent } from "./StudentLessonNetsContent";
+import { GenericPageSkeleton } from "@/presentation/components/skeletons";
 
-export default async function StudentLessonNetsPage() {
-  const student = await getCurrentStudentRecordAction();
-  if (!student) redirect("/login");
-
+export default function StudentLessonNetsPage() {
   return (
     <div className="screen">
       <div className="page-head">
@@ -14,7 +11,9 @@ export default async function StudentLessonNetsPage() {
           <p>Haftalık çözüm kayıtlarınız</p>
         </div>
       </div>
-      <StudentLessonNetClient studentId={student.id} />
+      <Suspense fallback={<GenericPageSkeleton />}>
+        <StudentLessonNetsContent />
+      </Suspense>
     </div>
   );
 }

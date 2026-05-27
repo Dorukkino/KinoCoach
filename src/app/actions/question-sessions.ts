@@ -37,7 +37,9 @@ export async function listQuestionSessionsAction(
 
   const { data, error } = await supabase
     .from("question_sessions")
-    .select("*")
+    .select(
+      "id, student_id, lesson_name, date, total, correct, wrong, blank, note, created_at"
+    )
     .eq("student_id", studentId)
     .gte("date", week)
     .lte("date", weekEnd)

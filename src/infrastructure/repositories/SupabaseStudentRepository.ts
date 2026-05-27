@@ -6,6 +6,9 @@ import {
 import { mapStudentRowWithEmail } from "../supabase/mappers";
 import { mapAuthError } from "../auth/authErrors";
 
+const STUDENT_COLUMNS =
+  "id, user_id, name, task_completion_rate, last_active_at, grade, track";
+
 export class SupabaseStudentRepository implements IStudentRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -48,7 +51,7 @@ export class SupabaseStudentRepository implements IStudentRepository {
   async findById(id: string) {
     const { data, error } = await this.supabase
       .from("students")
-      .select("*")
+      .select(STUDENT_COLUMNS)
       .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
@@ -58,7 +61,7 @@ export class SupabaseStudentRepository implements IStudentRepository {
   async findByUserId(userId: string) {
     const { data, error } = await this.supabase
       .from("students")
-      .select("*")
+      .select(STUDENT_COLUMNS)
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !data) return null;
@@ -69,7 +72,7 @@ export class SupabaseStudentRepository implements IStudentRepository {
     if (ids.length === 0) return [];
     const { data, error } = await this.supabase
       .from("students")
-      .select("*")
+      .select(STUDENT_COLUMNS)
       .in("id", ids);
     if (error || !data) return [];
     const userIds = data.map((r) => String(r.user_id));

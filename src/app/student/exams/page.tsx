@@ -1,11 +1,8 @@
-import { getCurrentStudentRecordAction } from "@/app/actions/dashboard";
-import { redirect } from "next/navigation";
-import { StudentExamsTab } from "@/app/coach/students/[id]/tabs/StudentExamsTab";
+import { Suspense } from "react";
+import { StudentExamsContent } from "./StudentExamsContent";
+import { GenericPageSkeleton } from "@/presentation/components/skeletons";
 
-export default async function StudentExamsPage() {
-  const student = await getCurrentStudentRecordAction();
-  if (!student) redirect("/login");
-
+export default function StudentExamsPage() {
   return (
     <div className="screen">
       <div className="page-head">
@@ -13,7 +10,9 @@ export default async function StudentExamsPage() {
           <h1>Deneme Netlerim</h1>
         </div>
       </div>
-      <StudentExamsTab studentId={student.id} role="student" />
+      <Suspense fallback={<GenericPageSkeleton />}>
+        <StudentExamsContent />
+      </Suspense>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { getCachedServerContainer } from "@/infrastructure/di/container";
 import { AppShell } from "@/presentation/components/layout/AppShell";
 import { cache } from "react";
@@ -13,13 +14,14 @@ const getStudentLayoutData = cache(async () => {
 
   const student = await container.students.findByUserId(session.userId);
 
-  // touchLastActive debounce: son 5 dk içinde güncellendiyse tekrar yazma
   if (student) {
     const lastActive = student.lastActiveAt
       ? new Date(student.lastActiveAt).getTime()
       : 0;
     if (Date.now() - lastActive > TOUCH_DEBOUNCE_MS) {
-      await container.students.touchLastActive(student.id);
+      after(async () => {
+        await container.students.touchLastActive(student.id);
+      });
     }
   }
 
