@@ -49,6 +49,9 @@ type View = "list" | "add-session" | "add-lesson";
 interface StudentLessonNetClientProps {
   studentId: string;
   readOnly?: boolean;
+  initialSessions?: QuestionSessionDto[];
+  initialWeeks?: string[];
+  initialSelectedWeek?: string;
 }
 
 const calculateNet = (correct: number, wrong: number) => correct - wrong / 4;
@@ -64,11 +67,20 @@ const weekStartForDate = (iso: string) => {
 export function StudentLessonNetClient({
   studentId,
   readOnly = false,
+  initialSessions,
+  initialWeeks,
+  initialSelectedWeek,
 }: StudentLessonNetClientProps) {
   const currentWeek = useMemo(() => getWeekStartISO(), []);
-  const [selectedWeek, setSelectedWeek] = useState<string>(currentWeek);
-  const [weeks, setWeeks] = useState<string[]>([currentWeek]);
-  const [sessions, setSessions] = useState<QuestionSessionDto[]>([]);
+  const hasInitialData = initialSessions !== undefined && initialWeeks !== undefined;
+  const skipInitialSessionsFetch = useRef(hasInitialData);
+  const [selectedWeek, setSelectedWeek] = useState<string>(
+    initialSelectedWeek ?? currentWeek
+  );
+  const [weeks, setWeeks] = useState<string[]>(initialWeeks ?? [currentWeek]);
+  const [sessions, setSessions] = useState<QuestionSessionDto[]>(
+    initialSessions ?? []
+  );
   const [lessons, setLessons] = useState<CoachLesson[]>([]);
   const [view, setView] = useState<View>("list");
   const [form, setForm] = useState<FormState>(emptyForm());
@@ -101,11 +113,15 @@ export function StudentLessonNetClient({
   }, [currentWeek, studentId]);
 
   useEffect(() => {
-    void loadWeeks();
+    if (!hasInitialData) void loadWeeks();
     if (!readOnly) void loadLessons();
-  }, [loadLessons, loadWeeks, readOnly]);
+  }, [hasInitialData, loadLessons, loadWeeks, readOnly]);
 
   useEffect(() => {
+    if (skipInitialSessionsFetch.current) {
+      skipInitialSessionsFetch.current = false;
+      return;
+    }
     loadSessions(selectedWeek);
     setView("list");
     setError("");

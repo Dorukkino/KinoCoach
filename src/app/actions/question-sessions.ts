@@ -76,27 +76,9 @@ export async function listQuestionSessionWeeksAction(
   await requireSession();
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
-    .from("question_sessions")
-    .select("date")
-    .eq("student_id", studentId);
+    .rpc("get_question_session_weeks", { p_student_id: studentId });
   if (error || !data) return [];
-
-  const weeks = new Set<string>();
-  for (const row of data) {
-    const iso = String(row.date);
-    const [y, m, d] = iso.split("-").map(Number);
-    if (!y || !m || !d) continue;
-    const dt = new Date(y, m - 1, d);
-    // Pazartesi başlangıcına snap
-    const day = dt.getDay();
-    const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
-    dt.setDate(diff);
-    const wy = dt.getFullYear();
-    const wm = String(dt.getMonth() + 1).padStart(2, "0");
-    const wd = String(dt.getDate()).padStart(2, "0");
-    weeks.add(`${wy}-${wm}-${wd}`);
-  }
-  return Array.from(weeks).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  return data.map((row: { week_start: string }) => row.week_start);
 }
 
 export async function createQuestionSessionAction(input: {
