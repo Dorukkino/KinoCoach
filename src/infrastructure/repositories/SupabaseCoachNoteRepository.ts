@@ -2,13 +2,16 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { ICoachNoteRepository } from "@/application/ports/ICoachNoteRepository";
 import { mapCoachNoteRow } from "../supabase/mappers";
 
+const COACH_NOTE_COLUMNS =
+  "id, engagement_id, coach_id, student_id, note, created_at, updated_at";
+
 export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async findById(id: string) {
     const { data, error } = await this.supabase
       .from("coach_notes")
-      .select("*")
+      .select(COACH_NOTE_COLUMNS)
       .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
@@ -18,7 +21,7 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
   async findByEngagement(engagementId: string) {
     const { data, error } = await this.supabase
       .from("coach_notes")
-      .select("*")
+      .select(COACH_NOTE_COLUMNS)
       .eq("engagement_id", engagementId)
       .order("updated_at", { ascending: false });
     if (error || !data) return [];
@@ -29,7 +32,7 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
     if (engagementIds.length === 0) return [];
     const { data, error } = await this.supabase
       .from("coach_notes")
-      .select("*")
+      .select(COACH_NOTE_COLUMNS)
       .in("engagement_id", engagementIds)
       .order("updated_at", { ascending: false });
     if (error || !data) return [];
@@ -51,7 +54,7 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
         note,
         updated_at: new Date().toISOString(),
       })
-      .select()
+      .select(COACH_NOTE_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapCoachNoteRow(data);
@@ -65,7 +68,7 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .select()
+      .select(COACH_NOTE_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapCoachNoteRow(data);

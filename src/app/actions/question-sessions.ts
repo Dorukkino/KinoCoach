@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "./lib";
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
+import { revalidateCoachCacheForStudent } from "@/infrastructure/cache/revalidate-coach-cache";
 import {
   addDaysISO,
   getWeekStartISO,
@@ -133,11 +134,14 @@ export async function createQuestionSessionAction(input: {
       blank: input.blank,
       note: input.note ?? "",
     })
-    .select()
+    .select(
+      "id, student_id, lesson_name, date, total, correct, wrong, blank, note"
+    )
     .single();
   if (error || !data) throw new Error(error?.message ?? "Kayıt eklenemedi");
   await container.students.touchLastActive(input.studentId);
   revalidatePath("/student/lesson-nets");
+  await revalidateCoachCacheForStudent(input.studentId);
   return {
     id: String(data.id),
     studentId: String(data.student_id),

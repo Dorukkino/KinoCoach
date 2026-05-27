@@ -1,18 +1,18 @@
-import { createServerContainer } from "@/infrastructure/di/container";
 import { redirect } from "next/navigation";
 import { CoachChatClient } from "./CoachChatClient";
 import { getLastMessageTimestampsAction } from "@/app/actions/messages";
+import { listActiveStudentsAction } from "@/app/actions/students";
+import { requireSession } from "@/app/actions/lib";
 
 export async function CoachChatContent({
   selectedStudentId,
 }: {
   selectedStudentId?: string;
 }) {
-  const c = await createServerContainer();
-  const session = await c.auth.getSession();
-  if (!session) redirect("/login");
+  const { session } = await requireSession();
+  if (!session.role.isCoach()) redirect("/login");
 
-  const allStudents = await c.listActiveStudents.execute(session.userId);
+  const allStudents = await listActiveStudentsAction();
   const students = allStudents.filter((s) => s.userId);
 
   const lastTimestamps = await getLastMessageTimestampsAction(

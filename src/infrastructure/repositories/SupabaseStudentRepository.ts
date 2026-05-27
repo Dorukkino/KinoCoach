@@ -9,20 +9,29 @@ import { mapAuthError } from "../auth/authErrors";
 const STUDENT_COLUMNS =
   "id, user_id, name, task_completion_rate, last_active_at, grade, track";
 
+const STUDENT_WITH_EMAIL_SELECT = `${STUDENT_COLUMNS}, users!inner(email)`;
+
 export class SupabaseStudentRepository implements IStudentRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
-  private async emailForUser(userId: string): Promise<string> {
-    const { data } = await this.supabase
-      .from("users")
-      .select("email")
-      .eq("id", userId)
-      .single();
-    const email = data?.email ?? "";
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      return `unknown+${userId}@placeholder.local`;
-    }
-    return email;
+  private resolveEmail(
+    row: Record<string, unknown>,
+    fallbackUserId: string
+  ): string {
+    const users = row.users as
+      | { email?: string }
+      | { email?: string }[]
+      | null
+      | undefined;
+    const emailRow = Array.isArray(users) ? users[0] : users;
+    const raw = String(emailRow?.email ?? "").trim();
+    if (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return raw;
+    return `unknown+${fallbackUserId}@placeholder.local`;
+  }
+
+  private mapRowWithJoin(row: Record<string, unknown>) {
+    const userId = String(row.user_id);
+    return mapStudentRowWithEmail(row, this.resolveEmail(row, userId));
   }
 
   private async emailsForUsers(userIds: string[]): Promise<Map<string, string>> {
@@ -43,29 +52,24 @@ export class SupabaseStudentRepository implements IStudentRepository {
     return map;
   }
 
-  private async mapRow(row: Record<string, unknown>) {
-    const email = await this.emailForUser(String(row.user_id));
-    return mapStudentRowWithEmail(row, email);
-  }
-
   async findById(id: string) {
     const { data, error } = await this.supabase
       .from("students")
-      .select(STUDENT_COLUMNS)
+      .select(STUDENT_WITH_EMAIL_SELECT)
       .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
-    return this.mapRow(data);
+    return this.mapRowWithJoin(data);
   }
 
   async findByUserId(userId: string) {
     const { data, error } = await this.supabase
       .from("students")
-      .select(STUDENT_COLUMNS)
+      .select(STUDENT_WITH_EMAIL_SELECT)
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !data) return null;
-    return this.mapRow(data);
+    return this.mapRowWithJoin(data);
   }
 
   async findManyByIds(ids: string[]) {
@@ -96,7 +100,7 @@ export class SupabaseStudentRepository implements IStudentRepository {
         track: input.track ?? null,
         task_completion_rate: 0,
       })
-      .select()
+      .select(STUDENT_COLUMNS)
       .single();
     if (error) throw new Error(mapAuthError(error.message));
     return mapStudentRowWithEmail(data, input.email);
@@ -123,10 +127,10 @@ export class SupabaseStudentRepository implements IStudentRepository {
       .from("students")
       .update(row)
       .eq("id", id)
-      .select()
+      .select(STUDENT_WITH_EMAIL_SELECT)
       .single();
     if (error) throw new Error(error.message);
-    return this.mapRow(data);
+    return this.mapRowWithJoin(data);
   }
 
   async touchLastActive(id: string) {

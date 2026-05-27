@@ -4,6 +4,8 @@ import { Grid7x10 } from "@/domain/value-objects/Grid7x10";
 import { mapLessonNetRow } from "../supabase/mappers";
 import { toLocalDateISO } from "@/lib/dates";
 
+const LESSON_NET_COLUMNS = "id, student_id, week_start, grid_json";
+
 export class SupabaseLessonNetRepository implements ILessonNetRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -14,7 +16,7 @@ export class SupabaseLessonNetRepository implements ILessonNetRepository {
   async findByEngagementAndWeek(engagementId: string, weekStart: Date) {
     const { data, error } = await this.supabase
       .from("lesson_nets")
-      .select("*")
+      .select(LESSON_NET_COLUMNS)
       .eq("engagement_id", engagementId)
       .eq("week_start", this.weekKey(weekStart))
       .maybeSingle();
@@ -39,7 +41,7 @@ export class SupabaseLessonNetRepository implements ILessonNetRepository {
         },
         { onConflict: "engagement_id,week_start" }
       )
-      .select()
+      .select(LESSON_NET_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapLessonNetRow(data);

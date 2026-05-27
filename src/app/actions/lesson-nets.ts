@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { Grid7x10 } from "@/domain/value-objects/Grid7x10";
 import { requireSession } from "./lib";
+import { revalidateCoachCacheForStudent } from "@/infrastructure/cache/revalidate-coach-cache";
 
 export async function getLessonNetAction(studentId: string, weekStart: string) {
   const { container } = await requireSession();
@@ -15,9 +17,12 @@ export async function saveLessonNetAction(
 ) {
   const { container } = await requireSession();
   const grid = Grid7x10.fromJSON(gridJson);
-  return container.upsertLessonNet.execute({
+  const result = await container.upsertLessonNet.execute({
     studentId,
     weekStart: new Date(weekStart),
     grid,
   });
+  revalidatePath("/student/lesson-nets");
+  await revalidateCoachCacheForStudent(studentId);
+  return result;
 }

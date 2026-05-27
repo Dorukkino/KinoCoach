@@ -4,6 +4,9 @@ import { Grid7x10 } from "@/domain/value-objects/Grid7x10";
 import { mapWeeklyProgramRow } from "../supabase/mappers";
 import { toLocalDateISO } from "@/lib/dates";
 
+const WEEKLY_PROGRAM_COLUMNS =
+  "id, student_id, week_start, grid_json, completion_rate";
+
 export class SupabaseWeeklyProgramRepository implements IWeeklyProgramRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -14,7 +17,7 @@ export class SupabaseWeeklyProgramRepository implements IWeeklyProgramRepository
   async findByEngagementAndWeek(engagementId: string, weekStart: Date) {
     const { data, error } = await this.supabase
       .from("weekly_programs")
-      .select("*")
+      .select(WEEKLY_PROGRAM_COLUMNS)
       .eq("engagement_id", engagementId)
       .eq("week_start", this.weekKey(weekStart))
       .maybeSingle();
@@ -25,7 +28,7 @@ export class SupabaseWeeklyProgramRepository implements IWeeklyProgramRepository
   async findLatestByEngagement(engagementId: string) {
     const { data, error } = await this.supabase
       .from("weekly_programs")
-      .select("*")
+      .select(WEEKLY_PROGRAM_COLUMNS)
       .eq("engagement_id", engagementId)
       .order("week_start", { ascending: false })
       .limit(1)
@@ -65,7 +68,7 @@ export class SupabaseWeeklyProgramRepository implements IWeeklyProgramRepository
         },
         { onConflict: "engagement_id,week_start" }
       )
-      .select()
+      .select(WEEKLY_PROGRAM_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapWeeklyProgramRow(data);

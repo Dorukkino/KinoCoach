@@ -2,6 +2,9 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { IMotivationRepository } from "@/application/ports/IMotivationRepository";
 import { mapMotivationRow } from "../supabase/mappers";
 
+const MOTIVATION_COLUMNS =
+  "id, coach_id, student_id, message, created_at";
+
 export class SupabaseMotivationRepository implements IMotivationRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -19,7 +22,7 @@ export class SupabaseMotivationRepository implements IMotivationRepository {
         student_id: studentId,
         message,
       })
-      .select()
+      .select(MOTIVATION_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapMotivationRow(data);
@@ -28,7 +31,7 @@ export class SupabaseMotivationRepository implements IMotivationRepository {
   async findByEngagement(engagementId: string) {
     const { data, error } = await this.supabase
       .from("motivation_messages")
-      .select("*")
+      .select(MOTIVATION_COLUMNS)
       .eq("engagement_id", engagementId)
       .order("created_at", { ascending: false });
     if (error || !data) return [];

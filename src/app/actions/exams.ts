@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireSession } from "./lib";
+import { revalidateCoachCacheForStudent } from "@/infrastructure/cache/revalidate-coach-cache";
 
 export async function listExamResultsAction(studentId: string) {
   const { container } = await requireSession();
@@ -19,4 +20,5 @@ export async function createExamResultAction(
   revalidatePath("/coach/exams");
   revalidatePath(`/coach/students/${studentId}`);
   revalidatePath("/student/exams");
+  await revalidateCoachCacheForStudent(studentId);
 }

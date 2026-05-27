@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Grid7x10 } from "@/domain/value-objects/Grid7x10";
 import { requireSession } from "./lib";
+import { revalidateCoachCacheForStudent } from "@/infrastructure/cache/revalidate-coach-cache";
 
 export async function getWeeklyProgramAction(
   studentId: string,
@@ -26,6 +27,7 @@ export async function saveWeeklyProgramAction(
   });
   revalidatePath(`/coach/students/${studentId}`);
   revalidatePath("/student/weekly");
+  await revalidateCoachCacheForStudent(studentId);
   return result;
 }
 
@@ -51,5 +53,6 @@ export async function toggleWeeklyTaskAction(
   });
   revalidatePath("/student/weekly");
   revalidatePath("/coach/weekly");
+  await revalidateCoachCacheForStudent(studentId);
   return result;
 }

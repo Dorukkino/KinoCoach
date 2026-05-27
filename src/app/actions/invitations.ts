@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "./lib";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
+import { revalidateCoachStudents } from "@/infrastructure/cache/revalidate-coach-cache";
 import type { CoachingInvitationDto } from "@/application/dto";
 
 export async function listMyPendingInvitationsAction(): Promise<
@@ -40,14 +41,22 @@ export async function acceptInvitationAction(token: string) {
       "Sunucu yapılandırma hatası: SUPABASE_SERVICE_ROLE_KEY tanımlı değil."
     );
   }
+  const invitation = await container.invitations.findByToken(token);
   await container.acceptInvitation.execute(token, session.userId);
+  if (invitation?.coachId) {
+    revalidateCoachStudents(invitation.coachId);
+  }
   revalidatePath("/student/dashboard");
   revalidatePath("/student/invitations");
 }
 
 export async function declineInvitationAction(token: string) {
   const { container, session } = await requireSession();
+  const invitation = await container.invitations.findByToken(token);
   await container.declineInvitation.execute(token, session.userId);
+  if (invitation?.coachId) {
+    revalidateCoachStudents(invitation.coachId);
+  }
   revalidatePath("/student/invitations");
 }
 

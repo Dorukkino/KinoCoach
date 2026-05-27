@@ -3,6 +3,7 @@
 import { requireSession } from "./lib";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 import { getWeekStartDate } from "@/lib/dates";
+import { getCachedActiveStudents } from "@/infrastructure/cache/coach-cache";
 
 /** Aktivite akışında gösterilecek en uzun yaşam süresi (gün) */
 const ACTIVITY_MAX_AGE_DAYS = 2;
@@ -127,8 +128,11 @@ export async function getCoachDashboardAction() {
   const { container, session } = await requireSession();
   if (!session.role.isCoach()) return null;
 
-  const rows = await container.listActiveStudents.execute(session.userId);
-  if (rows.length === 0) {
+  const coachId = session.userId;
+  const activeEngagements =
+    await container.engagements.findActiveByCoach(coachId);
+
+  if (activeEngagements.length === 0) {
     return {
       stats: container.dashboardStats.computeFromCards([]),
       students: [],
@@ -136,9 +140,18 @@ export async function getCoachDashboardAction() {
     };
   }
 
-  const studentIds = rows.map((r) => r.id);
+  const studentIds = activeEngagements.map((e) => e.studentId);
+
+  const [rows, activitiesRaw] = await Promise.all([
+    getCachedActiveStudents(coachId),
+    buildActivityFeed(new Map(), studentIds),
+  ]);
+
   const studentMap = new Map(rows.map((r) => [r.id, r.name]));
-  const activities = await buildActivityFeed(studentMap, studentIds);
+  const activities = activitiesRaw.map((a) => ({
+    ...a,
+    studentName: studentMap.get(a.studentId) ?? "Öğrenci",
+  }));
 
   return {
     stats: container.dashboardStats.computeFromCards(rows),

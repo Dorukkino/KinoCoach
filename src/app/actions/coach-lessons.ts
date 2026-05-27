@@ -22,21 +22,21 @@ async function resolveCoachId(
 
   if (userRow?.role === "coach") return userId;
 
-  // Öğrenciyse aktif engagement üzerinden koçu bul
   const { data: studentRow } = await supabase
     .from("students")
-    .select("id")
+    .select("id, coaching_engagements!inner(coach_id)")
     .eq("user_id", userId)
-    .maybeSingle();
-  if (!studentRow?.id) return userId;
-
-  const { data: engagement } = await supabase
-    .from("coaching_engagements")
-    .select("coach_id")
-    .eq("student_id", studentRow.id)
-    .eq("status", "active")
+    .eq("coaching_engagements.status", "active")
     .maybeSingle();
 
+  if (!studentRow) return userId;
+
+  const engagements = studentRow.coaching_engagements as
+    | { coach_id: string }
+    | { coach_id: string }[]
+    | null
+    | undefined;
+  const engagement = Array.isArray(engagements) ? engagements[0] : engagements;
   return engagement?.coach_id ?? userId;
 }
 
@@ -85,19 +85,13 @@ export async function updateCoachLessonAction(id: string, name: string): Promise
   if (!existing) throw new Error("Ders bulunamadı veya yetkiniz yok");
 
   // Update — select zinciri olmadan
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("coach_lessons")
     .update({ name: name.trim() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
-
-  // Güncel veriyi ayrı sorguda çek
-  const { data, error: fetchError } = await supabase
-    .from("coach_lessons")
-    .select("id, name")
     .eq("id", id)
+    .select("id, name")
     .single();
-  if (fetchError || !data) throw new Error(fetchError?.message ?? "Ders güncellenemedi");
+  if (error || !data) throw new Error(error?.message ?? "Ders güncellenemedi");
   return data as CoachLesson;
 }
 

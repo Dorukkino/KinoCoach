@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { requireCoach } from "./lib";
 import { ensureCoachProfile } from "./ensureCoachProfile";
+import { getCachedActiveStudents, getCachedArchivedStudents } from "@/infrastructure/cache/coach-cache";
+import {
+  revalidateCoachStudentLists,
+  revalidateCoachStudents,
+} from "@/infrastructure/cache/revalidate-coach-cache";
 import type { InviteStudentResult } from "@/application/use-cases/InviteStudentByEmailUseCase";
 import type { CoachStudentRowDto } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
 import type { ArchivedStudentRowDto } from "@/application/use-cases/ListArchivedStudentsForCoachUseCase";
@@ -40,6 +45,7 @@ export async function inviteStudentAction(input: {
     inviteRedirectTo,
   });
   revalidatePath("/coach/students");
+  revalidateCoachStudents(session.userId);
   return result;
 }
 
@@ -56,8 +62,8 @@ export async function addStudentAction(input: {
 }
 
 export async function listActiveStudentsAction(): Promise<CoachStudentRowDto[]> {
-  const { container, session } = await requireCoach();
-  return container.listActiveStudents.execute(session.userId);
+  const { session } = await requireCoach();
+  return getCachedActiveStudents(session.userId);
 }
 
 /**
@@ -70,8 +76,8 @@ export async function listStudentsAction(): Promise<CoachStudentRowDto[]> {
 export async function listArchivedStudentsAction(): Promise<
   ArchivedStudentRowDto[]
 > {
-  const { container, session } = await requireCoach();
-  return container.listArchivedStudents.execute(session.userId);
+  const { session } = await requireCoach();
+  return getCachedArchivedStudents(session.userId);
 }
 
 export async function getStudentDetailAction(studentId: string) {
@@ -87,6 +93,7 @@ export async function endEngagementAction(
   await container.endEngagement.execute(engagementId, session.userId, reason);
   revalidatePath("/coach/students");
   revalidatePath("/coach/dashboard");
+  revalidateCoachStudentLists(session.userId);
 }
 
 /**
@@ -105,4 +112,5 @@ export async function deleteStudentAction(studentId: string) {
   await container.endEngagement.execute(active.id, session.userId);
   revalidatePath("/coach/students");
   revalidatePath("/coach/dashboard");
+  revalidateCoachStudentLists(session.userId);
 }

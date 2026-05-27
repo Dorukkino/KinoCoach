@@ -1,12 +1,8 @@
-import { createServerContainer } from "@/infrastructure/di/container";
-import { redirect } from "next/navigation";
+import { listActiveStudentsAction } from "@/app/actions/students";
 import Link from "next/link";
 
 export async function CoachExamsContent() {
-  const c = await createServerContainer();
-  const session = await c.auth.getSession();
-  if (!session) redirect("/login");
-  const students = await c.listActiveStudents.execute(session.userId);
+  const students = await listActiveStudentsAction();
 
   return (
     <ul className="list-none p-0 m-0 flex flex-col gap-2">
