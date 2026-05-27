@@ -6,7 +6,7 @@ import {
   listWeeklyWeekStartsAction,
 } from "@/app/actions/weekly";
 import type { CoachNoteDto, ExamResultDto, WeeklyProgramDto } from "@/application/dto";
-import { getWeekStartISO } from "@/lib/dates";
+import { getWeekStartISO, mergeWeeksNearToday } from "@/lib/dates";
 import { notFound } from "next/navigation";
 import { StudentDetailClient } from "./StudentDetailClient";
 
@@ -44,9 +44,7 @@ export async function StudentDetailContent({
       listWeeklyWeekStartsAction(studentId),
       getWeeklyProgramAction(studentId, currentWeek),
     ]);
-    initialWeeklyWeeks = Array.from(new Set([currentWeek, ...dbWeeks])).sort(
-      (a, b) => (a < b ? 1 : a > b ? -1 : 0)
-    );
+    initialWeeklyWeeks = mergeWeeksNearToday(currentWeek, dbWeeks);
     initialWeeklyProgram = program;
     initialWeeklySelectedWeek = currentWeek;
   } else if (tab === "notes") {

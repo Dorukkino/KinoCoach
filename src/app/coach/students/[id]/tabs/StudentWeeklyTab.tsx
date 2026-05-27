@@ -12,7 +12,7 @@ import {
 } from "@/app/actions/weekly";
 import { WeeklyProgramDto } from "@/application/dto";
 import { Grid7x10, TaskCell } from "@/domain/value-objects/Grid7x10";
-import { getWeekStartISO } from "@/lib/dates";
+import { getWeekStartISO, mergeWeeksNearToday, sortWeeksNearToday } from "@/lib/dates";
 import { WeeklyGridSkeleton } from "@/presentation/components/skeletons/WeeklyGridSkeleton";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
@@ -50,10 +50,7 @@ export function StudentWeeklyTab({
 
   const loadWeeks = useCallback(async () => {
     const dbWeeks = await listWeeklyWeekStartsAction(studentId);
-    const merged = Array.from(new Set([currentWeek, ...dbWeeks])).sort((a, b) =>
-      a < b ? 1 : a > b ? -1 : 0
-    );
-    setWeeks(merged);
+    setWeeks(mergeWeeksNearToday(currentWeek, dbWeeks));
   }, [currentWeek, studentId]);
 
   const loadProgram = useCallback(
@@ -105,7 +102,9 @@ export function StudentWeeklyTab({
       setProgram(updated);
       // Yeni hafta oluşturulmuş olabilir; listeye ekle.
       setWeeks((prev) =>
-        prev.includes(selectedWeek) ? prev : [selectedWeek, ...prev].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
+        prev.includes(selectedWeek)
+          ? prev
+          : sortWeeksNearToday([selectedWeek, ...prev])
       );
     });
   };

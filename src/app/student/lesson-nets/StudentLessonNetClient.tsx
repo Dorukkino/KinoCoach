@@ -18,7 +18,8 @@ import {
   todayLocalISO,
   getWeekStartISO,
   getWeekStartForISO,
-  sortByDateAsc,
+  mergeWeeksNearToday,
+  sortByDateNearToday,
 } from "@/lib/dates";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
@@ -103,11 +104,7 @@ export function StudentLessonNetClient({
 
   const loadWeeks = useCallback(async () => {
     const dbWeeks = await listQuestionSessionWeeksAction(studentId);
-    setWeeks(
-      Array.from(new Set([currentWeek, ...dbWeeks]))
-        .filter((w): w is string => typeof w === "string" && /^\d{4}-\d{2}-\d{2}$/.test(w))
-        .sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
-    );
+    setWeeks(mergeWeeksNearToday(currentWeek, dbWeeks));
   }, [currentWeek, studentId]);
 
   useEffect(() => {
@@ -263,7 +260,7 @@ export function StudentLessonNetClient({
   );
 
   const sortedSessions = useMemo(
-    () => sortByDateAsc(sessions, (s) => s.date),
+    () => sortByDateNearToday(sessions, (s) => s.date),
     [sessions]
   );
 

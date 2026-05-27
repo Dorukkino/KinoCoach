@@ -1,6 +1,6 @@
 import { IExamResultRepository } from "../ports/IExamResultRepository";
 import { ExamResultDto } from "../dto";
-import { sortByDateDesc, toLocalDateISO } from "@/lib/dates";
+import { sortByDateNearToday, toLocalDateISO } from "@/lib/dates";
 
 export class ListExamResultsUseCase {
   constructor(private readonly exams: IExamResultRepository) {}
@@ -19,6 +19,6 @@ export class ListExamResultsUseCase {
       total: r.total(),
       note: r.note ?? "",
     }));
-    return sortByDateDesc(dtos, (r) => r.date);
+    return sortByDateNearToday(dtos, (r) => r.date);
   }
 }

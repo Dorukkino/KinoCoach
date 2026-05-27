@@ -9,7 +9,7 @@ export function WeekPicker({
   currentWeek,
   onSelect,
 }: {
-  /** YYYY-MM-DD hafta başlangıçları, yeni → eski */
+  /** YYYY-MM-DD hafta başlangıçları, bugüne en yakın önce */
   weeks: string[];
   selectedWeek: string;
   /** Bu haftanın başlangıcı (etiketlemek için) */

@@ -195,7 +195,106 @@ function dateSortKey(iso: string): number {
   return y * 10000 + m * 100 + d;
 }
 
-/** YYYY-MM-DD tarihlerine göre azalan sıralama (bugüne en yakın önce) */
+/** YYYY-MM-DD ile bugün arasındaki gün farkı (gelecek pozitif, geçmiş negatif) */
+export function daysFromToday(
+  iso: string,
+  today = todayLocalISO()
+): number {
+  const normalized = iso.slice(0, 10);
+  const ref = today.slice(0, 10);
+  const [y1, m1, d1] = normalized.split("-").map(Number);
+  const [y2, m2, d2] = ref.split("-").map(Number);
+  const t1 = Date.UTC(y1, m1 - 1, d1);
+  const t2 = Date.UTC(y2, m2 - 1, d2);
+  return Math.round((t1 - t2) / 86400000);
+}
+
+function absDaysFromToday(iso: string, today = todayLocalISO()): number {
+  return Math.abs(daysFromToday(iso, today));
+}
+
+/** Bugüne en yakın tarih önce; eşit uzaklıkta dün bugünden önce yarın'dan önce gelir */
+export function compareDateByProximityToToday(
+  dateA: string,
+  dateB: string,
+  today?: string,
+  createdAtA?: string,
+  createdAtB?: string
+): number {
+  const ref = today ?? todayLocalISO();
+  const distA = absDaysFromToday(dateA, ref);
+  const distB = absDaysFromToday(dateB, ref);
+  if (distA !== distB) return distA - distB;
+
+  const signedA = daysFromToday(dateA, ref);
+  const signedB = daysFromToday(dateB, ref);
+  if (signedA !== signedB) return signedA - signedB;
+
+  if (createdAtA && createdAtB) {
+    return new Date(createdAtB).getTime() - new Date(createdAtA).getTime();
+  }
+  return dateSortKey(dateB) - dateSortKey(dateA);
+}
+
+export function sortByDateNearToday<T>(
+  items: T[],
+  getDate: (item: T) => string,
+  getCreatedAt?: (item: T) => string | undefined,
+  today?: string
+): T[] {
+  return [...items].sort((a, b) =>
+    compareDateByProximityToToday(
+      getDate(a),
+      getDate(b),
+      today,
+      getCreatedAt?.(a),
+      getCreatedAt?.(b)
+    )
+  );
+}
+
+/** Hafta başlangıcı ile bugün arasındaki gün farkı (içindeyse 0) */
+export function daysFromTodayToWeek(
+  weekStartISO: string,
+  today = todayLocalISO()
+): number {
+  const weekEnd = addDaysISO(weekStartISO.slice(0, 10), 6);
+  const ref = today.slice(0, 10);
+  if (ref >= weekStartISO && ref <= weekEnd) return 0;
+  if (ref < weekStartISO) return daysFromToday(weekStartISO, ref);
+  return daysFromToday(weekEnd, ref);
+}
+
+export function sortWeeksNearToday(
+  weeks: string[],
+  today = todayLocalISO()
+): string[] {
+  return [...weeks].sort((a, b) => {
+    const distA = Math.abs(daysFromTodayToWeek(a, today));
+    const distB = Math.abs(daysFromTodayToWeek(b, today));
+    if (distA !== distB) return distA - distB;
+    const signedA = daysFromTodayToWeek(a, today);
+    const signedB = daysFromTodayToWeek(b, today);
+    if (signedA !== signedB) return signedA - signedB;
+    return dateSortKey(b) - dateSortKey(a);
+  });
+}
+
+export function mergeWeeksNearToday(
+  currentWeek: string,
+  dbWeeks: string[],
+  today = todayLocalISO()
+): string[] {
+  return sortWeeksNearToday(
+    Array.from(new Set([currentWeek, ...dbWeeks])).filter(
+      (w): w is string =>
+        typeof w === "string" && /^\d{4}-\d{2}-\d{2}$/.test(w)
+    ),
+    today
+  );
+}
+
+/** YYYY-MM-DD tarihlerine göre azalan sıralama (en yeni önce) */
 export function compareDateDesc(
   dateA: string,
   dateB: string,

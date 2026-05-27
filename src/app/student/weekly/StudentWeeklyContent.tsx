@@ -3,7 +3,7 @@ import {
   getWeeklyProgramAction,
   listWeeklyWeekStartsAction,
 } from "@/app/actions/weekly";
-import { getWeekStartISO } from "@/lib/dates";
+import { getWeekStartISO, mergeWeeksNearToday } from "@/lib/dates";
 import { redirect } from "next/navigation";
 import { StudentWeeklyTab } from "@/app/coach/students/[id]/tabs/StudentWeeklyTab";
 
@@ -16,9 +16,7 @@ export async function StudentWeeklyContent() {
     listWeeklyWeekStartsAction(student.id),
     getWeeklyProgramAction(student.id, currentWeek),
   ]);
-  const initialWeeks = Array.from(new Set([currentWeek, ...dbWeeks])).sort(
-    (a, b) => (a < b ? 1 : a > b ? -1 : 0)
-  );
+  const initialWeeks = mergeWeeksNearToday(currentWeek, dbWeeks);
 
   return (
     <StudentWeeklyTab

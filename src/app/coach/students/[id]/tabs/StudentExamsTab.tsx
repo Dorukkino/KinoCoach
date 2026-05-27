@@ -7,7 +7,7 @@ import { ExamLineChart } from "@/presentation/components/charts/ExamLineChart";
 import { ChartDataService } from "@/application/services/ChartDataService";
 import { ExamResult } from "@/domain/entities/ExamResult";
 import { ExamScores } from "@/domain/value-objects/ExamScores";
-import { sortByDateAsc } from "@/lib/dates";
+import { sortByDateAsc, sortByDateNearToday } from "@/lib/dates";
 import { DateInputTR } from "@/presentation/components/ui/DateInputTR";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
@@ -126,12 +126,17 @@ export function StudentExamsTab({
     }
   };
 
-  const sortedRows = useMemo(
+  const tableRows = useMemo(
+    () => sortByDateNearToday(rows, (r) => r.date),
+    [rows]
+  );
+
+  const chartRows = useMemo(
     () => sortByDateAsc(rows, (r) => r.date),
     [rows]
   );
 
-  const entities = sortedRows.map(
+  const entities = chartRows.map(
     (r) =>
       new ExamResult(
         r.id,
@@ -328,14 +333,14 @@ export function StudentExamsTab({
       )}
 
       {/* Grafik */}
-      {sortedRows.length > 0 && (
+      {chartRows.length > 0 && (
         <div className="panel p-4 mb-4">
           <ExamLineChart data={chart.points} />
         </div>
       )}
 
       {/* Tablo */}
-      {sortedRows.length === 0 ? (
+      {tableRows.length === 0 ? (
         <div className="panel p-8 text-center text-sm text-[var(--muted)]">
           Henüz deneme sonucu eklenmedi.
         </div>
@@ -349,7 +354,7 @@ export function StudentExamsTab({
                 <th className="p-3">Mat</th>
                 <th className="p-3">Fen</th>
                 <th className="p-3">Sosyal</th>
-                {sortedRows.some((r) => r.english != null) && (
+                {tableRows.some((r) => r.english != null) && (
                   <th className="p-3">İng</th>
                 )}
                 <th className="p-3 font-bold">Toplam</th>
@@ -357,14 +362,14 @@ export function StudentExamsTab({
               </tr>
             </thead>
             <tbody>
-              {sortedRows.map((r) => (
+              {tableRows.map((r) => (
                 <tr key={r.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-elev)]">
                   <td className="p-3">{r.date}</td>
                   <td className="p-3">{r.turkish}</td>
                   <td className="p-3">{r.math}</td>
                   <td className="p-3">{r.science}</td>
                   <td className="p-3">{r.social}</td>
-                  {sortedRows.some((x) => x.english != null) && (
+                  {tableRows.some((x) => x.english != null) && (
                     <td className="p-3">{r.english != null ? r.english : "—"}</td>
                   )}
                   <td className="p-3 font-semibold">{r.total}</td>

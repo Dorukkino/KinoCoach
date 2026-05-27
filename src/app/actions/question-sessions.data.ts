@@ -4,7 +4,8 @@ import {
   addDaysISO,
   getWeekStartForISO,
   getWeekStartISO,
-  sortByDateDesc,
+  sortByDateNearToday,
+  sortWeeksNearToday,
 } from "@/lib/dates";
 import type { QuestionSessionDto } from "./question-sessions.types";
 
@@ -49,7 +50,7 @@ async function fetchQuestionSessionWeeksFallback(
     if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) continue;
     weeks.add(getWeekStartForISO(iso));
   }
-  return [...weeks].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  return sortWeeksNearToday([...weeks]);
 }
 
 export async function fetchQuestionSessions(
@@ -83,11 +84,12 @@ export async function fetchQuestionSessions(
     note: String(r.note ?? ""),
     createdAt: String(r.created_at ?? ""),
   }));
-  return sortByDateDesc(
+  const sorted = sortByDateNearToday(
     items,
     (s) => s.date,
     (s) => s.createdAt
-  ).map(({ createdAt: _createdAt, ...rest }) => rest);
+  );
+  return sorted.map(({ createdAt: _createdAt, ...rest }) => rest);
 }
 
 export async function fetchQuestionSessionWeeks(
@@ -102,5 +104,5 @@ export async function fetchQuestionSessionWeeks(
   if (weeks.length === 0 && Array.isArray(data) && data.length > 0) {
     return fetchQuestionSessionWeeksFallback(studentId);
   }
-  return weeks;
+  return sortWeeksNearToday(weeks);
 }
