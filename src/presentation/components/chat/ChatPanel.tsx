@@ -12,14 +12,17 @@ export function ChatPanel({
   otherUserName,
   profileHref,
   onLastMessage,
+  initialMessages,
 }: {
   currentUserId: string;
   otherUserId: string;
   otherUserName: string;
   profileHref?: string;
   onLastMessage?: (userId: string, text: string, createdAt: string) => void;
+  initialMessages?: MessageDto[];
 }) {
-  const [messages, setMessages] = useState<MessageDto[]>([]);
+  const skipInitialLoad = useRef(initialMessages !== undefined);
+  const [messages, setMessages] = useState<MessageDto[]>(initialMessages ?? []);
   const [text, setText] = useState("");
   const [pending, startTransition] = useTransition();
   const onLastMessageRef = useRef(onLastMessage);
@@ -38,8 +41,16 @@ export function ChatPanel({
   }, [otherUserId, startTransition]);
 
   useEffect(() => {
+    if (skipInitialLoad.current) {
+      skipInitialLoad.current = false;
+      const last = initialMessages?.[initialMessages.length - 1];
+      if (last) {
+        onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
+      }
+      return;
+    }
     load();
-  }, [load]);
+  }, [initialMessages, load, otherUserId]);
 
   useSupabaseTableRealtime({
     channelName: `chat-${otherUserId}`,

@@ -5,7 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { setMotivationAction } from "@/app/actions/notes";
 import { endEngagementAction } from "@/app/actions/students";
-import { StudentDetailDto } from "@/application/dto";
+import type {
+  CoachNoteDto,
+  ExamResultDto,
+  StudentDetailDto,
+  WeeklyProgramDto,
+} from "@/application/dto";
 import { UserAvatar } from "@/presentation/components/ui/UserAvatar";
 import { StudentWeeklyTab } from "./tabs/StudentWeeklyTab";
 import { StudentExamsTab } from "./tabs/StudentExamsTab";
@@ -23,13 +28,30 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number][0];
 
-export function StudentDetailClient({ student }: { student: StudentDetailDto }) {
+export function StudentDetailClient({
+  student,
+  initialTab,
+  initialExamRows,
+  initialWeeklyWeeks,
+  initialWeeklyProgram,
+  initialWeeklySelectedWeek,
+  initialNotes,
+}: {
+  student: StudentDetailDto;
+  initialTab?: TabKey;
+  initialExamRows?: ExamResultDto[];
+  initialWeeklyWeeks?: string[];
+  initialWeeklyProgram?: WeeklyProgramDto | null;
+  initialWeeklySelectedWeek?: string;
+  initialNotes?: CoachNoteDto[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as TabKey) ?? "overview";
-  const [tab, setTab] = useState<TabKey>(
-    TABS.some(([k]) => k === initialTab) ? initialTab : "overview"
-  );
+  const urlTab = (searchParams.get("tab") as TabKey) ?? "overview";
+  const resolvedInitialTab =
+    initialTab ??
+    (TABS.some(([k]) => k === urlTab) ? urlTab : "overview");
+  const [tab, setTab] = useState<TabKey>(resolvedInitialTab);
   const [motivationText, setMotivationText] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -171,10 +193,22 @@ export function StudentDetailClient({ student }: { student: StudentDetailDto }) 
           )}
         </div>
       )}
-      {tab === "weekly" && <StudentWeeklyTab studentId={student.id} role="coach" />}
-      {tab === "exams" && <StudentExamsTab studentId={student.id} />}
+      {tab === "weekly" && (
+        <StudentWeeklyTab
+          studentId={student.id}
+          role="coach"
+          initialWeeks={initialWeeklyWeeks}
+          initialProgram={initialWeeklyProgram}
+          initialSelectedWeek={initialWeeklySelectedWeek}
+        />
+      )}
+      {tab === "exams" && (
+        <StudentExamsTab studentId={student.id} initialRows={initialExamRows} />
+      )}
       {tab === "lesson-nets" && <StudentLessonNetClient studentId={student.id} readOnly />}
-      {tab === "notes" && <StudentNotesTab studentId={student.id} />}
+      {tab === "notes" && (
+        <StudentNotesTab studentId={student.id} initialNotes={initialNotes} />
+      )}
     </div>
   );
 }

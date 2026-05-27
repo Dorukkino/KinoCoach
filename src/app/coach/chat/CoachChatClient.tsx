@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { StudentCardDto } from "@/application/dto";
+import { MessageDto, StudentCardDto } from "@/application/dto";
 import { ChatPanel } from "@/presentation/components/chat/ChatPanel";
 import { formatChatTimestamp } from "@/lib/dates";
 
@@ -11,11 +11,13 @@ export function CoachChatClient({
   students,
   selectedStudentId,
   initialLastTimestamps = {},
+  initialMessages,
 }: {
   coachUserId: string;
   students: StudentCardDto[];
   selectedStudentId?: string;
   initialLastTimestamps?: Record<string, string>;
+  initialMessages?: MessageDto[];
 }) {
   const [activeId, setActiveId] = useState(selectedStudentId ?? students[0]?.id);
   const [lastMessages, setLastMessages] = useState<Record<string, string>>({});
@@ -103,6 +105,9 @@ export function CoachChatClient({
           otherUserName={active.name}
           profileHref={`/coach/students/${active.id}`}
           onLastMessage={handleLastMessage}
+          initialMessages={
+            active.id === selectedStudentId ? initialMessages : undefined
+          }
         />
       )}
     </div>

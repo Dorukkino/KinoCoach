@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { CoachChatClient } from "./CoachChatClient";
-import { getLastMessageTimestampsAction } from "@/app/actions/messages";
+import { getLastMessageTimestampsAction, listMessagesAction } from "@/app/actions/messages";
 import { listActiveStudentsAction } from "@/app/actions/students";
 import { requireSession } from "@/app/actions/lib";
 
@@ -31,12 +31,18 @@ export async function CoachChatContent({
     ? sortedStudents.find((s) => s.id === selectedStudentId) ?? sortedStudents[0]
     : sortedStudents[0];
 
+  const initialMessages =
+    selected?.userId != null
+      ? await listMessagesAction(selected.userId)
+      : undefined;
+
   return (
     <CoachChatClient
       coachUserId={session.userId}
       students={sortedStudents}
       selectedStudentId={selected?.id}
       initialLastTimestamps={lastTimestamps}
+      initialMessages={initialMessages}
     />
   );
 }

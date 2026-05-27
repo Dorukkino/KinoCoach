@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MessageDto } from "@/application/dto";
 import { ChatPanel } from "@/presentation/components/chat/ChatPanel";
 import { formatChatTimestamp } from "@/lib/dates";
 
@@ -9,11 +10,13 @@ export function StudentChatClient({
   coachUserId,
   coachName,
   initialLastTimestamp,
+  initialMessages,
 }: {
   studentUserId: string;
   coachUserId: string;
   coachName: string;
   initialLastTimestamp?: string;
+  initialMessages?: MessageDto[];
 }) {
   const [lastMessage, setLastMessage] = useState<string | undefined>();
   const [lastTimestamp, setLastTimestamp] = useState<string | undefined>(
@@ -70,6 +73,7 @@ export function StudentChatClient({
         otherUserId={coachUserId}
         otherUserName={coachName}
         onLastMessage={handleLastMessage}
+        initialMessages={initialMessages}
       />
     </div>
   );

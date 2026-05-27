@@ -2,7 +2,7 @@ import { createServerContainer } from "@/infrastructure/di/container";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 import { redirect } from "next/navigation";
 import { StudentChatClient } from "./StudentChatClient";
-import { getLastMessageTimestampsAction } from "@/app/actions/messages";
+import { getLastMessageTimestampsAction, listMessagesAction } from "@/app/actions/messages";
 
 async function fetchCoachName(coachId: string): Promise<string> {
   try {
@@ -41,9 +41,10 @@ export async function StudentChatContent() {
   }
 
   const coachUserId = activeEngagement.coachId;
-  const [coachName, lastTimestamps] = await Promise.all([
+  const [coachName, lastTimestamps, initialMessages] = await Promise.all([
     fetchCoachName(coachUserId),
     getLastMessageTimestampsAction([coachUserId]),
+    listMessagesAction(coachUserId),
   ]);
 
   return (
@@ -56,6 +57,7 @@ export async function StudentChatContent() {
         coachUserId={coachUserId}
         coachName={coachName}
         initialLastTimestamp={lastTimestamps[coachUserId]}
+        initialMessages={initialMessages}
       />
     </>
   );

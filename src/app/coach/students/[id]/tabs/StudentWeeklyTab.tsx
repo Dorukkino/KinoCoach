@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { WeeklyGrid } from "@/presentation/components/weekly/WeeklyGrid";
 import { CellPickerModal } from "@/presentation/components/weekly/CellPickerModal";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
@@ -25,14 +25,26 @@ interface PendingCell {
 export function StudentWeeklyTab({
   studentId,
   role,
+  initialWeeks,
+  initialProgram,
+  initialSelectedWeek,
 }: {
   studentId: string;
   role: "coach" | "student";
+  initialWeeks?: string[];
+  initialProgram?: WeeklyProgramDto | null;
+  initialSelectedWeek?: string;
 }) {
   const currentWeek = useMemo(() => getWeekStartISO(), []);
-  const [selectedWeek, setSelectedWeek] = useState<string>(currentWeek);
-  const [weeks, setWeeks] = useState<string[]>([currentWeek]);
-  const [program, setProgram] = useState<WeeklyProgramDto | null>(null);
+  const hasInitialWeeks = initialWeeks !== undefined;
+  const skipInitialProgramFetch = useRef(initialProgram !== undefined);
+  const [selectedWeek, setSelectedWeek] = useState<string>(
+    initialSelectedWeek ?? currentWeek
+  );
+  const [weeks, setWeeks] = useState<string[]>(initialWeeks ?? [currentWeek]);
+  const [program, setProgram] = useState<WeeklyProgramDto | null>(
+    initialProgram ?? null
+  );
   const [pending, setPending] = useState<PendingCell | null>(null);
   const [, startTransition] = useTransition();
 
@@ -55,13 +67,15 @@ export function StudentWeeklyTab({
     [studentId, startTransition]
   );
 
-  // Hafta listesini bir kere yükle ve güncel haftayı da listeye dahil et.
   useEffect(() => {
-    void loadWeeks();
-  }, [loadWeeks]);
+    if (!hasInitialWeeks) void loadWeeks();
+  }, [hasInitialWeeks, loadWeeks]);
 
-  // Seçili hafta değiştiğinde programı yükle.
   useEffect(() => {
+    if (skipInitialProgramFetch.current) {
+      skipInitialProgramFetch.current = false;
+      return;
+    }
     loadProgram(selectedWeek, true);
   }, [loadProgram, selectedWeek]);
 

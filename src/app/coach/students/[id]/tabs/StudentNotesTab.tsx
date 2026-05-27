@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   deleteCoachNoteAction,
   getCoachNoteAction,
@@ -10,8 +10,15 @@ import {
 import type { CoachNoteDto } from "@/application/dto";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
-export function StudentNotesTab({ studentId }: { studentId: string }) {
-  const [notes, setNotes] = useState<CoachNoteDto[]>([]);
+export function StudentNotesTab({
+  studentId,
+  initialNotes,
+}: {
+  studentId: string;
+  initialNotes?: CoachNoteDto[];
+}) {
+  const skipInitialLoad = useRef(initialNotes !== undefined);
+  const [notes, setNotes] = useState<CoachNoteDto[]>(initialNotes ?? []);
   const [newNote, setNewNote] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
@@ -24,6 +31,10 @@ export function StudentNotesTab({ studentId }: { studentId: string }) {
   }, [studentId, startTransition]);
 
   useEffect(() => {
+    if (skipInitialLoad.current) {
+      skipInitialLoad.current = false;
+      return;
+    }
     load();
   }, [load]);
 

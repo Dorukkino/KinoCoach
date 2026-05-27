@@ -46,11 +46,14 @@ const emptyForm = (): AddFormState => ({
 export function StudentExamsTab({
   studentId,
   role = "coach",
+  initialRows,
 }: {
   studentId: string;
   role?: "coach" | "student";
+  initialRows?: ExamResultDto[];
 }) {
-  const [rows, setRows] = useState<ExamResultDto[]>([]);
+  const skipInitialLoad = useRef(initialRows !== undefined);
+  const [rows, setRows] = useState<ExamResultDto[]>(initialRows ?? []);
   const [subject, setSubject] = useState<"total" | "turkish" | "math" | "science" | "social" | "english">("total");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<AddFormState>(emptyForm());
@@ -65,7 +68,13 @@ export function StudentExamsTab({
     });
   }, [studentId, startTransition]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (skipInitialLoad.current) {
+      skipInitialLoad.current = false;
+      return;
+    }
+    load();
+  }, [load]);
 
   useSupabaseTableRealtime({
     channelName: `exam-results-${studentId}`,
