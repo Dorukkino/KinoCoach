@@ -20,7 +20,7 @@ export class UpsertCoachNoteUseCase {
     );
     if (!engagement) throw new NoActiveEngagementError();
 
-    const result = await this.notes.upsert(
+    const result = await this.notes.create(
       engagement.id,
       coachId,
       studentId,
@@ -30,6 +30,7 @@ export class UpsertCoachNoteUseCase {
       id: result.id,
       studentId: result.studentId,
       note: result.note,
+      createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
     };
   }

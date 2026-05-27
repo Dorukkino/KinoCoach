@@ -5,14 +5,24 @@ import { mapCoachNoteRow } from "../supabase/mappers";
 export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
+  async findById(id: string) {
+    const { data, error } = await this.supabase
+      .from("coach_notes")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) return null;
+    return mapCoachNoteRow(data);
+  }
+
   async findByEngagement(engagementId: string) {
     const { data, error } = await this.supabase
       .from("coach_notes")
       .select("*")
       .eq("engagement_id", engagementId)
-      .maybeSingle();
-    if (error || !data) return null;
-    return mapCoachNoteRow(data);
+      .order("updated_at", { ascending: false });
+    if (error || !data) return [];
+    return data.map(mapCoachNoteRow);
   }
 
   async findByEngagementIds(engagementIds: string[]) {
@@ -20,12 +30,13 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
     const { data, error } = await this.supabase
       .from("coach_notes")
       .select("*")
-      .in("engagement_id", engagementIds);
+      .in("engagement_id", engagementIds)
+      .order("updated_at", { ascending: false });
     if (error || !data) return [];
     return data.map(mapCoachNoteRow);
   }
 
-  async upsert(
+  async create(
     engagementId: string,
     coachId: string,
     studentId: string,
@@ -33,19 +44,38 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
   ) {
     const { data, error } = await this.supabase
       .from("coach_notes")
-      .upsert(
-        {
-          engagement_id: engagementId,
-          coach_id: coachId,
-          student_id: studentId,
-          note,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "engagement_id" }
-      )
+      .insert({
+        engagement_id: engagementId,
+        coach_id: coachId,
+        student_id: studentId,
+        note,
+        updated_at: new Date().toISOString(),
+      })
       .select()
       .single();
     if (error) throw new Error(error.message);
     return mapCoachNoteRow(data);
+  }
+
+  async update(id: string, note: string) {
+    const { data, error } = await this.supabase
+      .from("coach_notes")
+      .update({
+        note,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return mapCoachNoteRow(data);
+  }
+
+  async delete(id: string) {
+    const { error } = await this.supabase
+      .from("coach_notes")
+      .delete()
+      .eq("id", id);
+    if (error) throw new Error(error.message);
   }
 }

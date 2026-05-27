@@ -90,9 +90,11 @@ export function mapMessageRow(row: Record<string, unknown>): Message {
 export function mapCoachNoteRow(row: Record<string, unknown>): CoachNote {
   return new CoachNote(
     String(row.id),
+    String(row.engagement_id),
     String(row.coach_id),
     String(row.student_id),
     String(row.note),
+    new Date(String(row.created_at ?? row.updated_at)),
     new Date(String(row.updated_at))
   );
 }

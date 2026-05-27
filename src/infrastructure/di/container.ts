@@ -91,6 +91,7 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     coaches,
     engagements,
     invitations,
+    notes,
     statusMapper,
     chartData,
     dashboardStats,

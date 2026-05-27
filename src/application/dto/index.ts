@@ -91,14 +91,17 @@ export interface CoachNoteDto {
   id: string;
   studentId: string;
   note: string;
+  createdAt: string;
   updatedAt: string;
 }
 
 export interface CoachNoteListItemDto {
+  id: string;
   studentId: string;
   studentName: string;
   note: string;
-  updatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MotivationCardDto {

@@ -11,19 +11,19 @@ export class GetCoachNoteUseCase {
   async execute(
     coachId: string,
     studentId: string
-  ): Promise<CoachNoteDto | null> {
+  ): Promise<CoachNoteDto[]> {
     const engagement = await this.engagements.findActiveByCoachAndStudent(
       coachId,
       studentId
     );
-    if (!engagement) return null;
-    const note = await this.notes.findByEngagement(engagement.id);
-    if (!note) return null;
-    return {
+    if (!engagement) return [];
+    const notes = await this.notes.findByEngagement(engagement.id);
+    return notes.map((note) => ({
       id: note.id,
       studentId: note.studentId,
       note: note.note,
+      createdAt: note.createdAt.toISOString(),
       updatedAt: note.updatedAt.toISOString(),
-    };
+    }));
   }
 }

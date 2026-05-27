@@ -20,26 +20,15 @@ export class ListCoachNotesUseCase {
     ]);
 
     const studentById = new Map(studentList.map((s) => [s.id, s]));
-    const noteByEngagement = new Map(
-      noteList.map((n) => [
-        // CoachNote shape includes engagement reference via the upsert call; we
-        // assume one note per engagement (UNIQUE constraint), so match using
-        // coach_id + student_id mapping via the engagement.
-        `${n.coachId}:${n.studentId}`,
-        n,
-      ])
-    );
-
-    return active.map((engagement) => {
-      const student = studentById.get(engagement.studentId);
-      const note = noteByEngagement.get(
-        `${engagement.coachId}:${engagement.studentId}`
-      );
+    return noteList.map((note) => {
+      const student = studentById.get(note.studentId);
       return {
-        studentId: engagement.studentId,
+        id: note.id,
+        studentId: note.studentId,
         studentName: student?.name ?? "Öğrenci",
-        note: note?.note ?? "",
-        updatedAt: note?.updatedAt.toISOString() ?? null,
+        note: note.note,
+        createdAt: note.createdAt.toISOString(),
+        updatedAt: note.updatedAt.toISOString(),
       };
     });
   }

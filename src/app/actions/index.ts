@@ -29,6 +29,8 @@ export { listMessagesAction, sendMessageAction } from "./messages";
 
 export {
   upsertCoachNoteAction,
+  updateCoachNoteAction,
+  deleteCoachNoteAction,
   getCoachNoteAction,
   setMotivationAction,
 } from "./notes";
