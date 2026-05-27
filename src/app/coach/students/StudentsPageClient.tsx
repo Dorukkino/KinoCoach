@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { StudentCard } from "@/presentation/components/students/StudentCard";
 import {
@@ -8,6 +8,7 @@ import {
   endEngagementAction,
 } from "@/app/actions/students";
 import { Icons } from "@/presentation/components/icons";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 import type { CoachStudentRowDto } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
 import type { ArchivedStudentRowDto } from "@/application/use-cases/ListArchivedStudentsForCoachUseCase";
 
@@ -23,7 +24,7 @@ export function StudentsPageClient({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("active");
   const [active, setActive] = useState(initialActive);
-  const archived = initialArchived;
+  const [archived, setArchived] = useState(initialArchived);
   const [filter, setFilter] = useState<string>("all");
   const [q, setQ] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -31,6 +32,36 @@ export function StudentsPageClient({
     null
   );
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setActive(initialActive);
+  }, [initialActive]);
+
+  useEffect(() => {
+    setArchived(initialArchived);
+  }, [initialArchived]);
+
+  const refreshStudents = useCallback(() => {
+    router.refresh();
+  }, [router]);
+
+  useSupabaseTableRealtime({
+    channelName: "coach-students-engagements",
+    table: "coaching_engagements",
+    onChange: refreshStudents,
+  });
+
+  useSupabaseTableRealtime({
+    channelName: "coach-students-invitations",
+    table: "coaching_invitations",
+    onChange: refreshStudents,
+  });
+
+  useSupabaseTableRealtime({
+    channelName: "coach-students-profiles",
+    table: "students",
+    onChange: refreshStudents,
+  });
 
   let list = active;
   if (filter !== "all") list = list.filter((s) => s.status === filter);
@@ -86,6 +117,7 @@ export function StudentsPageClient({
       try {
         await endEngagementAction(engagementId);
         setActive((prev) => prev.filter((s) => s.engagementId !== engagementId));
+        router.refresh();
       } catch (err) {
         alert(
           err instanceof Error ? err.message : "İlişki sonlandırılamadı."

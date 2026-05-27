@@ -1,18 +1,30 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { getCoachNoteAction, upsertCoachNoteAction } from "@/app/actions/notes";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 export function StudentNotesTab({ studentId }: { studentId: string }) {
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
+  const load = useCallback(() => {
     startTransition(async () => {
       const n = await getCoachNoteAction(studentId);
-      if (n) setNote(n.note);
+      setNote(n?.note ?? "");
     });
-  }, [studentId]);
+  }, [studentId, startTransition]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useSupabaseTableRealtime({
+    channelName: `coach-notes-${studentId}`,
+    table: "coach_notes",
+    filter: `student_id=eq.${studentId}`,
+    onChange: load,
+  });
 
   const save = () => {
     startTransition(async () => {

@@ -4,6 +4,7 @@ import { ReadOnlyWeeklyGrid } from "@/presentation/components/weekly/ReadOnlyWee
 import { GridMatrix } from "@/application/dto";
 import Link from "next/link";
 import { StudentInvitationsBanner } from "./StudentInvitationsBanner";
+import { StudentDashboardRealtime } from "./StudentDashboardRealtime";
 
 export default async function StudentDashboardPage() {
   const [data, invitations] = await Promise.all([
@@ -16,6 +17,7 @@ export default async function StudentDashboardPage() {
 
   return (
     <div className="screen">
+      <StudentDashboardRealtime />
       <div className="page-head">
         <div className="page-title">
           <h1>Merhaba, {data.name}</h1>
@@ -27,9 +29,7 @@ export default async function StudentDashboardPage() {
         </div>
       </div>
 
-      {invitations.length > 0 && (
-        <StudentInvitationsBanner invitations={invitations} />
-      )}
+      <StudentInvitationsBanner invitations={invitations} />
 
       {!data.hasActiveCoach && invitations.length === 0 && (
         <div className="panel p-6 mb-4 border-l-4 border-[var(--accent)]">

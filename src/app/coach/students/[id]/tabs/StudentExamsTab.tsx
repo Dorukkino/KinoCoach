@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { listExamResultsAction, createExamResultAction } from "@/app/actions/exams";
 import { ExamResultDto } from "@/application/dto";
 import { ExamLineChart } from "@/presentation/components/charts/ExamLineChart";
@@ -8,6 +8,7 @@ import { ChartDataService } from "@/application/services/ChartDataService";
 import { ExamResult } from "@/domain/entities/ExamResult";
 import { ExamScores } from "@/domain/value-objects/ExamScores";
 import { sortByDateAsc } from "@/lib/dates";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 const chartService = new ChartDataService();
 
@@ -58,13 +59,20 @@ export function StudentExamsTab({
   const [, startTransition] = useTransition();
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     startTransition(async () => {
       setRows(await listExamResultsAction(studentId));
     });
-  };
+  }, [studentId, startTransition]);
 
-  useEffect(() => { load(); }, [studentId]);
+  useEffect(() => { load(); }, [load]);
+
+  useSupabaseTableRealtime({
+    channelName: `exam-results-${studentId}`,
+    table: "exam_results",
+    filter: `student_id=eq.${studentId}`,
+    onChange: load,
+  });
 
   useEffect(() => {
     if (showForm) setTimeout(() => firstInputRef.current?.focus(), 50);

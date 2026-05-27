@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, useMemo } from "react";
 import {
   listQuestionSessionsAction,
   listQuestionSessionWeeksAction,
@@ -20,6 +20,7 @@ import {
   sortByDateAsc,
 } from "@/lib/dates";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 const today = () => todayLocalISO();
 
@@ -81,34 +82,53 @@ export function StudentLessonNetClient({
   const isPastWeek = selectedWeek < currentWeek;
   const effectiveReadOnly = readOnly || isPastWeek;
 
-  const loadSessions = (week: string) => {
+  const loadSessions = useCallback((week: string) => {
     startTransition(async () => {
       setSessions(await listQuestionSessionsAction(studentId, week));
     });
-  };
+  }, [studentId, startTransition]);
 
-  const loadLessons = async () => {
+  const loadLessons = useCallback(async () => {
     const data = await getCoachLessonsAction();
     setLessons(data);
-  };
+  }, []);
 
-  const loadWeeks = async () => {
+  const loadWeeks = useCallback(async () => {
     const dbWeeks = await listQuestionSessionWeeksAction(studentId);
     setWeeks(Array.from(new Set([currentWeek, ...dbWeeks])).sort((a, b) =>
       a < b ? 1 : a > b ? -1 : 0
     ));
-  };
+  }, [currentWeek, studentId]);
 
   useEffect(() => {
-    loadWeeks();
-    if (!readOnly) loadLessons();
-  }, [studentId, readOnly, currentWeek]);
+    void loadWeeks();
+    if (!readOnly) void loadLessons();
+  }, [loadLessons, loadWeeks, readOnly]);
 
   useEffect(() => {
     loadSessions(selectedWeek);
     setView("list");
     setError("");
-  }, [studentId, selectedWeek]);
+  }, [loadSessions, selectedWeek]);
+
+  const refreshQuestionSessions = useCallback(() => {
+    void loadWeeks();
+    loadSessions(selectedWeek);
+  }, [loadSessions, loadWeeks, selectedWeek]);
+
+  useSupabaseTableRealtime({
+    channelName: `question-sessions-${studentId}`,
+    table: "question_sessions",
+    filter: `student_id=eq.${studentId}`,
+    onChange: refreshQuestionSessions,
+  });
+
+  useSupabaseTableRealtime({
+    channelName: "coach-lessons",
+    table: "coach_lessons",
+    enabled: !readOnly,
+    onChange: loadLessons,
+  });
 
   useEffect(() => {
     if (view === "add-lesson") {

@@ -5,6 +5,7 @@ import {
 import { StatCard } from "@/presentation/components/dashboard/StatCard";
 import { StudentStatusList } from "@/presentation/components/dashboard/StudentStatusList";
 import { ActivityFeed } from "@/presentation/components/dashboard/ActivityFeed";
+import { CoachDashboardRealtime } from "./CoachDashboardRealtime";
 
 export default async function CoachDashboardPage() {
   const [data, activities] = await Promise.all([
@@ -17,6 +18,7 @@ export default async function CoachDashboardPage() {
 
   return (
     <div className="screen">
+      <CoachDashboardRealtime />
       <div className="page-head">
         <div className="page-title">
           <h1>Dashboard</h1>

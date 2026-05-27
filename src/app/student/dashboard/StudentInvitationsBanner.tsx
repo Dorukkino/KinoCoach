@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CoachingInvitationDto } from "@/application/dto";
 import {
   acceptInvitationAction,
   declineInvitationAction,
 } from "@/app/actions/invitations";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 export function StudentInvitationsBanner({
   invitations,
@@ -16,6 +17,20 @@ export function StudentInvitationsBanner({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [active, setActive] = useState(invitations);
+
+  useEffect(() => {
+    setActive(invitations);
+  }, [invitations]);
+
+  const refreshInvitations = useCallback(() => {
+    router.refresh();
+  }, [router]);
+
+  useSupabaseTableRealtime({
+    channelName: "student-invitations",
+    table: "coaching_invitations",
+    onChange: refreshInvitations,
+  });
 
   const respond = (
     token: string,

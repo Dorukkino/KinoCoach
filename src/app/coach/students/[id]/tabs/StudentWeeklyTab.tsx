@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { WeeklyGrid } from "@/presentation/components/weekly/WeeklyGrid";
 import { CellPickerModal } from "@/presentation/components/weekly/CellPickerModal";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
@@ -13,6 +13,7 @@ import {
 import { WeeklyProgramDto } from "@/application/dto";
 import { Grid7x10, TaskCell } from "@/domain/value-objects/Grid7x10";
 import { getWeekStartISO } from "@/lib/dates";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 interface PendingCell {
   row: number;
@@ -34,30 +35,46 @@ export function StudentWeeklyTab({
   const [pending, setPending] = useState<PendingCell | null>(null);
   const [, startTransition] = useTransition();
 
+  const loadWeeks = useCallback(async () => {
+    const dbWeeks = await listWeeklyWeekStartsAction(studentId);
+    const merged = Array.from(new Set([currentWeek, ...dbWeeks])).sort((a, b) =>
+      a < b ? 1 : a > b ? -1 : 0
+    );
+    setWeeks(merged);
+  }, [currentWeek, studentId]);
+
+  const loadProgram = useCallback(
+    (weekStart: string, clear = false) => {
+      if (clear) setProgram(null);
+      startTransition(async () => {
+        const p = await getWeeklyProgramAction(studentId, weekStart);
+        setProgram(p);
+      });
+    },
+    [studentId, startTransition]
+  );
+
   // Hafta listesini bir kere yükle ve güncel haftayı da listeye dahil et.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const dbWeeks = await listWeeklyWeekStartsAction(studentId);
-      if (cancelled) return;
-      const merged = Array.from(new Set([currentWeek, ...dbWeeks])).sort((a, b) =>
-        a < b ? 1 : a > b ? -1 : 0
-      );
-      setWeeks(merged);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [studentId, currentWeek]);
+    void loadWeeks();
+  }, [loadWeeks]);
 
   // Seçili hafta değiştiğinde programı yükle.
   useEffect(() => {
-    setProgram(null);
-    startTransition(async () => {
-      const p = await getWeeklyProgramAction(studentId, selectedWeek);
-      setProgram(p);
-    });
-  }, [studentId, selectedWeek]);
+    loadProgram(selectedWeek, true);
+  }, [loadProgram, selectedWeek]);
+
+  const refreshWeeklyProgram = useCallback(() => {
+    void loadWeeks();
+    loadProgram(selectedWeek);
+  }, [loadProgram, loadWeeks, selectedWeek]);
+
+  useSupabaseTableRealtime({
+    channelName: `weekly-programs-${studentId}`,
+    table: "weekly_programs",
+    filter: `student_id=eq.${studentId}`,
+    onChange: refreshWeeklyProgram,
+  });
 
   const isPastWeek = selectedWeek < currentWeek;
   const canEdit = role === "coach" && !isPastWeek;
