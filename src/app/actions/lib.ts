@@ -1,16 +1,15 @@
 import "server-only";
-import { createServerContainer } from "@/infrastructure/di/container";
+import { cache } from "react";
+import { getCachedServerContainer } from "@/infrastructure/di/container";
 
-export async function getContainer() {
-  return createServerContainer();
-}
+export const getContainer = getCachedServerContainer;
 
-export async function requireSession() {
+export const requireSession = cache(async () => {
   const container = await getContainer();
   const session = await container.auth.getSession();
   if (!session) throw new Error("Unauthorized");
   return { container, session };
-}
+});
 
 export async function requireCoach() {
   const { container, session } = await requireSession();
