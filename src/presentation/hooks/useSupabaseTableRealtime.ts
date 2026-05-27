@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 
 interface UseSupabaseTableRealtimeOptions {
@@ -8,22 +8,40 @@ interface UseSupabaseTableRealtimeOptions {
   table: string;
   filter?: string;
   enabled?: boolean;
+  /** @deprecated Polling kaldırıldı — sadece realtime event'ler kullanılır */
   pollIntervalMs?: number;
   onChange: () => void;
 }
 
+/**
+ * Supabase Realtime subscription hook.
+ * Rapid-fire event'leri 1 saniye debounce ile birleştirir.
+ */
 export function useSupabaseTableRealtime({
   channelName,
   table,
   filter,
   enabled = true,
-  pollIntervalMs,
   onChange,
 }: UseSupabaseTableRealtimeOptions) {
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   useEffect(() => {
     if (!enabled) return;
 
     const supabase = createSupabaseBrowserClient();
+
+    const debouncedOnChange = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          onChangeRef.current();
+        }
+      }, 1000);
+    };
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -34,19 +52,13 @@ export function useSupabaseTableRealtime({
           table,
           ...(filter ? { filter } : {}),
         },
-        onChange
+        debouncedOnChange
       )
       .subscribe();
-    const interval =
-      pollIntervalMs && pollIntervalMs > 0
-        ? window.setInterval(() => {
-            if (document.visibilityState === "visible") onChange();
-          }, pollIntervalMs)
-        : null;
 
     return () => {
-      if (interval) window.clearInterval(interval);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       void supabase.removeChannel(channel);
     };
-  }, [channelName, enabled, filter, onChange, pollIntervalMs, table]);
+  }, [channelName, enabled, filter, table]);
 }
