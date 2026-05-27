@@ -77,24 +77,22 @@ export function CoachNotesClient({
             <li key={note.id}>
               <Link
                 href={`/coach/students/${note.studentId}?tab=notes`}
-                className="panel p-4 block hover:shadow-md transition-shadow"
+                className="coach-note-card block"
               >
-                <div className="flex items-start gap-3">
+                <div className="coach-note-card-header">
                   <UserAvatar name={note.studentName} size={40} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-sm">
-                        {note.studentName}
-                      </span>
-                      <span className="text-xs text-[var(--muted-2)] flex-shrink-0">
-                        {new Date(note.updatedAt).toLocaleDateString("tr-TR")}
-                      </span>
-                    </div>
-                    <p className="text-sm text-[var(--muted)] m-0 mt-1.5 leading-snug whitespace-pre-wrap">
-                      {truncateNote(note.note)}
+                    <p className="coach-note-card-eyebrow">Özel koç notu</p>
+                    <h3 className="coach-note-card-title">{note.studentName}</h3>
+                    <p className="coach-note-card-meta">
+                      Güncellendi:{" "}
+                      {new Date(note.updatedAt).toLocaleDateString("tr-TR")}
                     </p>
                   </div>
                 </div>
+                <p className="coach-note-card-body">
+                  {truncateNote(note.note)}
+                </p>
               </Link>
             </li>
           ))}

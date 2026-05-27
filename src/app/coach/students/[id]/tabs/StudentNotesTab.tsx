@@ -116,12 +116,19 @@ export function StudentNotesTab({ studentId }: { studentId: string }) {
           {notes.map((note) => {
             const isEditing = editingId === note.id;
             return (
-              <article key={note.id} className="panel p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <p className="font-semibold text-sm m-0">Koç notu</p>
-                    <p className="text-xs text-[var(--muted)] m-0 mt-1">
-                      Güncellendi:{" "}
+              <article key={note.id} className="coach-note-card">
+                <div className="coach-note-card-header">
+                  <div className="min-w-0">
+                    <p className="coach-note-card-eyebrow">Özel koç notu</p>
+                    <h4 className="coach-note-card-title">
+                      {new Date(note.createdAt).toLocaleDateString("tr-TR", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </h4>
+                    <p className="coach-note-card-meta">
+                      Son güncelleme:{" "}
                       {new Date(note.updatedAt).toLocaleString("tr-TR")}
                     </p>
                   </div>
@@ -175,7 +182,7 @@ export function StudentNotesTab({ studentId }: { studentId: string }) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap m-0">
+                  <p className="coach-note-card-body">
                     {note.note}
                   </p>
                 )}

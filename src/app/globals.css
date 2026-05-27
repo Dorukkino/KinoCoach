@@ -218,6 +218,68 @@ a {
   box-shadow: 0 1px 0 rgba(20, 20, 16, 0.02);
 }
 
+.coach-note-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(253, 252, 250, 0.96)),
+    var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(20, 20, 16, 0.06);
+  padding: 18px;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.coach-note-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 14px 30px rgba(20, 20, 16, 0.09);
+  transform: translateY(-1px);
+}
+
+.coach-note-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.coach-note-card-eyebrow {
+  margin: 0 0 3px;
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.coach-note-card-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.coach-note-card-meta {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.coach-note-card-body {
+  margin: 0;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
 .students-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
