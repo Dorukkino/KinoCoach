@@ -1,20 +1,14 @@
-import {
-  getCoachDashboardAction,
-  getCoachActivityFeedAction,
-} from "@/app/actions/dashboard";
+import { getCoachDashboardAction } from "@/app/actions/dashboard";
 import { StatCard } from "@/presentation/components/dashboard/StatCard";
 import { StudentStatusList } from "@/presentation/components/dashboard/StudentStatusList";
 import { ActivityFeed } from "@/presentation/components/dashboard/ActivityFeed";
 import { CoachDashboardRealtime } from "./CoachDashboardRealtime";
 
 export default async function CoachDashboardPage() {
-  const [data, activities] = await Promise.all([
-    getCoachDashboardAction(),
-    getCoachActivityFeedAction(),
-  ]);
+  const data = await getCoachDashboardAction();
   if (!data) return null;
 
-  const { stats, students } = data;
+  const { stats, students, activities } = data;
 
   return (
     <div className="screen">

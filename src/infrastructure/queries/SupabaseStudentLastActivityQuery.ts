@@ -20,6 +20,7 @@ export class SupabaseStudentLastActivityQuery
       if (!prev || at > prev) latest.set(studentId, at);
     };
 
+    // Her tablodan sadece öğrenci başına en son kaydı çek (limit ile)
     const [studentsRes, examsRes, sessionsRes, netsRes] = await Promise.all([
       this.supabase
         .from("students")
@@ -28,15 +29,21 @@ export class SupabaseStudentLastActivityQuery
       this.supabase
         .from("exam_results")
         .select("student_id, created_at")
-        .in("student_id", studentIds),
+        .in("student_id", studentIds)
+        .order("created_at", { ascending: false })
+        .limit(studentIds.length),
       this.supabase
         .from("question_sessions")
         .select("student_id, created_at")
-        .in("student_id", studentIds),
+        .in("student_id", studentIds)
+        .order("created_at", { ascending: false })
+        .limit(studentIds.length),
       this.supabase
         .from("lesson_nets")
         .select("student_id, created_at")
-        .in("student_id", studentIds),
+        .in("student_id", studentIds)
+        .order("created_at", { ascending: false })
+        .limit(studentIds.length),
     ]);
 
     for (const row of studentsRes.data ?? []) {
