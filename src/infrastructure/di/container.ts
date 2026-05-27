@@ -180,5 +180,11 @@ export async function createServerContainer() {
   return buildContainer(supabase, admin);
 }
 
+/** Cookie kullanmaz — unstable_cache içinde güvenle çağrılabilir */
+export function createAdminContainer() {
+  const admin = createSupabaseAdminClient();
+  return buildContainer(admin, admin);
+}
+
 // Request-scoped cached version — aynı request içinde tek container oluşturur
 export const getCachedServerContainer = cache(createServerContainer);

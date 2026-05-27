@@ -3,7 +3,7 @@
 import { unstable_cache } from "next/cache";
 import { requireSession } from "./lib";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
-import { createServerContainer } from "@/infrastructure/di/container";
+import { createAdminContainer } from "@/infrastructure/di/container";
 import {
   buildActivityFeed,
   type ActivityItem,
@@ -27,7 +27,7 @@ function getCachedCoachDashboard(
 ): Promise<CoachDashboardCacheResult> {
   return unstable_cache(
     async () => {
-      const container = await createServerContainer();
+      const container = createAdminContainer();
       const { rows } = await container.loadActiveCoachStudents.execute(coachId);
 
       if (rows.length === 0) {
