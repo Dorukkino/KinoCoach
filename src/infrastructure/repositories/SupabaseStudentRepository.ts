@@ -9,7 +9,7 @@ import { mapAuthError } from "../auth/authErrors";
 const STUDENT_COLUMNS =
   "id, user_id, name, task_completion_rate, last_active_at, grade, track";
 
-const STUDENT_WITH_EMAIL_SELECT = `${STUDENT_COLUMNS}, users!inner(email)`;
+const STUDENT_WITH_EMAIL_SELECT = `${STUDENT_COLUMNS}, users(email)`;
 
 export class SupabaseStudentRepository implements IStudentRepository {
   constructor(private readonly supabase: SupabaseClient) {}

@@ -26,10 +26,30 @@ export function ChatPanel({
   const [text, setText] = useState("");
   const [pending, startTransition] = useTransition();
   const onLastMessageRef = useRef(onLastMessage);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const hasScrolledInitially = useRef(false);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const el = threadRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
+  }, []);
+
+  const lastMessageId = messages[messages.length - 1]?.id;
 
   useEffect(() => {
     onLastMessageRef.current = onLastMessage;
   }, [onLastMessage]);
+
+  useEffect(() => {
+    hasScrolledInitially.current = false;
+  }, [otherUserId]);
+
+  useEffect(() => {
+    if (!lastMessageId) return;
+    scrollToBottom(hasScrolledInitially.current ? "smooth" : "instant");
+    hasScrolledInitially.current = true;
+  }, [messages.length, lastMessageId, scrollToBottom]);
 
   const load = useCallback(() => {
     startTransition(async () => {
@@ -83,7 +103,7 @@ export function ChatPanel({
           otherUserName
         )}
       </header>
-      <div className="chat-thread flex-1">
+      <div ref={threadRef} className="chat-thread flex-1">
         {messages.map((m) => (
           <div
             key={m.id}
