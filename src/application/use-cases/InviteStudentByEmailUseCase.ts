@@ -5,6 +5,8 @@ import { IUserRepository } from "../ports/IUserRepository";
 import { IEngagementRepository } from "../ports/IEngagementRepository";
 import { IInvitationRepository } from "../ports/IInvitationRepository";
 import { IEmailService } from "../ports/IEmailService";
+import { SendNotificationUseCase } from "./SendNotificationUseCase";
+import { NotificationType } from "@/domain/value-objects/NotificationType";
 import { Email } from "@/domain/value-objects/Email";
 import {
   EmailBelongsToCoachError,
@@ -40,7 +42,8 @@ export class InviteStudentByEmailUseCase {
     private readonly users: IUserRepository,
     private readonly engagements: IEngagementRepository,
     private readonly invitations: IInvitationRepository,
-    private readonly emailService: IEmailService
+    private readonly emailService: IEmailService,
+    private readonly sendNotification?: SendNotificationUseCase
   ) {}
 
   async execute(input: {
@@ -116,6 +119,23 @@ export class InviteStudentByEmailUseCase {
         }),
         text: `${coachName} seni Kino Coach'ta öğrencisi olmaya davet etti. Daveti görmek için giriş yap: ${siteUrl}/student/dashboard`,
       });
+      if (this.sendNotification) {
+        try {
+          await this.sendNotification.execute({
+            userId: existingUser.id,
+            title: "Yeni koçluk davetiniz",
+            message: `${coachName} sizi koçluğa davet etti.`,
+            type: NotificationType.NEW_INVITATION,
+            metadata: {
+              coachId: input.coachId,
+              invitationId: invitation.id,
+              href: "/student/dashboard",
+            },
+          });
+        } catch {
+          // Bildirim hatası davet akışını geri almaz
+        }
+      }
       return {
         studentId: studentProfile.id,
         engagementId: null,

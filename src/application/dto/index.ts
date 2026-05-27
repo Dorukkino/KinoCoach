@@ -132,4 +132,15 @@ export interface ChatThreadDto {
   unreadCount: number;
 }
 
+export interface NotificationDto {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  metadata: Record<string, string> | null;
+  createdAt: string;
+}
+
 export type { TaskCell, GridMatrix };

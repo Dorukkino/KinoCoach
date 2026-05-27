@@ -6,12 +6,15 @@ import {
   InvitationNotFoundError,
   StudentAlreadyEngagedError,
 } from "@/domain/errors/EngagementErrors";
+import { SendNotificationUseCase } from "./SendNotificationUseCase";
+import { NotificationType } from "@/domain/value-objects/NotificationType";
 
 export class AcceptInvitationUseCase {
   constructor(
     private readonly invitations: IInvitationRepository,
     private readonly engagements: IEngagementRepository,
-    private readonly students: IStudentRepository
+    private readonly students: IStudentRepository,
+    private readonly sendNotification?: SendNotificationUseCase
   ) {}
 
   /**
@@ -42,6 +45,25 @@ export class AcceptInvitationUseCase {
       track: student.track ?? undefined,
     });
     await this.invitations.markAccepted(invitation.id);
+
+    if (this.sendNotification) {
+      try {
+        await this.sendNotification.execute({
+          userId: invitation.coachId,
+          title: "Davet kabul edildi",
+          message: `${student.name} koçluk davetinizi kabul etti.`,
+          type: NotificationType.INVITATION_ACCEPTED,
+          metadata: {
+            studentId: student.id,
+            engagementId: engagement.id,
+            href: `/coach/students/${student.id}`,
+          },
+        });
+      } catch {
+        // Bildirim hatası kabul akışını geri almaz
+      }
+    }
+
     return engagement;
   }
 }

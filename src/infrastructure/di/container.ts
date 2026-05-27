@@ -14,6 +14,7 @@ import { SupabaseLessonNetRepository } from "../repositories/SupabaseLessonNetRe
 import { SupabaseCoachRepository } from "../repositories/SupabaseCoachRepository";
 import { SupabaseEngagementRepository } from "../repositories/SupabaseEngagementRepository";
 import { SupabaseInvitationRepository } from "../repositories/SupabaseInvitationRepository";
+import { SupabaseNotificationRepository } from "../repositories/SupabaseNotificationRepository";
 import { SupabaseStudentLastActivityQuery } from "../queries/SupabaseStudentLastActivityQuery";
 import { SupabaseAuthService } from "../auth/SupabaseAuthService";
 import { SupabaseAdminAuthService } from "../auth/SupabaseAdminAuthService";
@@ -45,6 +46,10 @@ import { DeclineInvitationUseCase } from "@/application/use-cases/DeclineInvitat
 import { ListActiveStudentsForCoachUseCase } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
 import { LoadActiveCoachStudentsUseCase } from "@/application/use-cases/LoadActiveCoachStudentsUseCase";
 import { ListArchivedStudentsForCoachUseCase } from "@/application/use-cases/ListArchivedStudentsForCoachUseCase";
+import { SendNotificationUseCase } from "@/application/use-cases/SendNotificationUseCase";
+import { ListNotificationsForUserUseCase } from "@/application/use-cases/ListNotificationsForUserUseCase";
+import { MarkNotificationAsReadUseCase } from "@/application/use-cases/MarkNotificationAsReadUseCase";
+import { SendWeeklyReminderUseCase } from "@/application/use-cases/SendWeeklyReminderUseCase";
 import { CalculateStudentStatusService } from "@/application/services/CalculateStudentStatusService";
 import { ChartDataService } from "@/application/services/ChartDataService";
 import { DashboardStatsService } from "@/application/services/DashboardStatsService";
@@ -63,6 +68,7 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
   const coaches = new SupabaseCoachRepository(supabase);
   const engagements = new SupabaseEngagementRepository(supabase);
   const invitations = new SupabaseInvitationRepository(supabase);
+  const notifications = new SupabaseNotificationRepository(supabase);
   const auth = new SupabaseAuthService(supabase);
   const storage = new SupabaseStorageService(supabase);
   const emailService = createSmtpEmailService();
@@ -83,9 +89,35 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
   const adminInvitations = admin
     ? new SupabaseInvitationRepository(admin)
     : null;
+  const adminNotifications = admin
+    ? new SupabaseNotificationRepository(admin)
+    : null;
+  const adminUsersForNotify = admin ? new SupabaseUserRepository(admin) : null;
   const lastActivityQuery = admin
     ? new SupabaseStudentLastActivityQuery(admin)
     : new SupabaseStudentLastActivityQuery(supabase);
+
+  const sendNotification =
+    adminNotifications && adminUsersForNotify
+      ? new SendNotificationUseCase(
+          adminNotifications,
+          adminUsersForNotify,
+          emailService
+        )
+      : null;
+
+  const listNotifications = new ListNotificationsForUserUseCase(notifications);
+  const markNotificationRead = new MarkNotificationAsReadUseCase(notifications);
+  const sendWeeklyReminder =
+    sendNotification && adminEngagements && adminNotifications
+      ? new SendWeeklyReminderUseCase(
+          adminEngagements,
+          programs,
+          adminStudents ?? students,
+          sendNotification,
+          adminNotifications
+        )
+      : null;
 
   return {
     auth,
@@ -107,7 +139,8 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
             adminUsers,
             adminEngagements,
             adminInvitations,
-            emailService
+            emailService,
+            sendNotification ?? undefined
           )
         : null,
     listActiveStudents: new ListActiveStudentsForCoachUseCase(
@@ -137,7 +170,12 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     startEngagement: new StartEngagementUseCase(engagements),
     endEngagement: new EndEngagementUseCase(engagements),
     acceptInvitation: adminEngagements
-      ? new AcceptInvitationUseCase(invitations, adminEngagements, students)
+      ? new AcceptInvitationUseCase(
+          invitations,
+          adminEngagements,
+          students,
+          sendNotification ?? undefined
+        )
       : null,
     declineInvitation: new DeclineInvitationUseCase(invitations, students),
     createWeeklyProgram: new CreateWeeklyProgramUseCase(programs, engagements),
@@ -150,7 +188,12 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     listStudentWeeks: new ListStudentWeeksUseCase(programs, engagements),
     updateExamResult: new UpdateExamResultUseCase(exams, students),
     listExamResults: new ListExamResultsUseCase(exams),
-    sendMessage: new SendMessageUseCase(messages, storage),
+    sendMessage: new SendMessageUseCase(
+      messages,
+      storage,
+      sendNotification ?? undefined,
+      adminUsersForNotify ?? users
+    ),
     listMessages: new ListMessagesUseCase(messages),
     upsertCoachNote: new UpsertCoachNoteUseCase(notes, engagements),
     getCoachNote: new GetCoachNoteUseCase(notes, engagements),
@@ -162,10 +205,18 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
       statusMapper,
       lastActivityQuery
     ),
-    setMotivation: new SetMotivationMessageUseCase(motivation, engagements),
+    setMotivation: new SetMotivationMessageUseCase(
+      motivation,
+      engagements,
+      students,
+      sendNotification ?? undefined
+    ),
     getMotivation: new GetMotivationForStudentUseCase(motivation, engagements),
     getLessonNet: new GetLessonNetUseCase(lessonNets, engagements),
     upsertLessonNet: new UpsertLessonNetUseCase(lessonNets, engagements, students),
+    listNotifications,
+    markNotificationRead,
+    sendWeeklyReminder,
   };
 }
 

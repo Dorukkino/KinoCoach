@@ -14,10 +14,11 @@ import { UserRole } from "@/domain/value-objects/UserRole";
 import { UserProfile } from "@/application/ports/IUserRepository";
 import { CoachingEngagement } from "@/domain/entities/CoachingEngagement";
 import { EngagementStatus } from "@/domain/value-objects/EngagementStatus";
-import {
-  CoachingInvitation,
+import { CoachingInvitation,
   InvitationStatus,
 } from "@/domain/entities/CoachingInvitation";
+import { Notification } from "@/domain/entities/Notification";
+import { isNotificationType } from "@/domain/value-objects/NotificationType";
 
 function safeEmail(raw: unknown, userId: string): Email {
   const str = String(raw ?? "").trim();
@@ -167,5 +168,34 @@ export function mapInvitationRow(
     new Date(String(row.expires_at)),
     new Date(String(row.created_at)),
     row.responded_at ? new Date(String(row.responded_at)) : null
+  );
+}
+
+function parseNotificationMetadata(
+  raw: unknown
+): Record<string, string> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (value != null) out[key] = String(value);
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+export function mapNotificationRow(row: Record<string, unknown>): Notification {
+  const type = String(row.type);
+  if (!isNotificationType(type)) {
+    throw new Error(`Invalid notification type: ${type}`);
+  }
+  return new Notification(
+    String(row.id),
+    String(row.user_id),
+    String(row.title),
+    String(row.message),
+    type,
+    Boolean(row.is_read),
+    parseNotificationMetadata(row.metadata),
+    new Date(String(row.created_at)),
+    new Date(String(row.updated_at ?? row.created_at))
   );
 }

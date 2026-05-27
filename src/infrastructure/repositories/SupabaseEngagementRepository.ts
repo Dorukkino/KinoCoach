@@ -43,6 +43,16 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
     return data.map(mapEngagementRow);
   }
 
+  async findAllActive() {
+    const { data, error } = await this.supabase
+      .from("coaching_engagements")
+      .select(ENGAGEMENT_COLUMNS)
+      .eq("status", "active")
+      .order("started_at", { ascending: false });
+    if (error || !data) return [];
+    return data.map(mapEngagementRow);
+  }
+
   async findHistoricalByCoach(coachId: string) {
     const { data, error } = await this.supabase
       .from("coaching_engagements")

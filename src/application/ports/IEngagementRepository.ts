@@ -12,6 +12,7 @@ export interface IEngagementRepository {
   findById(id: string): Promise<CoachingEngagement | null>;
   findActiveByStudent(studentId: string): Promise<CoachingEngagement | null>;
   findActiveByCoach(coachId: string): Promise<CoachingEngagement[]>;
+  findAllActive(): Promise<CoachingEngagement[]>;
   findHistoricalByCoach(coachId: string): Promise<CoachingEngagement[]>;
   findAllByStudent(studentId: string): Promise<CoachingEngagement[]>;
   findActiveByCoachAndStudent(
