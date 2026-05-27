@@ -10,7 +10,7 @@ import {
 } from "@/infrastructure/queries/buildActivityFeed";
 import { coachCacheTags } from "@/infrastructure/cache/revalidate-coach-cache";
 import type { CoachStudentRowDto } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
-import type { DashboardStatsDto } from "@/application/dto";
+import type { DashboardStatsDto, MotivationCardDto } from "@/application/dto";
 
 export type { ActivityItem } from "@/infrastructure/queries/buildActivityFeed";
 
@@ -99,6 +99,7 @@ export async function getStudentDashboardAction() {
 
   if (!activeEngagement) {
     return {
+      studentId: student.id,
       name: student.name,
       coachName: null,
       motivation: null,
@@ -117,11 +118,32 @@ export async function getStudentDashboardAction() {
   );
 
   return {
+    studentId: student.id,
     name: student.name,
     coachName,
     motivation,
     hasActiveCoach: true,
   };
+}
+
+export async function getStudentMotivationAction(): Promise<MotivationCardDto | null> {
+  const { container, session } = await requireSession();
+  const student = await container.students.findByUserId(session.userId);
+  if (!student) return null;
+
+  const activeEngagement = await container.engagements.findActiveByStudent(
+    student.id
+  );
+  if (!activeEngagement) return null;
+
+  const coachName = await fetchCoachName(activeEngagement.coachId);
+  const latestMotivation = await container.getMotivation.fetchLatest(
+    activeEngagement.id
+  );
+  return container.getMotivation.toCardDto(
+    latestMotivation ? [latestMotivation] : [],
+    coachName
+  );
 }
 
 export async function getCurrentStudentRecordAction() {

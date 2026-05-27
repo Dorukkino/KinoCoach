@@ -11,12 +11,6 @@ export function StudentDashboardRealtime() {
   }, [router]);
 
   useSupabaseTableRealtime({
-    channelName: "student-dashboard-motivation",
-    table: "motivation_messages",
-    onChange: refreshDashboard,
-  });
-
-  useSupabaseTableRealtime({
     channelName: "student-dashboard-engagements",
     table: "coaching_engagements",
     onChange: refreshDashboard,

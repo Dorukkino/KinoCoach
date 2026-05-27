@@ -2,6 +2,7 @@ import { getStudentDashboardAction } from "@/app/actions/dashboard";
 import { listMyPendingInvitationsAction } from "@/app/actions/invitations";
 import Link from "next/link";
 import { StudentInvitationsBanner } from "./StudentInvitationsBanner";
+import { StudentMotivationBanner } from "./StudentMotivationBanner";
 
 export async function StudentDashboardContent() {
   const [data, invitations] = await Promise.all([
@@ -34,13 +35,11 @@ export async function StudentDashboardContent() {
         </div>
       )}
 
-      {data.motivation && (
-        <div className="panel p-6 mb-4 border-l-4 border-[var(--accent)]">
-          <p className="text-xs font-semibold text-[var(--muted)] m-0 mb-1">
-            {data.motivation.coachName} diyor ki
-          </p>
-          <p className="text-base m-0">{data.motivation.message}</p>
-        </div>
+      {data.hasActiveCoach && (
+        <StudentMotivationBanner
+          studentId={data.studentId}
+          initialMotivation={data.motivation}
+        />
       )}
 
       {data.hasActiveCoach && (

@@ -36,6 +36,12 @@ function mapAuthErrorMessage(
   context?: Pick<AuthErrorLike, "status" | "name">
 ): string {
   const lower = message.toLowerCase();
+  if (
+    lower.includes("invalid login credentials") ||
+    lower.includes("invalid credentials")
+  ) {
+    return "Wrong Password (Yanlış Şifre)";
+  }
   if (lower.includes("invalid") && lower.includes("email")) {
     return "Bu e-posta adresi kabul edilmiyor. Gerçek bir adres deneyin (ör. Gmail). test@test.com gibi adresler Supabase tarafından engellenebilir.";
   }
