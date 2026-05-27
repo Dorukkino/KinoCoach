@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "../supabase/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -161,3 +162,6 @@ export async function createServerContainer() {
   }
   return buildContainer(supabase, admin);
 }
+
+// Request-scoped cached version — aynı request içinde tek container oluşturur
+export const getCachedServerContainer = cache(createServerContainer);

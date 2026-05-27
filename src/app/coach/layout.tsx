@@ -1,20 +1,27 @@
 import { redirect } from "next/navigation";
-import { createServerContainer } from "@/infrastructure/di/container";
+import { getCachedServerContainer } from "@/infrastructure/di/container";
 import { AppShell } from "@/presentation/components/layout/AppShell";
+import { cache } from "react";
+
+const getCoachLayoutData = cache(async () => {
+  const container = await getCachedServerContainer();
+  const session = await container.auth.getSession();
+  if (!session) redirect("/login");
+  if (!session.role.isCoach()) redirect("/student/dashboard");
+
+  const profile = await container.users.findById(session.userId);
+  return { userName: profile?.fullName ?? "Koç" };
+});
 
 export default async function CoachLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const container = await createServerContainer();
-  const session = await container.auth.getSession();
-  if (!session || !session.role.isCoach()) redirect("/login");
-
-  const profile = await container.users.findById(session.userId);
+  const { userName } = await getCoachLayoutData();
 
   return (
-    <AppShell role="coach" userName={profile?.fullName ?? "Koç"} pageTitle="">
+    <AppShell role="coach" userName={userName} pageTitle="">
       {children}
     </AppShell>
   );
