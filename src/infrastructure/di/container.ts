@@ -189,7 +189,8 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     updateWeeklyCompletion: new UpdateWeeklyProgramCompletionUseCase(
       programs,
       students,
-      engagements
+      engagements,
+      sendNotification ?? undefined
     ),
     getWeeklyProgram: new GetWeeklyProgramUseCase(programs, engagements),
     listStudentWeeks: new ListStudentWeeksUseCase(programs, engagements),
@@ -230,6 +231,7 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     markNotificationRead,
     deleteNotification,
     sendWeeklyReminder,
+    sendNotification,
   };
 }
 

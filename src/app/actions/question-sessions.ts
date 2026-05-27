@@ -13,6 +13,7 @@ import type {
   CreateQuestionSessionResult,
   QuestionSessionDto,
 } from "./question-sessions.types";
+import { NotificationType } from "@/domain/value-objects/NotificationType";
 
 export type { CreateQuestionSessionResult, QuestionSessionDto };
 
@@ -93,6 +94,28 @@ export async function createQuestionSessionAction(input: {
     // Kayıt başarılı; son aktiflik güncellenemese de devam et
   }
 
+  if (container.sendNotification) {
+    try {
+      const student = await container.students.findById(input.studentId);
+      if (student) {
+        const dateLabel = new Date(`${date}T12:00:00`).toLocaleDateString("tr-TR");
+        await container.sendNotification.execute({
+          userId: engagement.coachId,
+          title: "Yeni soru çözüm kaydı",
+          message: `${student.name} ${dateLabel} tarihinde ${input.lessonName} için soru çözüm ekledi (${input.total} soru, ${input.correct}D ${input.wrong}Y ${input.blank}B).`,
+          type: NotificationType.QUESTION_SESSION_CREATED,
+          metadata: {
+            studentId: input.studentId,
+            sessionId: String(data.id),
+            href: "/coach/lesson-nets",
+          },
+        });
+      }
+    } catch {
+      // Bildirim hatası kaydı geri almaz
+    }
+  }
+
   after(async () => {
     await revalidateCoachCacheForStudent(input.studentId);
   });
@@ -114,15 +137,18 @@ export async function createQuestionSessionAction(input: {
 }
 
 export async function deleteQuestionSessionAction(id: string): Promise<void> {
-  await requireSession();
+  const { container } = await requireSession();
   const supabase = await createSupabaseServerClient();
   const { data: existing, error: fetchError } = await supabase
     .from("question_sessions")
-    .select("student_id")
+    .select("student_id, lesson_name, date")
     .eq("id", id)
     .maybeSingle();
   if (fetchError) throw new Error(fetchError.message);
   if (!existing) throw new Error("Kayıt bulunamadı.");
+
+  const studentId = String(existing.student_id);
+  const engagement = await container.engagements.findActiveByStudent(studentId);
 
   const { error } = await supabase
     .from("question_sessions")
@@ -130,7 +156,32 @@ export async function deleteQuestionSessionAction(id: string): Promise<void> {
     .eq("id", id);
   if (error) throw new Error(error.message);
 
+  if (container.sendNotification && engagement) {
+    try {
+      const student = await container.students.findById(studentId);
+      if (student) {
+        const dateStr = String(existing.date).slice(0, 10);
+        const dateLabel = new Date(`${dateStr}T12:00:00`).toLocaleDateString(
+          "tr-TR"
+        );
+        await container.sendNotification.execute({
+          userId: engagement.coachId,
+          title: "Soru çözüm kaydı silindi",
+          message: `${student.name} ${dateLabel} tarihli ${String(existing.lesson_name)} soru çözüm kaydını sildi.`,
+          type: NotificationType.QUESTION_SESSION_DELETED,
+          metadata: {
+            studentId,
+            sessionId: id,
+            href: "/coach/lesson-nets",
+          },
+        });
+      }
+    } catch {
+      // Bildirim hatası silmeyi geri almaz
+    }
+  }
+
   after(async () => {
-    await revalidateCoachCacheForStudent(String(existing.student_id));
+    await revalidateCoachCacheForStudent(studentId);
   });
 }
