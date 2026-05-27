@@ -8,6 +8,7 @@ import { ChartDataService } from "@/application/services/ChartDataService";
 import { ExamResult } from "@/domain/entities/ExamResult";
 import { ExamScores } from "@/domain/value-objects/ExamScores";
 import { sortByDateAsc } from "@/lib/dates";
+import { DateInputTR } from "@/presentation/components/ui/DateInputTR";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 const chartService = new ChartDataService();
@@ -98,7 +99,10 @@ export function StudentExamsTab({
     const social  = parseFloat(form.social);
     const english = (form.english ?? "").trim() !== "" ? parseFloat(form.english) : null;
 
-    if (!form.date) { setError("Tarih giriniz."); return; }
+    if (!form.date) {
+      setError("Geçerli bir tarih giriniz (GG/AA/YYYY).");
+      return;
+    }
     if ([turkish, math, science, social].some(isNaN)) {
       setError("Türkçe, Matematik, Fen ve Sosyal net alanlarını doldurunuz.");
       return;
@@ -183,12 +187,10 @@ export function StudentExamsTab({
             {/* Tarih — tam satır */}
             <div style={{ gridColumn: "1 / -1" }}>
               <label className="label">Tarih</label>
-              <input
+              <DateInputTR
                 ref={firstInputRef}
-                type="date"
-                className="input"
                 value={form.date}
-                onChange={(e) => set("date", e.target.value)}
+                onChange={(iso) => set("date", iso)}
               />
             </div>
 

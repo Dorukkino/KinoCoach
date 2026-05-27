@@ -35,6 +35,38 @@ export function todayLocalISO(): string {
   return toLocalDateISO();
 }
 
+/** YYYY-MM-DD → GG/AA/YYYY */
+export function formatISODateAsTR(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return "";
+  return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+}
+
+/** GG/AA/YYYY veya GG/AA/YY → YYYY-MM-DD; geçersizse null */
+export function parseTRDateToISO(input: string): string | null {
+  const trimmed = input.trim();
+  const match = trimmed.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  let year = Number(match[3]);
+  if (match[3].length === 2) year += year >= 70 ? 1900 : 2000;
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return toLocalDateISO(date);
+}
+
 /**
  * Sohbet mesajları için akıllı saat/tarih biçimi:
  * - Bugün: "14:32"

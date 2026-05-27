@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireSession } from "./lib";
 import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { revalidateCoachCacheForStudent } from "@/infrastructure/cache/revalidate-coach-cache";
@@ -10,6 +9,51 @@ import {
   sortByDateDesc,
   todayLocalISO,
 } from "@/lib/dates";
+
+function normalizeWeekStart(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const iso = value.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : null;
+}
+
+function parseQuestionSessionWeekRows(data: unknown): string[] {
+  if (!Array.isArray(data)) return [];
+  const weeks: string[] = [];
+  for (const row of data) {
+    if (typeof row === "string") {
+      const week = normalizeWeekStart(row);
+      if (week) weeks.push(week);
+      continue;
+    }
+    if (row && typeof row === "object") {
+      const week = normalizeWeekStart(
+        (row as Record<string, unknown>).week_start
+      );
+      if (week) weeks.push(week);
+    }
+  }
+  return weeks;
+}
+
+async function listQuestionSessionWeeksFallback(
+  studentId: string
+): Promise<string[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("question_sessions")
+    .select("date")
+    .eq("student_id", studentId);
+  if (error || !data) return [];
+
+  const weeks = new Set<string>();
+  for (const row of data) {
+    const iso = String(row.date);
+    const [y, m, d] = iso.split("-").map(Number);
+    if (!y || !m || !d) continue;
+    weeks.add(getWeekStartISO(new Date(y, m - 1, d)));
+  }
+  return [...weeks].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+}
 
 export interface QuestionSessionDto {
   id: string;
@@ -75,10 +119,15 @@ export async function listQuestionSessionWeeksAction(
 ): Promise<string[]> {
   await requireSession();
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .rpc("get_question_session_weeks", { p_student_id: studentId });
-  if (error || !data) return [];
-  return data.map((row: { week_start: string }) => row.week_start);
+  const { data, error } = await supabase.rpc("get_question_session_weeks", {
+    p_student_id: studentId,
+  });
+  if (error) return listQuestionSessionWeeksFallback(studentId);
+  const weeks = parseQuestionSessionWeekRows(data);
+  if (weeks.length === 0 && Array.isArray(data) && data.length > 0) {
+    return listQuestionSessionWeeksFallback(studentId);
+  }
+  return weeks;
 }
 
 export async function createQuestionSessionAction(input: {
@@ -121,8 +170,11 @@ export async function createQuestionSessionAction(input: {
     )
     .single();
   if (error || !data) throw new Error(error?.message ?? "Kayıt eklenemedi");
-  await container.students.touchLastActive(input.studentId);
-  revalidatePath("/student/lesson-nets");
+  try {
+    await container.students.touchLastActive(input.studentId);
+  } catch {
+    // Kayıt başarılı; son aktiflik güncellenemese de devam et
+  }
   await revalidateCoachCacheForStudent(input.studentId);
   return {
     id: String(data.id),
@@ -153,6 +205,5 @@ export async function deleteQuestionSessionAction(id: string): Promise<void> {
     .delete()
     .eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/student/lesson-nets");
   await revalidateCoachCacheForStudent(String(existing.student_id));
 }
