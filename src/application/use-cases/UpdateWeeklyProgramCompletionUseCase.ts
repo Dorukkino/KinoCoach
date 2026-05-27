@@ -34,17 +34,18 @@ export class UpdateWeeklyProgramCompletionUseCase {
     const updatedGrid = grid.toggleDone(input.row, input.col);
     const rate = this.taskCompletion.calculate(updatedGrid);
 
-    const program = await this.programs.upsert(
-      engagement.id,
-      input.studentId,
-      input.weekStart,
-      updatedGrid,
-      rate.percent
-    );
-
-    await this.students.update(input.studentId, {
-      taskCompletionRate: rate.percent,
-    });
+    const [program] = await Promise.all([
+      this.programs.upsert(
+        engagement.id,
+        input.studentId,
+        input.weekStart,
+        updatedGrid,
+        rate.percent
+      ),
+      this.students.update(input.studentId, {
+        taskCompletionRate: rate.percent,
+      }),
+    ]);
 
     return {
       id: program.id,

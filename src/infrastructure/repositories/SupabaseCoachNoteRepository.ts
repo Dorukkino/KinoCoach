@@ -5,6 +5,13 @@ import { mapCoachNoteRow } from "../supabase/mappers";
 const COACH_NOTE_COLUMNS =
   "id, engagement_id, coach_id, student_id, note, created_at, updated_at";
 
+const NOTE_PREVIEW_LENGTH = 200;
+
+function truncateNote(note: string): string {
+  if (note.length <= NOTE_PREVIEW_LENGTH) return note;
+  return `${note.slice(0, NOTE_PREVIEW_LENGTH)}…`;
+}
+
 export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -36,7 +43,10 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
       .in("engagement_id", engagementIds)
       .order("updated_at", { ascending: false });
     if (error || !data) return [];
-    return data.map(mapCoachNoteRow);
+    return data.map((row) => {
+      const note = mapCoachNoteRow(row);
+      return { ...note, note: truncateNote(note.note) };
+    });
   }
 
   async create(

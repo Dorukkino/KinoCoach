@@ -26,12 +26,12 @@ export class GetMotivationForStudentUseCase {
     engagement: CoachingEngagement,
     coachName: string
   ): Promise<MotivationCardDto | null> {
-    const messages = await this.motivation.findByEngagement(engagement.id);
-    return this.display.toCardDto(messages, coachName);
+    const latest = await this.motivation.findLatestByEngagement(engagement.id);
+    return this.display.toCardDto(latest ? [latest] : [], coachName);
   }
 
-  async fetchMessages(engagementId: string): Promise<MotivationMessage[]> {
-    return this.motivation.findByEngagement(engagementId);
+  async fetchLatest(engagementId: string): Promise<MotivationMessage | null> {
+    return this.motivation.findLatestByEngagement(engagementId);
   }
 
   toCardDto(

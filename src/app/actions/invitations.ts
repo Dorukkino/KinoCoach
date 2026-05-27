@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "./lib";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
-import { revalidateCoachStudents } from "@/infrastructure/cache/revalidate-coach-cache";
+import { revalidateCoachDashboard } from "@/infrastructure/cache/revalidate-coach-cache";
 import type { CoachingInvitationDto } from "@/application/dto";
 
 export async function listMyPendingInvitationsAction(): Promise<
@@ -44,7 +44,7 @@ export async function acceptInvitationAction(token: string) {
   const invitation = await container.invitations.findByToken(token);
   await container.acceptInvitation.execute(token, session.userId);
   if (invitation?.coachId) {
-    revalidateCoachStudents(invitation.coachId);
+    revalidateCoachDashboard(invitation.coachId);
   }
   revalidatePath("/student/dashboard");
   revalidatePath("/student/invitations");
@@ -55,7 +55,7 @@ export async function declineInvitationAction(token: string) {
   const invitation = await container.invitations.findByToken(token);
   await container.declineInvitation.execute(token, session.userId);
   if (invitation?.coachId) {
-    revalidateCoachStudents(invitation.coachId);
+    revalidateCoachDashboard(invitation.coachId);
   }
   revalidatePath("/student/invitations");
 }

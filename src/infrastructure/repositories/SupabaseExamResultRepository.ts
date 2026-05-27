@@ -3,6 +3,9 @@ import { IExamResultRepository } from "@/application/ports/IExamResultRepository
 import { ExamScoresProps } from "@/domain/value-objects/ExamScores";
 import { mapExamResultRow } from "../supabase/mappers";
 
+const EXAM_RESULT_COLUMNS =
+  "id, student_id, exam_date, scores_json, note, created_at";
+
 export class SupabaseExamResultRepository implements IExamResultRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -32,7 +35,7 @@ export class SupabaseExamResultRepository implements IExamResultRepository {
         scores_json: scores,
         note,
       })
-      .select()
+      .select(EXAM_RESULT_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapExamResultRow(data);
@@ -46,7 +49,7 @@ export class SupabaseExamResultRepository implements IExamResultRepository {
       .from("exam_results")
       .update(patch)
       .eq("id", id)
-      .select()
+      .select(EXAM_RESULT_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapExamResultRow(data);

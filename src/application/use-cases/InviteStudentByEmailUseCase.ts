@@ -58,8 +58,10 @@ export class InviteStudentByEmailUseCase {
     inviteRedirectTo: string;
   }): Promise<InviteStudentResult> {
     const email = Email.create(input.email);
-    const existingUser = await this.users.findByEmail(email.value);
-    const coach = await this.users.findById(input.coachId);
+    const [existingUser, coach] = await Promise.all([
+      this.users.findByEmail(email.value),
+      this.users.findById(input.coachId),
+    ]);
     const coachName = coach?.fullName || "Koçun";
     const siteUrl = getOrigin(input.inviteRedirectTo);
 

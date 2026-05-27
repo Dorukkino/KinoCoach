@@ -37,4 +37,16 @@ export class SupabaseMotivationRepository implements IMotivationRepository {
     if (error || !data) return [];
     return data.map(mapMotivationRow);
   }
+
+  async findLatestByEngagement(engagementId: string) {
+    const { data, error } = await this.supabase
+      .from("motivation_messages")
+      .select(MOTIVATION_COLUMNS)
+      .eq("engagement_id", engagementId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return mapMotivationRow(data);
+  }
 }

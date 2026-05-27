@@ -8,4 +8,5 @@ export interface IMotivationRepository {
     message: string
   ): Promise<MotivationMessage>;
   findByEngagement(engagementId: string): Promise<MotivationMessage[]>;
+  findLatestByEngagement(engagementId: string): Promise<MotivationMessage | null>;
 }

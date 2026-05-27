@@ -158,10 +158,19 @@ export async function createQuestionSessionAction(input: {
 export async function deleteQuestionSessionAction(id: string): Promise<void> {
   await requireSession();
   const supabase = await createSupabaseServerClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("question_sessions")
+    .select("student_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchError) throw new Error(fetchError.message);
+  if (!existing) throw new Error("Kayıt bulunamadı.");
+
   const { error } = await supabase
     .from("question_sessions")
     .delete()
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/student/lesson-nets");
+  await revalidateCoachCacheForStudent(String(existing.student_id));
 }

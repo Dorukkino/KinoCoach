@@ -87,7 +87,7 @@ export class SupabaseEngagementRepository implements IEngagementRepository {
         grade_at_start: input.gradeAtStart ?? null,
         track: input.track ?? null,
       })
-      .select()
+      .select(ENGAGEMENT_COLUMNS)
       .single();
     if (error) throw new Error(error.message);
     return mapEngagementRow(data);

@@ -3,7 +3,7 @@ import {
   CreateStudentInput,
   IStudentRepository,
 } from "@/application/ports/IStudentRepository";
-import { mapStudentRowWithEmail } from "../supabase/mappers";
+import { mapStudentRow, mapStudentRowWithEmail } from "../supabase/mappers";
 import { mapAuthError } from "../auth/authErrors";
 
 const STUDENT_COLUMNS =
@@ -34,24 +34,6 @@ export class SupabaseStudentRepository implements IStudentRepository {
     return mapStudentRowWithEmail(row, this.resolveEmail(row, userId));
   }
 
-  private async emailsForUsers(userIds: string[]): Promise<Map<string, string>> {
-    if (userIds.length === 0) return new Map();
-    const { data } = await this.supabase
-      .from("users")
-      .select("id, email")
-      .in("id", userIds);
-    const map = new Map<string, string>();
-    for (const row of data ?? []) {
-      const raw = String(row.email ?? "").trim();
-      const valid = raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
-      map.set(
-        String(row.id),
-        valid ? raw : `unknown+${row.id}@placeholder.local`
-      );
-    }
-    return map;
-  }
-
   async findById(id: string) {
     const { data, error } = await this.supabase
       .from("students")
@@ -79,15 +61,7 @@ export class SupabaseStudentRepository implements IStudentRepository {
       .select(STUDENT_COLUMNS)
       .in("id", ids);
     if (error || !data) return [];
-    const userIds = data.map((r) => String(r.user_id));
-    const emails = await this.emailsForUsers(userIds);
-    return data.map((row) =>
-      mapStudentRowWithEmail(
-        row,
-        emails.get(String(row.user_id)) ??
-          `unknown+${row.user_id}@placeholder.local`
-      )
-    );
+    return data.map((row) => mapStudentRow(row));
   }
 
   async create(input: CreateStudentInput) {

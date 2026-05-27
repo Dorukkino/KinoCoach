@@ -43,6 +43,7 @@ import { EndEngagementUseCase } from "@/application/use-cases/EndEngagementUseCa
 import { AcceptInvitationUseCase } from "@/application/use-cases/AcceptInvitationUseCase";
 import { DeclineInvitationUseCase } from "@/application/use-cases/DeclineInvitationUseCase";
 import { ListActiveStudentsForCoachUseCase } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
+import { LoadActiveCoachStudentsUseCase } from "@/application/use-cases/LoadActiveCoachStudentsUseCase";
 import { ListArchivedStudentsForCoachUseCase } from "@/application/use-cases/ListArchivedStudentsForCoachUseCase";
 import { CalculateStudentStatusService } from "@/application/services/CalculateStudentStatusService";
 import { ChartDataService } from "@/application/services/ChartDataService";
@@ -110,6 +111,14 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
           )
         : null,
     listActiveStudents: new ListActiveStudentsForCoachUseCase(
+      new LoadActiveCoachStudentsUseCase(
+        engagements,
+        students,
+        statusMapper,
+        lastActivityQuery
+      )
+    ),
+    loadActiveCoachStudents: new LoadActiveCoachStudentsUseCase(
       engagements,
       students,
       statusMapper,
