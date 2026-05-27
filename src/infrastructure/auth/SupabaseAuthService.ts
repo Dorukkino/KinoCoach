@@ -7,30 +7,54 @@ import { UserRole } from "@/domain/value-objects/UserRole";
 import { mapAuthError } from "./authErrors";
 
 export class SupabaseAuthService implements IAuthService {
+  private cachedSession: AuthSession | null | undefined = undefined;
+
   constructor(private readonly supabase: SupabaseClient) {}
 
   async getSession(): Promise<AuthSession | null> {
+    // Request içinde tekrar çağrılırsa cache'den dön
+    if (this.cachedSession !== undefined) return this.cachedSession;
+
     const {
       data: { user },
     } = await this.supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) {
+      this.cachedSession = null;
+      return null;
+    }
 
-    const { data: profile } = await this.supabase
-      .from("users")
-      .select("role, full_name")
-      .eq("id", user.id)
-      .single();
+    // user_metadata'dan role ve fullName çek — DB sorgusu olmadan
+    const metaRole = user.user_metadata?.role;
+    const metaFullName = user.user_metadata?.full_name;
 
-    const role = profile?.role
-      ? UserRole.from(String(profile.role))
-      : UserRole.coach();
+    let role: UserRole;
+    let fullName: string;
 
-    return {
+    if (metaRole) {
+      // JWT metadata'da role varsa DB'ye gitmeye gerek yok
+      role = UserRole.from(String(metaRole));
+      fullName = String(metaFullName ?? user.email?.split("@")[0] ?? "");
+    } else {
+      // Fallback: DB'den çek
+      const { data: profile } = await this.supabase
+        .from("users")
+        .select("role, full_name")
+        .eq("id", user.id)
+        .single();
+
+      role = profile?.role
+        ? UserRole.from(String(profile.role))
+        : UserRole.coach();
+      fullName = String(profile?.full_name ?? metaFullName ?? user.email?.split("@")[0] ?? "");
+    }
+
+    this.cachedSession = {
       userId: user.id,
       email: user.email ?? "",
       role,
-      fullName: String(profile?.full_name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? ""),
+      fullName,
     };
+    return this.cachedSession;
   }
 
   async signIn(email: string, password: string): Promise<AuthSession> {
