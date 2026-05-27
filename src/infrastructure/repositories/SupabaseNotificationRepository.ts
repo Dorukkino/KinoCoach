@@ -16,6 +16,7 @@ export class SupabaseNotificationRepository implements INotificationRepository {
     const { data, error } = await this.supabase
       .from("notifications")
       .insert({
+        id: crypto.randomUUID(),
         user_id: input.userId,
         title: input.title,
         message: input.message,
