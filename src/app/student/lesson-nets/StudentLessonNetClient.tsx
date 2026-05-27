@@ -17,6 +17,7 @@ import {
 import {
   todayLocalISO,
   getWeekStartISO,
+  getWeekStartForISO,
   sortByDateAsc,
 } from "@/lib/dates";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
@@ -58,11 +59,6 @@ const calculateNet = (correct: number, wrong: number) => correct - wrong / 4;
 
 const formatNet = (value: number) =>
   Number.isInteger(value) ? String(value) : value.toFixed(2);
-
-const weekStartForDate = (iso: string) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  return getWeekStartISO(new Date(y, m - 1, d));
-};
 
 export function StudentLessonNetClient({
   studentId,
@@ -217,7 +213,7 @@ export function StudentLessonNetClient({
     setError("");
     try {
       const savedDate = form.date;
-      await createQuestionSessionAction({
+      const result = await createQuestionSessionAction({
         studentId,
         lessonName: form.lessonName,
         date: savedDate,
@@ -227,9 +223,13 @@ export function StudentLessonNetClient({
         blank,
         note: form.note.trim(),
       });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
       setForm(emptyForm());
       setView("list");
-      const savedWeek = weekStartForDate(savedDate);
+      const savedWeek = getWeekStartForISO(savedDate);
       await loadWeeks();
       setSelectedWeek(savedWeek);
       loadSessions(savedWeek);

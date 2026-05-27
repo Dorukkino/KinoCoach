@@ -1,19 +1,38 @@
-/** Yerel saat diliminde YYYY-MM-DD (UTC kayması olmadan) */
-export function toLocalDateISO(d: Date = new Date()): string {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+/** Uygulama tarihleri Türkiye saati (Vercel UTC ortamında da doğru çalışır) */
+export const APP_TIMEZONE = "Europe/Istanbul";
+
+/** Seçilen saat diliminde YYYY-MM-DD */
+export function toLocalDateISO(
+  d: Date = new Date(),
+  timeZone = APP_TIMEZONE
+): string {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone }).format(d);
+}
+
+function weekdaySinceMonday(iso: string, timeZone = APP_TIMEZONE): number {
+  const ref = new Date(`${iso}T12:00:00+03:00`);
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+  }).format(ref);
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  const dow = map[weekday] ?? 1;
+  return dow === 0 ? 6 : dow - 1;
 }
 
 /** Bu haftanın Pazartesi günü (00:00 yerel) */
 export function getWeekStartDate(d: Date = new Date()): Date {
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
+  const iso = getWeekStartISO(d);
+  const [y, m, day] = iso.split("-").map(Number);
+  return new Date(y, m - 1, day);
 }
 
 /** Bu haftanın Pazar günü (Pazartesi + 6 gün) */
@@ -23,16 +42,30 @@ export function getWeekEndDate(d: Date = new Date()): Date {
   return sunday;
 }
 
-export function getWeekStartISO(d: Date = new Date()): string {
-  return toLocalDateISO(getWeekStartDate(d));
+export function getWeekStartISO(
+  d: Date = new Date(),
+  timeZone = APP_TIMEZONE
+): string {
+  const iso = toLocalDateISO(d, timeZone);
+  return addDaysISO(iso, -weekdaySinceMonday(iso, timeZone));
+}
+
+/** YYYY-MM-DD tarihinin ait olduğu haftanın Pazartesi günü */
+export function getWeekStartForISO(
+  iso: string,
+  timeZone = APP_TIMEZONE
+): string {
+  const normalized = iso.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return getWeekStartISO();
+  return addDaysISO(normalized, -weekdaySinceMonday(normalized, timeZone));
 }
 
 export function getWeekEndISO(d: Date = new Date()): string {
-  return toLocalDateISO(getWeekEndDate(d));
+  return addDaysISO(getWeekStartISO(d), 6);
 }
 
-export function todayLocalISO(): string {
-  return toLocalDateISO();
+export function todayLocalISO(timeZone = APP_TIMEZONE): string {
+  return toLocalDateISO(new Date(), timeZone);
 }
 
 /** YYYY-MM-DD → GG/AA/YYYY */
