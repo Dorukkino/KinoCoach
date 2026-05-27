@@ -72,7 +72,7 @@ export function StudentWeeklyTab({
   useSupabaseTableRealtime({
     channelName: `weekly-programs-${studentId}`,
     table: "weekly_programs",
-    pollIntervalMs: role === "student" ? 3000 : undefined,
+    pollIntervalMs: 3000,
     onChange: refreshWeeklyProgram,
   });
 

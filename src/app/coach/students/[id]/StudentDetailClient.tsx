@@ -11,6 +11,7 @@ import { StudentWeeklyTab } from "./tabs/StudentWeeklyTab";
 import { StudentExamsTab } from "./tabs/StudentExamsTab";
 import { StudentNotesTab } from "./tabs/StudentNotesTab";
 import { StudentLessonNetClient } from "@/app/student/lesson-nets/StudentLessonNetClient";
+import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 
 const TABS = [
   ["overview", "Genel Bakış"],
@@ -71,6 +72,18 @@ export function StudentDetailClient({ student }: { student: StudentDetailDto }) 
 
   return (
     <div className="screen">
+      <RealtimeRouteRefresh
+        channelPrefix={`coach-student-detail-${student.id}`}
+        tables={[
+          "weekly_programs",
+          "exam_results",
+          "question_sessions",
+          "coach_notes",
+          "motivation_messages",
+          "students",
+          "coaching_engagements",
+        ]}
+      />
       <Link href="/coach/students" className="text-sm text-[var(--muted)] mb-4 inline-block">
         ← Öğrencilerim
       </Link>

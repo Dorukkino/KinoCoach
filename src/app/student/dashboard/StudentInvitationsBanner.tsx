@@ -29,6 +29,7 @@ export function StudentInvitationsBanner({
   useSupabaseTableRealtime({
     channelName: "student-invitations",
     table: "coaching_invitations",
+    pollIntervalMs: 5000,
     onChange: refreshInvitations,
   });
 

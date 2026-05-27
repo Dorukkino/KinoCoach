@@ -13,6 +13,7 @@ export function CoachDashboardRealtime() {
   useSupabaseTableRealtime({
     channelName: "coach-dashboard-engagements",
     table: "coaching_engagements",
+    pollIntervalMs: 5000,
     onChange: refreshDashboard,
   });
 

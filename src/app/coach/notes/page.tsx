@@ -1,6 +1,7 @@
 import { listCoachNotesAction } from "@/app/actions/notes";
 import Link from "next/link";
 import { UserAvatar } from "@/presentation/components/ui/UserAvatar";
+import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 
 function truncateNote(note: string, max = 120) {
   const trimmed = note.trim();
@@ -14,6 +15,10 @@ export default async function CoachNotesPage() {
 
   return (
     <div className="screen">
+      <RealtimeRouteRefresh
+        channelPrefix="coach-notes"
+        tables={["coach_notes", "students", "coaching_engagements"]}
+      />
       <div className="page-head">
         <div className="page-title">
           <h1>Notlar</h1>

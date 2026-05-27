@@ -1,6 +1,7 @@
 import { createServerContainer } from "@/infrastructure/di/container";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 
 export default async function CoachWeeklyPage() {
   const c = await createServerContainer();
@@ -10,6 +11,10 @@ export default async function CoachWeeklyPage() {
 
   return (
     <div className="screen">
+      <RealtimeRouteRefresh
+        channelPrefix="coach-weekly"
+        tables={["weekly_programs", "students", "coaching_engagements"]}
+      />
       <div className="page-head">
         <div className="page-title">
           <h1>Haftalık Program</h1>

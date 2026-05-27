@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MessageDto } from "@/application/dto";
 import { listMessagesAction, sendMessageAction } from "@/app/actions/messages";
-import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { formatChatTimestamp } from "@/lib/dates";
+import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 export function ChatPanel({
   otherUserId,
@@ -22,31 +22,31 @@ export function ChatPanel({
   const [messages, setMessages] = useState<MessageDto[]>([]);
   const [text, setText] = useState("");
   const [pending, startTransition] = useTransition();
+  const onLastMessageRef = useRef(onLastMessage);
 
-  const load = () => {
+  useEffect(() => {
+    onLastMessageRef.current = onLastMessage;
+  }, [onLastMessage]);
+
+  const load = useCallback(() => {
     startTransition(async () => {
       const list = await listMessagesAction(otherUserId);
       setMessages(list);
       const last = list[list.length - 1];
-      if (last) onLastMessage?.(otherUserId, last.content, last.createdAt);
+      if (last) onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
     });
-  };
+  }, [otherUserId, startTransition]);
 
   useEffect(() => {
     load();
-    const supabase = createSupabaseBrowserClient();
-    const channel = supabase
-      .channel("chat")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        () => load()
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [otherUserId]);
+  }, [load]);
+
+  useSupabaseTableRealtime({
+    channelName: `chat-${otherUserId}`,
+    table: "messages",
+    pollIntervalMs: 3000,
+    onChange: load,
+  });
 
   const send = () => {
     if (!text.trim()) return;

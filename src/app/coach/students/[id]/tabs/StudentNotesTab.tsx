@@ -23,6 +23,7 @@ export function StudentNotesTab({ studentId }: { studentId: string }) {
     channelName: `coach-notes-${studentId}`,
     table: "coach_notes",
     filter: `student_id=eq.${studentId}`,
+    pollIntervalMs: 5000,
     onChange: load,
   });
 

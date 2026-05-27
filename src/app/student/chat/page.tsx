@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 import { redirect } from "next/navigation";
 import { StudentChatClient } from "./StudentChatClient";
 import { getLastMessageTimestampsAction } from "@/app/actions/messages";
+import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 
 async function fetchCoachName(coachId: string): Promise<string> {
   try {
@@ -32,6 +33,10 @@ export default async function StudentChatPage() {
   if (!activeEngagement) {
     return (
       <div className="screen">
+        <RealtimeRouteRefresh
+          channelPrefix="student-chat-empty"
+          tables={["coaching_engagements", "messages"]}
+        />
         <div className="page-head">
           <div className="page-title">
             <h1>Chat</h1>
@@ -53,6 +58,10 @@ export default async function StudentChatPage() {
 
   return (
     <div className="screen">
+      <RealtimeRouteRefresh
+        channelPrefix="student-chat"
+        tables={["messages", "coaching_engagements"]}
+      />
       <div className="page-head">
         <div className="page-title">
           <h1>Chat</h1>

@@ -2,6 +2,7 @@ import { createServerContainer } from "@/infrastructure/di/container";
 import { redirect } from "next/navigation";
 import { CoachChatClient } from "./CoachChatClient";
 import { getLastMessageTimestampsAction } from "@/app/actions/messages";
+import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 
 export default async function CoachChatPage({
   searchParams,
@@ -36,6 +37,10 @@ export default async function CoachChatPage({
 
   return (
     <div className="screen">
+      <RealtimeRouteRefresh
+        channelPrefix="coach-chat"
+        tables={["messages", "coaching_engagements", "students"]}
+      />
       <div className="page-head">
         <div className="page-title">
           <h1>Chat</h1>

@@ -48,6 +48,7 @@ export function StudentsPageClient({
   useSupabaseTableRealtime({
     channelName: "coach-students-engagements",
     table: "coaching_engagements",
+    pollIntervalMs: 5000,
     onChange: refreshStudents,
   });
 
