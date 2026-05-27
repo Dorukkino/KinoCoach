@@ -13,6 +13,7 @@ export function StudentDashboardRealtime() {
   useSupabaseTableRealtime({
     channelName: "student-dashboard-weekly",
     table: "weekly_programs",
+    pollIntervalMs: 5000,
     onChange: refreshDashboard,
   });
 

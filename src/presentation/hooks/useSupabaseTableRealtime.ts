@@ -8,6 +8,7 @@ interface UseSupabaseTableRealtimeOptions {
   table: string;
   filter?: string;
   enabled?: boolean;
+  pollIntervalMs?: number;
   onChange: () => void;
 }
 
@@ -16,6 +17,7 @@ export function useSupabaseTableRealtime({
   table,
   filter,
   enabled = true,
+  pollIntervalMs,
   onChange,
 }: UseSupabaseTableRealtimeOptions) {
   useEffect(() => {
@@ -35,9 +37,16 @@ export function useSupabaseTableRealtime({
         onChange
       )
       .subscribe();
+    const interval =
+      pollIntervalMs && pollIntervalMs > 0
+        ? window.setInterval(() => {
+            if (document.visibilityState === "visible") onChange();
+          }, pollIntervalMs)
+        : null;
 
     return () => {
+      if (interval) window.clearInterval(interval);
       void supabase.removeChannel(channel);
     };
-  }, [channelName, enabled, filter, onChange, table]);
+  }, [channelName, enabled, filter, onChange, pollIntervalMs, table]);
 }
