@@ -8,6 +8,7 @@ import { formatChatTimestamp } from "@/lib/dates";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 export function ChatPanel({
+  currentUserId,
   otherUserId,
   otherUserName,
   profileHref,
@@ -73,18 +74,43 @@ export function ChatPanel({
   }, [initialMessages, load, otherUserId]);
 
   useSupabaseTableRealtime({
-    channelName: `chat-${otherUserId}`,
+    channelName: `chat-${currentUserId}-${otherUserId}`,
     table: "messages",
-    pollIntervalMs: 3000,
+    filter: `receiver_id=eq.${currentUserId}`,
+    debounceMs: 250,
     onChange: load,
   });
 
   const send = () => {
-    if (!text.trim()) return;
+    const content = text.trim();
+    if (!content || pending) return;
+
+    const optimisticId = `pending-${Date.now()}`;
+    const optimistic: MessageDto = {
+      id: optimisticId,
+      senderId: currentUserId,
+      receiverId: otherUserId,
+      content,
+      createdAt: new Date().toISOString(),
+      attachmentUrl: null,
+      isMine: true,
+    };
+
+    setText("");
+    setMessages((prev) => [...prev, optimistic]);
+    onLastMessageRef.current?.(otherUserId, content, optimistic.createdAt);
+
     startTransition(async () => {
-      await sendMessageAction(otherUserId, text.trim());
-      setText("");
-      load();
+      try {
+        const saved = await sendMessageAction(otherUserId, content);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimisticId ? saved : m))
+        );
+        onLastMessageRef.current?.(otherUserId, saved.content, saved.createdAt);
+      } catch {
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        setText(content);
+      }
     });
   };
 

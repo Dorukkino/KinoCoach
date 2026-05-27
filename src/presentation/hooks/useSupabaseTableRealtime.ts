@@ -8,6 +8,8 @@ interface UseSupabaseTableRealtimeOptions {
   table: string;
   filter?: string;
   enabled?: boolean;
+  /** Rapid-fire event'leri birleştirme süresi (ms). Varsayılan: 1000 */
+  debounceMs?: number;
   /** @deprecated Polling kaldırıldı — sadece realtime event'ler kullanılır */
   pollIntervalMs?: number;
   onChange: () => void;
@@ -22,6 +24,7 @@ export function useSupabaseTableRealtime({
   table,
   filter,
   enabled = true,
+  debounceMs = 1000,
   onChange,
 }: UseSupabaseTableRealtimeOptions) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,7 +42,7 @@ export function useSupabaseTableRealtime({
         if (document.visibilityState === "visible") {
           onChangeRef.current();
         }
-      }, 1000);
+      }, debounceMs);
     };
 
     const channel = supabase
@@ -60,5 +63,5 @@ export function useSupabaseTableRealtime({
       if (debounceRef.current) clearTimeout(debounceRef.current);
       void supabase.removeChannel(channel);
     };
-  }, [channelName, enabled, filter, table]);
+  }, [channelName, debounceMs, enabled, filter, table]);
 }
