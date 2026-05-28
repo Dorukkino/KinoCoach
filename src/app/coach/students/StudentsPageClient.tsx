@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/students";
 import { Icons } from "@/presentation/components/icons";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
+import { useCoachClientCache } from "@/presentation/providers/CoachClientCacheProvider";
 import type { CoachStudentRowDto } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
 import type { ArchivedStudentRowDto } from "@/application/use-cases/ListArchivedStudentsForCoachUseCase";
 
@@ -22,6 +23,7 @@ export function StudentsPageClient({
   initialArchived: ArchivedStudentRowDto[];
 }) {
   const router = useRouter();
+  const { setStudents, patchActiveStudents } = useCoachClientCache();
   const [activeTab, setActiveTab] = useState<Tab>("active");
   const [active, setActive] = useState(initialActive);
   const [archived, setArchived] = useState(initialArchived);
@@ -35,11 +37,9 @@ export function StudentsPageClient({
 
   useEffect(() => {
     setActive(initialActive);
-  }, [initialActive]);
-
-  useEffect(() => {
     setArchived(initialArchived);
-  }, [initialArchived]);
+    setStudents({ active: initialActive, archived: initialArchived });
+  }, [initialActive, initialArchived, setStudents]);
 
   const refreshStudents = useCallback(() => {
     router.refresh();
@@ -117,6 +117,9 @@ export function StudentsPageClient({
       try {
         await endEngagementAction(engagementId);
         setActive((prev) => prev.filter((s) => s.engagementId !== engagementId));
+        patchActiveStudents((prev) =>
+          prev.filter((s) => s.engagementId !== engagementId)
+        );
         router.refresh();
       } catch (err) {
         alert(

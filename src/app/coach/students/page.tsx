@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { StudentsPageContent } from "./StudentsPageContent";
-import { StudentsListSkeleton } from "@/presentation/components/skeletons";
+import { StudentsCachedFallback } from "./StudentsCachedFallback";
 
 export default function CoachStudentsPage() {
   return (
-    <Suspense fallback={<StudentsListSkeleton />}>
+    <Suspense fallback={<StudentsCachedFallback />}>
       <StudentsPageContent />
     </Suspense>
   );

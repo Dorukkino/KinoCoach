@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Sidebar } from "./Sidebar";
 import { signOutAction } from "@/app/actions/auth";
 import { NotificationBell } from "@/presentation/components/notifications/NotificationBell";
+import { CoachClientCacheProvider } from "@/presentation/providers/CoachClientCacheProvider";
 
 export function AppShell({
   role,
@@ -31,7 +32,7 @@ export function AppShell({
     });
   };
 
-  return (
+  const shell = (
     <div className="app" data-collapsed={collapsed}>
       <Sidebar
         role={role}
@@ -59,4 +60,6 @@ export function AppShell({
       </div>
     </div>
   );
+
+  return <CoachClientCacheProvider>{shell}</CoachClientCacheProvider>;
 }

@@ -39,6 +39,7 @@ export function ChatPanel({
   const onThreadReadRef = useRef(onThreadRead);
   const threadRef = useRef<HTMLDivElement>(null);
   const hasScrolledInitially = useRef(false);
+  const markReadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = threadRef.current;
@@ -60,10 +61,31 @@ export function ChatPanel({
     hasScrolledInitially.current = false;
   }, [otherUserId]);
 
-  const markCurrentThreadRead = useCallback(async () => {
-    await markThreadMessagesReadAction(otherUserId);
-    onThreadReadRef.current?.(otherUserId);
+  const markCurrentThreadRead = useCallback(() => {
+    if (markReadTimeoutRef.current) {
+      clearTimeout(markReadTimeoutRef.current);
+    }
+
+    markReadTimeoutRef.current = setTimeout(() => {
+      markReadTimeoutRef.current = null;
+      void markThreadMessagesReadAction(otherUserId)
+        .then(() => {
+          onThreadReadRef.current?.(otherUserId);
+        })
+        .catch(() => {
+          // Okundu bilgisi kritik yol değil; navigation veya mesaj yüklemeyi bekletmesin.
+        });
+    }, 600);
   }, [otherUserId]);
+
+  useEffect(() => {
+    return () => {
+      if (markReadTimeoutRef.current) {
+        clearTimeout(markReadTimeoutRef.current);
+        markReadTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!lastMessageId) return;
@@ -98,7 +120,7 @@ export function ChatPanel({
       });
       const last = list[list.length - 1];
       if (last) onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
-      await markCurrentThreadRead();
+      markCurrentThreadRead();
     });
   }, [currentUserId, markCurrentThreadRead, otherUserId, startTransition]);
 

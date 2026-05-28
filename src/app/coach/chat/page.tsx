@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 import { ChatPageSkeleton } from "@/presentation/components/skeletons";
 import { CoachChatContent } from "./CoachChatContent";
 
@@ -10,10 +9,6 @@ export default function CoachChatPage({
 }) {
   return (
     <div className="screen">
-      <RealtimeRouteRefresh
-        channelPrefix="coach-chat"
-        tables={["coaching_engagements", "students"]}
-      />
       <div className="page-head">
         <div className="page-title">
           <h1>Chat</h1>
