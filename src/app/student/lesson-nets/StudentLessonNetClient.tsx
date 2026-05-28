@@ -23,6 +23,7 @@ import {
 } from "@/lib/dates";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 const today = () => todayLocalISO();
 
@@ -78,6 +79,9 @@ export function StudentLessonNetClient({
   const [sessions, setSessions] = useState<QuestionSessionDto[]>(
     initialSessions ?? []
   );
+  const [sessionsLoading, setSessionsLoading] = useState(
+    initialSessions === undefined
+  );
   const [lessons, setLessons] = useState<CoachLesson[]>([]);
   const [view, setView] = useState<View>("list");
   const [form, setForm] = useState<FormState>(emptyForm());
@@ -91,9 +95,14 @@ export function StudentLessonNetClient({
   const isPastWeek = selectedWeek < currentWeek;
   const effectiveReadOnly = readOnly || isPastWeek;
 
-  const loadSessions = useCallback((week: string) => {
+  const loadSessions = useCallback((week: string, showLoading = false) => {
+    if (showLoading) setSessionsLoading(true);
     startTransition(async () => {
-      setSessions(await listQuestionSessionsAction(studentId, week));
+      try {
+        setSessions(await listQuestionSessionsAction(studentId, week));
+      } finally {
+        setSessionsLoading(false);
+      }
     });
   }, [studentId, startTransition]);
 
@@ -117,14 +126,14 @@ export function StudentLessonNetClient({
       skipInitialSessionsFetch.current = false;
       return;
     }
-    loadSessions(selectedWeek);
+    loadSessions(selectedWeek, true);
     setView("list");
     setError("");
   }, [loadSessions, selectedWeek]);
 
   const refreshQuestionSessions = useCallback(() => {
     void loadWeeks();
-    loadSessions(selectedWeek);
+    loadSessions(selectedWeek, false);
   }, [loadSessions, loadWeeks, selectedWeek]);
 
   useSupabaseTableRealtime({
@@ -229,7 +238,7 @@ export function StudentLessonNetClient({
       const savedWeek = getWeekStartForISO(savedDate);
       await loadWeeks();
       setSelectedWeek(savedWeek);
-      loadSessions(savedWeek);
+      loadSessions(savedWeek, true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Bir hata oluştu.");
     } finally {
@@ -499,7 +508,7 @@ export function StudentLessonNetClient({
       )}
 
       {/* ── ÖZET KARTLARI ── */}
-      {sessions.length > 0 && (
+      {!sessionsLoading && sessions.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
           {Object.entries(summary).map(([lesson, s]) => (
             <div key={lesson} className="panel" style={{ padding: "14px 18px", minWidth: 160 }}>
@@ -517,15 +526,17 @@ export function StudentLessonNetClient({
       )}
 
       {/* ── KAYIT LİSTESİ ── */}
-      {sortedSessions.length === 0 && view === "list" ? (
+      {sessionsLoading && view === "list" ? (
+        <LoadingScreen className="panel" />
+      ) : sortedSessions.length === 0 && view === "list" ? (
         <div className="panel p-8 text-center text-sm text-[var(--muted)]">
           {effectiveReadOnly
             ? "Bu hafta için soru çözüm kaydı yok."
             : "Bu hafta henüz soru çözüm kaydı eklemediniz. Yukarıdaki butondan ekleyebilirsiniz."}
         </div>
       ) : sortedSessions.length > 0 ? (
-        <div className="panel overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="panel overflow-x-auto">
+          <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-[var(--muted)] bg-[var(--bg-elev)]">
                 <th className="p-3">Tarih</th>

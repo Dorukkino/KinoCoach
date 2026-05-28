@@ -3,7 +3,7 @@ import { SkeletonAvatar } from "../ui/SkeletonAvatar";
 
 export function StudentDetailSkeleton() {
   return (
-    <>
+    <div className="screen">
       <div className="flex items-center gap-4 mb-6">
         <SkeletonAvatar size={56} />
         <div className="flex flex-col gap-2">
@@ -21,6 +21,6 @@ export function StudentDetailSkeleton() {
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-20 w-full" />
       </div>
-    </>
+    </div>
   );
 }

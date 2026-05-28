@@ -111,7 +111,7 @@ export function StudentDetailClient({
       </Link>
       <header className="flex flex-wrap gap-4 items-start mb-6">
         <UserAvatar name={student.name} size={72} />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold m-0">{student.name}</h1>
             <span className={`status-pill s-${student.status}`}>
@@ -119,7 +119,7 @@ export function StudentDetailClient({
             </span>
           </div>
           {subtitleParts.length > 0 && (
-            <p className="text-sm text-[var(--muted)] mt-1">
+            <p className="text-sm text-[var(--muted)] mt-1 break-words">
               {subtitleParts.join(" · ")}
             </p>
           )}

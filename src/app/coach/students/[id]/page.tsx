@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { StudentDetailContent } from "./StudentDetailContent";
-import { StudentDetailSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function StudentDetailPage({
   params,
@@ -10,7 +10,13 @@ export default function StudentDetailPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   return (
-    <Suspense fallback={<StudentDetailSkeleton />}>
+    <Suspense
+      fallback={
+        <div className="screen">
+          <LoadingScreen />
+        </div>
+      }
+    >
       <StudentDetailPageInner params={params} searchParams={searchParams} />
     </Suspense>
   );

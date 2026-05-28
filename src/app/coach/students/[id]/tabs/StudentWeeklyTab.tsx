@@ -13,8 +13,8 @@ import {
 import { WeeklyProgramDto } from "@/application/dto";
 import { Grid7x10, TaskCell } from "@/domain/value-objects/Grid7x10";
 import { getWeekStartISO, mergeWeeksNearToday, sortWeeksNearToday } from "@/lib/dates";
-import { WeeklyGridSkeleton } from "@/presentation/components/skeletons/WeeklyGridSkeleton";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 interface PendingCell {
   row: number;
@@ -139,7 +139,7 @@ export function StudentWeeklyTab({
       </div>
 
       {!program ? (
-        <WeeklyGridSkeleton />
+        <LoadingScreen className="panel" />
       ) : (
         <WeeklyGrid
           grid={program.grid}

@@ -52,71 +52,73 @@ export function WeeklyGrid({
           </span>
         </div>
       </div>
-      <div className="weekly-grid">
-        <div className="wg-cell font-mono text-xs text-[var(--muted)]">#</div>
-        {DAY_LONG.map((d, i) => (
-          <div key={d} className="wg-cell font-semibold text-xs text-center bg-[var(--bg-elev)]">
-            <span className="hidden sm:inline">{d}</span>
-            <span className="sm:hidden">{DAYS[i]}</span>
-          </div>
-        ))}
-        {grid.map((row, r) => (
-          <React.Fragment key={`row-${r}`}>
-            <div className="wg-cell text-xs text-[var(--muted)] flex items-center justify-center">
-              {r + 1}
+      <div className="overflow-x-auto pb-2">
+        <div className="weekly-grid">
+          <div className="wg-cell font-mono text-xs text-[var(--muted)]">#</div>
+          {DAY_LONG.map((d, i) => (
+            <div key={d} className="wg-cell font-semibold text-xs text-center bg-[var(--bg-elev)]">
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{DAYS[i]}</span>
             </div>
-            {row.map((cell, c) => (
-              <div
-                key={`${r}-${c}`}
-                className="wg-cell"
-                style={cell ? cellStyle(cell.tone, cell.done) : undefined}
-              >
-                {cell ? (
-                  <button
-                    type="button"
-                    className="w-full h-full text-left"
-                    onClick={() => {
-                      if (role === "student" && !readOnly) onToggle?.(r, c);
-                      else if (role === "coach" && !readOnly) onEditCell?.(r, c, cell);
-                    }}
-                  >
-                    <div className="font-medium text-xs">{cell.title}</div>
-                    {cell.sub && (
-                      <div className="text-[10px] text-[var(--muted)]">{cell.sub}</div>
-                    )}
-                    {role === "student" && (
-                      <input
-                        type="checkbox"
-                        checked={cell.done}
-                        disabled={readOnly}
-                        onChange={() => {
-                          if (!readOnly) onToggle?.(r, c);
-                        }}
-                        className={`mt-1 ${readOnly ? "cursor-not-allowed" : "cursor-pointer"}`}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    )}
-                  </button>
-                ) : role === "coach" && !readOnly ? (
-                  <button
-                    type="button"
-                    className="w-full h-full text-[var(--muted-2)] text-xs"
-                    onClick={() =>
-                      onEditCell?.(r, c, {
-                        title: "",
-                        sub: "",
-                        tone: "#0d9488",
-                        done: false,
-                      })
-                    }
-                  >
-                    +
-                  </button>
-                ) : null}
+          ))}
+          {grid.map((row, r) => (
+            <React.Fragment key={`row-${r}`}>
+              <div className="wg-cell text-xs text-[var(--muted)] flex items-center justify-center">
+                {r + 1}
               </div>
-            ))}
-          </React.Fragment>
-        ))}
+              {row.map((cell, c) => (
+                <div
+                  key={`${r}-${c}`}
+                  className="wg-cell"
+                  style={cell ? cellStyle(cell.tone, cell.done) : undefined}
+                >
+                  {cell ? (
+                    <button
+                      type="button"
+                      className="w-full h-full text-left"
+                      onClick={() => {
+                        if (role === "student" && !readOnly) onToggle?.(r, c);
+                        else if (role === "coach" && !readOnly) onEditCell?.(r, c, cell);
+                      }}
+                    >
+                      <div className="font-medium text-xs">{cell.title}</div>
+                      {cell.sub && (
+                        <div className="text-[10px] text-[var(--muted)]">{cell.sub}</div>
+                      )}
+                      {role === "student" && (
+                        <input
+                          type="checkbox"
+                          checked={cell.done}
+                          disabled={readOnly}
+                          onChange={() => {
+                            if (!readOnly) onToggle?.(r, c);
+                          }}
+                          className={`mt-1 ${readOnly ? "cursor-not-allowed" : "cursor-pointer"}`}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
+                    </button>
+                  ) : role === "coach" && !readOnly ? (
+                    <button
+                      type="button"
+                      className="w-full h-full text-[var(--muted-2)] text-xs"
+                      onClick={() =>
+                        onEditCell?.(r, c, {
+                          title: "",
+                          sub: "",
+                          tone: "#0d9488",
+                          done: false,
+                        })
+                      }
+                    >
+                      +
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );

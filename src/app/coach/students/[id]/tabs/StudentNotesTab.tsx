@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/notes";
 import type { CoachNoteDto } from "@/application/dto";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export function StudentNotesTab({
   studentId,
@@ -19,14 +20,20 @@ export function StudentNotesTab({
 }) {
   const skipInitialLoad = useRef(initialNotes !== undefined);
   const [notes, setNotes] = useState<CoachNoteDto[]>(initialNotes ?? []);
+  const [loading, setLoading] = useState(initialNotes === undefined);
   const [newNote, setNewNote] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const load = useCallback(() => {
+  const load = useCallback((showLoading = false) => {
+    if (showLoading) setLoading(true);
     startTransition(async () => {
-      setNotes(await getCoachNoteAction(studentId));
+      try {
+        setNotes(await getCoachNoteAction(studentId));
+      } finally {
+        setLoading(false);
+      }
     });
   }, [studentId, startTransition]);
 
@@ -35,7 +42,7 @@ export function StudentNotesTab({
       skipInitialLoad.current = false;
       return;
     }
-    load();
+    load(true);
   }, [load]);
 
   useSupabaseTableRealtime({
@@ -43,7 +50,7 @@ export function StudentNotesTab({
     table: "coach_notes",
     filter: `student_id=eq.${studentId}`,
     pollIntervalMs: 5000,
-    onChange: load,
+    onChange: () => load(false),
   });
 
   const createNote = () => {
@@ -118,7 +125,9 @@ export function StudentNotesTab({
         </div>
       </div>
 
-      {notes.length === 0 ? (
+      {loading ? (
+        <LoadingScreen className="panel" />
+      ) : notes.length === 0 ? (
         <div className="panel p-8 text-center text-sm text-[var(--muted)]">
           Bu öğrenci için henüz not eklenmedi.
         </div>

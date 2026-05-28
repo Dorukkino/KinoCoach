@@ -14,6 +14,7 @@ import { ExamScores } from "@/domain/value-objects/ExamScores";
 import { sortByDateAsc, sortByDateNearToday } from "@/lib/dates";
 import { DateInputTR } from "@/presentation/components/ui/DateInputTR";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 const chartService = new ChartDataService();
 
@@ -59,6 +60,7 @@ export function StudentExamsTab({
 }) {
   const skipInitialLoad = useRef(initialRows !== undefined);
   const [rows, setRows] = useState<ExamResultDto[]>(initialRows ?? []);
+  const [loading, setLoading] = useState(initialRows === undefined);
   const [subject, setSubject] = useState<"total" | "turkish" | "math" | "science" | "social" | "english">("total");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<AddFormState>(emptyForm());
@@ -67,9 +69,14 @@ export function StudentExamsTab({
   const [, startTransition] = useTransition();
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback((showLoading = false) => {
+    if (showLoading) setLoading(true);
     startTransition(async () => {
-      setRows(await listExamResultsAction(studentId));
+      try {
+        setRows(await listExamResultsAction(studentId));
+      } finally {
+        setLoading(false);
+      }
     });
   }, [studentId, startTransition]);
 
@@ -78,7 +85,7 @@ export function StudentExamsTab({
       skipInitialLoad.current = false;
       return;
     }
-    load();
+    load(true);
   }, [load]);
 
   useSupabaseTableRealtime({
@@ -86,7 +93,7 @@ export function StudentExamsTab({
     table: "exam_results",
     filter: `student_id=eq.${studentId}`,
     pollIntervalMs: 5000,
-    onChange: load,
+    onChange: () => load(false),
   });
 
   useEffect(() => {
@@ -135,7 +142,7 @@ export function StudentExamsTab({
       await createExamResultAction(studentId, form.date, { turkish, math, science, social, english }, form.note);
       setForm(emptyForm());
       setShowForm(false);
-      load();
+      load(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Bir hata oluştu.");
     } finally {
@@ -350,6 +357,10 @@ export function StudentExamsTab({
       )}
 
       {/* Grafik */}
+      {loading ? (
+        <LoadingScreen className="panel" />
+      ) : (
+        <>
       {chartRows.length > 0 && (
         <div className="panel p-4 mb-4">
           <ExamLineChart data={chart.points} />
@@ -362,8 +373,8 @@ export function StudentExamsTab({
           Henüz deneme sonucu eklenmedi.
         </div>
       ) : (
-        <div className="panel overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="panel overflow-x-auto">
+          <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-[var(--muted)] bg-[var(--bg-elev)]">
                 <th className="p-3">Tarih</th>
@@ -409,6 +420,8 @@ export function StudentExamsTab({
             </tbody>
           </table>
         </div>
+      )}
+        </>
       )}
     </div>
   );
