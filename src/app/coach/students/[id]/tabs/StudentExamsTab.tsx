@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition, useMemo } from "react";
-import { listExamResultsAction, createExamResultAction } from "@/app/actions/exams";
+import {
+  listExamResultsAction,
+  createExamResultAction,
+  deleteExamResultAction,
+} from "@/app/actions/exams";
 import { ExamResultDto } from "@/application/dto";
 import { ExamLineChart } from "@/presentation/components/charts/ExamLineChart";
 import { ChartDataService } from "@/application/services/ChartDataService";
@@ -91,6 +95,19 @@ export function StudentExamsTab({
 
   const set = (field: keyof AddFormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleDelete = async (id: string) => {
+    if (role !== "student") return;
+    if (!confirm("Bu deneme sonucunu silmek istiyor musunuz?")) return;
+    startTransition(async () => {
+      try {
+        await deleteExamResultAction(id);
+        setRows((prev) => prev.filter((r) => r.id !== id));
+      } catch (e) {
+        alert(e instanceof Error ? e.message : "Silinemedi.");
+      }
+    });
+  };
 
   const handleSubmit = async () => {
     const turkish = parseFloat(form.turkish);
@@ -359,6 +376,7 @@ export function StudentExamsTab({
                 )}
                 <th className="p-3 font-bold">Toplam</th>
                 <th className="p-3">Not</th>
+                {role === "student" && <th className="p-3"></th>}
               </tr>
             </thead>
             <tbody>
@@ -374,6 +392,18 @@ export function StudentExamsTab({
                   )}
                   <td className="p-3 font-semibold">{r.total}</td>
                   <td className="p-3 text-[var(--muted)]">{r.note || "—"}</td>
+                  {role === "student" && (
+                    <td className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(r.id)}
+                        style={{ color: "var(--muted-2)", fontSize: 16, lineHeight: 1 }}
+                        title="Sil"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

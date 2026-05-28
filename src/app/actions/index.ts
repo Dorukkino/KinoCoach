@@ -23,7 +23,11 @@ export {
   listWeeklyWeekStartsAction,
 } from "./weekly";
 
-export { listExamResultsAction, createExamResultAction } from "./exams";
+export {
+  listExamResultsAction,
+  createExamResultAction,
+  deleteExamResultAction,
+} from "./exams";
 
 export { listMessagesAction, sendMessageAction } from "./messages";
 
