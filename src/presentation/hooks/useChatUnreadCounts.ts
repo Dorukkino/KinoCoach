@@ -7,6 +7,11 @@ import {
 } from "@/app/actions/messages";
 import { useSupabaseTableRealtime } from "./useSupabaseTableRealtime";
 
+type MessageRealtimePayload = {
+  eventType?: string;
+  new?: Record<string, unknown>;
+};
+
 export function useChatUnreadCount(userId: string) {
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -19,12 +24,30 @@ export function useChatUnreadCount(userId: string) {
     void reload();
   }, [reload]);
 
+  const handleRealtimeChange = useCallback(
+    (payload?: MessageRealtimePayload) => {
+      const row = payload?.new;
+      if (
+        payload?.eventType === "INSERT" &&
+        row &&
+        String(row.receiver_id) === userId &&
+        row.read_at == null
+      ) {
+        setUnreadCount((count) => count + 1);
+        return;
+      }
+
+      void reload();
+    },
+    [reload, userId]
+  );
+
   useSupabaseTableRealtime({
     channelName: `chat-unread-${userId}`,
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
     debounceMs: 0,
-    onChange: reload,
+    onChange: handleRealtimeChange,
   });
 
   return { unreadCount, reload };
@@ -42,12 +65,34 @@ export function useChatUnreadCountsBySender(userId: string) {
     void reload();
   }, [reload]);
 
+  const handleRealtimeChange = useCallback(
+    (payload?: MessageRealtimePayload) => {
+      const row = payload?.new;
+      if (
+        payload?.eventType === "INSERT" &&
+        row &&
+        String(row.receiver_id) === userId &&
+        row.read_at == null
+      ) {
+        const senderId = String(row.sender_id);
+        setUnreadCounts((counts) => ({
+          ...counts,
+          [senderId]: (counts[senderId] ?? 0) + 1,
+        }));
+        return;
+      }
+
+      void reload();
+    },
+    [reload, userId]
+  );
+
   useSupabaseTableRealtime({
     channelName: `chat-unread-by-sender-${userId}`,
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
     debounceMs: 0,
-    onChange: reload,
+    onChange: handleRealtimeChange,
   });
 
   return { unreadCounts, reload };

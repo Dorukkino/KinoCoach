@@ -12,7 +12,7 @@ export default function CoachChatPage({
     <div className="screen">
       <RealtimeRouteRefresh
         channelPrefix="coach-chat"
-        tables={["messages", "coaching_engagements", "students"]}
+        tables={["coaching_engagements", "students"]}
       />
       <div className="page-head">
         <div className="page-title">

@@ -81,6 +81,42 @@ export function ChatPanel({
     });
   }, [markCurrentThreadRead, otherUserId, startTransition]);
 
+  const handleRealtimeMessage = useCallback(
+    (payload?: { eventType?: string; new?: Record<string, unknown> }) => {
+      const row = payload?.new;
+      if (!row || payload?.eventType !== "INSERT") {
+        load();
+        return;
+      }
+
+      const senderId = String(row.sender_id ?? "");
+      const receiverId = String(row.receiver_id ?? "");
+      if (senderId !== otherUserId || receiverId !== currentUserId) return;
+
+      const incoming: MessageDto = {
+        id: String(row.id),
+        senderId,
+        receiverId,
+        content: String(row.content ?? ""),
+        createdAt: String(row.created_at),
+        attachmentUrl: row.attachment_url ? String(row.attachment_url) : null,
+        isMine: false,
+      };
+
+      setMessages((prev) => {
+        if (prev.some((message) => message.id === incoming.id)) return prev;
+        return [...prev, incoming];
+      });
+      onLastMessageRef.current?.(
+        otherUserId,
+        incoming.content,
+        incoming.createdAt
+      );
+      void markCurrentThreadRead();
+    },
+    [currentUserId, load, markCurrentThreadRead, otherUserId]
+  );
+
   useEffect(() => {
     if (skipInitialLoad.current) {
       skipInitialLoad.current = false;
@@ -99,7 +135,7 @@ export function ChatPanel({
     table: "messages",
     filter: `receiver_id=eq.${currentUserId}`,
     debounceMs: 0,
-    onChange: load,
+    onChange: handleRealtimeMessage,
   });
 
   const send = () => {

@@ -8,7 +8,7 @@ export default function StudentChatPage() {
     <div className="screen">
       <RealtimeRouteRefresh
         channelPrefix="student-chat"
-        tables={["messages", "coaching_engagements"]}
+        tables={["coaching_engagements"]}
       />
       <div className="page-head">
         <div className="page-title">

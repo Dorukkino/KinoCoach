@@ -3,6 +3,12 @@
 import { useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 
+type RealtimePayload = {
+  eventType?: string;
+  new?: Record<string, unknown>;
+  old?: Record<string, unknown>;
+};
+
 interface UseSupabaseTableRealtimeOptions {
   channelName: string;
   table: string;
@@ -12,7 +18,8 @@ interface UseSupabaseTableRealtimeOptions {
   debounceMs?: number;
   /** @deprecated Polling kaldırıldı — sadece realtime event'ler kullanılır */
   pollIntervalMs?: number;
-  onChange: () => void;
+  reloadOnVisible?: boolean;
+  onChange: (payload?: RealtimePayload) => void;
 }
 
 /**
@@ -25,6 +32,7 @@ export function useSupabaseTableRealtime({
   filter,
   enabled = true,
   debounceMs = 1000,
+  reloadOnVisible = true,
   onChange,
 }: UseSupabaseTableRealtimeOptions) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,19 +44,19 @@ export function useSupabaseTableRealtime({
 
     const supabase = createSupabaseBrowserClient();
 
-    const debouncedOnChange = () => {
+    const runWhenVisible = (payload?: RealtimePayload) => {
+      if (document.visibilityState === "visible") {
+        onChangeRef.current(payload);
+      }
+    };
+
+    const debouncedOnChange = (payload: RealtimePayload) => {
       if (debounceMs <= 0) {
-        if (document.visibilityState === "visible") {
-          onChangeRef.current();
-        }
+        runWhenVisible(payload);
         return;
       }
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        if (document.visibilityState === "visible") {
-          onChangeRef.current();
-        }
-      }, debounceMs);
+      debounceRef.current = setTimeout(() => runWhenVisible(payload), debounceMs);
     };
 
     const channel = supabase
@@ -65,9 +73,18 @@ export function useSupabaseTableRealtime({
       )
       .subscribe();
 
+    const handleVisibilityChange = () => {
+      if (reloadOnVisible && document.visibilityState === "visible") {
+        onChangeRef.current();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);
     };
-  }, [channelName, debounceMs, enabled, filter, table]);
+  }, [channelName, debounceMs, enabled, filter, reloadOnVisible, table]);
 }
