@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { Icons, NavIconKey } from "../icons";
 import { useChatUnreadCount } from "@/presentation/hooks/useChatUnreadCounts";
-import { useCoachClientCache } from "@/presentation/providers/CoachClientCacheProvider";
+import { useOptionalCoachClientCache } from "@/presentation/providers/CoachClientCacheProvider";
 
 interface NavItem {
   id: string;
@@ -142,7 +142,7 @@ export function Sidebar({
   const router = useRouter();
   const nav = role === "coach" ? COACH_NAV : STUDENT_NAV;
   const { unreadCount: chatUnreadCount } = useChatUnreadCount(userId);
-  const { prefetchStudents } = useCoachClientCache();
+  const { prefetchStudents } = useOptionalCoachClientCache();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
   const isChatRoute = role === "coach" && pathname.startsWith("/coach/chat");
 

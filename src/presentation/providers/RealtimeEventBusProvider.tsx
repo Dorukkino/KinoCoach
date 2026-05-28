@@ -52,7 +52,9 @@ export function RealtimeEventBusProvider({
   > | null>(null);
 
   const subscribe = useCallback((subscription: Omit<Subscription, "id">) => {
-    const id = crypto.randomUUID();
+    const id =
+      globalThis.crypto?.randomUUID?.() ??
+      `sub-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     subscriptionsRef.current.set(id, { ...subscription, id });
     return () => {
       subscriptionsRef.current.delete(id);

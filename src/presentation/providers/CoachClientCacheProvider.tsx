@@ -95,3 +95,17 @@ export function useCoachClientCache() {
   }
   return ctx;
 }
+
+export function useOptionalCoachClientCache() {
+  const ctx = useContext(CoachClientCacheContext);
+  return useMemo<CoachClientCacheContextValue>(
+    () =>
+      ctx ?? {
+        students: null,
+        setStudents: () => {},
+        patchActiveStudents: () => {},
+        prefetchStudents: async () => {},
+      },
+    [ctx]
+  );
+}
