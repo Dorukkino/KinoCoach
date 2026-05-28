@@ -41,7 +41,11 @@ export {
 
 export {
   getCoachDashboardAction,
+  getCoachDashboardStatsAction,
+  getCoachDashboardStudentsAction,
+  getCoachActivityFeedAction,
   getStudentDashboardAction,
+  getStudentDashboardWithInvitationsAction,
   getCurrentStudentRecordAction,
   getCurrentStudentActiveEngagementAction,
 } from "./dashboard";

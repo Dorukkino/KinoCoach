@@ -2,6 +2,16 @@
 
 import { useEffect, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
+import { useRealtimeEventBus } from "@/presentation/providers/RealtimeEventBusProvider";
+
+function matchesRealtimeFilter(
+  filter: string,
+  row: Record<string, unknown>
+): boolean {
+  const eqMatch = /^(\w+)=eq\.(.+)$/.exec(filter);
+  if (!eqMatch) return true;
+  return String(row[eqMatch[1]] ?? "") === eqMatch[2];
+}
 
 type RealtimePayload = {
   eventType?: string;
@@ -14,18 +24,12 @@ interface UseSupabaseTableRealtimeOptions {
   table: string;
   filter?: string;
   enabled?: boolean;
-  /** Rapid-fire event'leri birleştirme süresi (ms). Varsayılan: 1000 */
   debounceMs?: number;
-  /** Realtime bağlantısı düşerse F5 gerektirmeyen düşük frekanslı yedek yenileme. */
   pollIntervalMs?: number;
   reloadOnVisible?: boolean;
   onChange: (payload?: RealtimePayload) => void;
 }
 
-/**
- * Supabase Realtime subscription hook.
- * Rapid-fire event'leri 1 saniye debounce ile birleştirir.
- */
 export function useSupabaseTableRealtime({
   channelName,
   table,
@@ -39,11 +43,10 @@ export function useSupabaseTableRealtime({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const eventBus = useRealtimeEventBus();
 
   useEffect(() => {
     if (!enabled) return;
-
-    const supabase = createSupabaseBrowserClient();
 
     const runWhenVisible = (payload?: RealtimePayload) => {
       if (document.visibilityState === "visible") {
@@ -57,9 +60,28 @@ export function useSupabaseTableRealtime({
         return;
       }
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => runWhenVisible(payload), debounceMs);
+      debounceRef.current = setTimeout(
+        () => runWhenVisible(payload),
+        debounceMs
+      );
     };
 
+    if (eventBus) {
+      const unsubscribe = eventBus.subscribe({
+        table,
+        onChange: (payload) => {
+          const row = payload?.new ?? payload?.old;
+          if (filter && row && !matchesRealtimeFilter(filter, row)) return;
+          debouncedOnChange(payload ?? {});
+        },
+      });
+      return () => {
+        unsubscribe();
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+      };
+    }
+
+    const supabase = createSupabaseBrowserClient();
     const channel = supabase
       .channel(channelName)
       .on(
@@ -100,6 +122,7 @@ export function useSupabaseTableRealtime({
     channelName,
     debounceMs,
     enabled,
+    eventBus,
     filter,
     pollIntervalMs,
     reloadOnVisible,

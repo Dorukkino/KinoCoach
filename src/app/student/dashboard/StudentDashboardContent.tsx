@@ -1,23 +1,31 @@
-import { getStudentDashboardAction } from "@/app/actions/dashboard";
-import { listMyPendingInvitationsAction } from "@/app/actions/invitations";
 import Link from "next/link";
+import type { CoachingInvitationDto } from "@/application/dto";
 import { StudentInvitationsBanner } from "./StudentInvitationsBanner";
 import { StudentMotivationBanner } from "./StudentMotivationBanner";
+import type { MotivationCardDto } from "@/application/dto";
 
-export async function StudentDashboardContent() {
-  const [data, invitations] = await Promise.all([
-    getStudentDashboardAction(),
-    listMyPendingInvitationsAction(),
-  ]);
-  if (!data) return <div>Profil bulunamadı.</div>;
+export interface StudentDashboardData {
+  studentId: string;
+  name: string;
+  coachName: string | null;
+  motivation: MotivationCardDto | null;
+  hasActiveCoach: boolean;
+}
 
+export function StudentDashboardContent({
+  dashboard,
+  invitations,
+}: {
+  dashboard: StudentDashboardData;
+  invitations: CoachingInvitationDto[];
+}) {
   return (
     <>
-      <p className="text-lg font-semibold m-0 mb-4">Merhaba, {data.name}</p>
+      <p className="text-lg font-semibold m-0 mb-4">Merhaba, {dashboard.name}</p>
       <p className="text-sm text-[var(--muted)] m-0 mb-4">
-        {data.hasActiveCoach ? (
+        {dashboard.hasActiveCoach ? (
           <>
-            Koçun: <strong>{data.coachName}</strong>
+            Koçun: <strong>{dashboard.coachName}</strong>
           </>
         ) : (
           "Henüz aktif bir koçun yok."
@@ -26,7 +34,7 @@ export async function StudentDashboardContent() {
 
       <StudentInvitationsBanner invitations={invitations} />
 
-      {!data.hasActiveCoach && invitations.length === 0 && (
+      {!dashboard.hasActiveCoach && invitations.length === 0 && (
         <div className="panel p-6 mb-4 border-l-4 border-[var(--accent)]">
           <p className="font-semibold m-0 mb-1">Henüz bir koçun yok</p>
           <p className="text-sm text-[var(--muted)] m-0">
@@ -35,14 +43,14 @@ export async function StudentDashboardContent() {
         </div>
       )}
 
-      {data.hasActiveCoach && (
+      {dashboard.hasActiveCoach && (
         <StudentMotivationBanner
-          studentId={data.studentId}
-          initialMotivation={data.motivation}
+          studentId={dashboard.studentId}
+          initialMotivation={dashboard.motivation}
         />
       )}
 
-      {data.hasActiveCoach && (
+      {dashboard.hasActiveCoach && (
         <div className="flex gap-3 flex-wrap">
           <Link href="/student/chat" className="btn btn-outline">
             Koça mesaj

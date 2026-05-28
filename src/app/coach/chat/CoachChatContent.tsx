@@ -31,10 +31,10 @@ export async function CoachChatContent({
     ? sortedStudents.find((s) => s.id === selectedStudentId) ?? sortedStudents[0]
     : sortedStudents[0];
 
-  const initialMessages =
-    selected?.userId != null
+  const thread = selected?.userId != null
       ? await listMessagesAction(selected.userId)
       : undefined;
+  const initialMessages = thread?.messages;
 
   return (
     <CoachChatClient

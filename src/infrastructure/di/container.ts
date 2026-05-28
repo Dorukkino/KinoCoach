@@ -51,6 +51,7 @@ import { ListNotificationsForUserUseCase } from "@/application/use-cases/ListNot
 import { MarkNotificationAsReadUseCase } from "@/application/use-cases/MarkNotificationAsReadUseCase";
 import { DeleteNotificationUseCase } from "@/application/use-cases/DeleteNotificationUseCase";
 import { SendWeeklyReminderUseCase } from "@/application/use-cases/SendWeeklyReminderUseCase";
+import { SupabaseWeeklyReminderQuery } from "../queries/SupabaseWeeklyReminderQuery";
 import { CalculateStudentStatusService } from "@/application/services/CalculateStudentStatusService";
 import { ChartDataService } from "@/application/services/ChartDataService";
 import { DashboardStatsService } from "@/application/services/DashboardStatsService";
@@ -111,13 +112,10 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
   const markNotificationRead = new MarkNotificationAsReadUseCase(notifications);
   const deleteNotification = new DeleteNotificationUseCase(notifications);
   const sendWeeklyReminder =
-    sendNotification && adminEngagements && adminNotifications
+    sendNotification && admin
       ? new SendWeeklyReminderUseCase(
-          adminEngagements,
-          programs,
-          adminStudents ?? students,
-          sendNotification,
-          adminNotifications
+          new SupabaseWeeklyReminderQuery(admin),
+          sendNotification
         )
       : null;
 

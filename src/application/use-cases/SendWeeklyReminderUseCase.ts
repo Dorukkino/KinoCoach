@@ -1,76 +1,56 @@
-import { IEngagementRepository } from "../ports/IEngagementRepository";
-import { IWeeklyProgramRepository } from "../ports/IWeeklyProgramRepository";
-import { IStudentRepository } from "../ports/IStudentRepository";
-import { INotificationRepository } from "../ports/INotificationRepository";
 import { SendNotificationUseCase } from "./SendNotificationUseCase";
 import { NotificationType } from "@/domain/value-objects/NotificationType";
-import { getWeekStartISO, todayLocalISO } from "@/lib/dates";
-
-const COMPLETION_THRESHOLD = 30;
+import { SupabaseWeeklyReminderQuery } from "@/infrastructure/queries/SupabaseWeeklyReminderQuery";
+import { getBackgroundConcurrency } from "@/infrastructure/supabase/background";
 
 export class SendWeeklyReminderUseCase {
   constructor(
-    private readonly engagements: IEngagementRepository,
-    private readonly programs: IWeeklyProgramRepository,
-    private readonly students: IStudentRepository,
-    private readonly sendNotification: SendNotificationUseCase,
-    private readonly notifications: INotificationRepository
+    private readonly reminderQuery: SupabaseWeeklyReminderQuery,
+    private readonly sendNotification: SendNotificationUseCase
   ) {}
 
   async execute(): Promise<{ sent: number }> {
     if (!this.isMidWeekOrLater()) return { sent: 0 };
 
-    const weekStart = getWeekStartISO();
-    const weekStartDate = new Date(`${weekStart}T12:00:00+03:00`);
-    const activeEngagements = await this.engagements.findAllActive();
+    const weekStart = this.reminderQuery.currentWeekStart();
+    const candidates = await this.reminderQuery.fetchCandidates(weekStart);
+    if (candidates.length === 0) return { sent: 0 };
+
     let sent = 0;
+    const concurrency = getBackgroundConcurrency();
 
-    for (const engagement of activeEngagements) {
-      const student = await this.students.findById(engagement.studentId);
-      if (!student) continue;
-
-      const alreadySent = await this.notifications.existsByTypeAndMetadata(
-        student.userId,
-        NotificationType.WEEKLY_REMINDER,
-        "weekStart",
-        weekStart
+    for (let i = 0; i < candidates.length; i += concurrency) {
+      const batch = candidates.slice(i, i + concurrency);
+      const results = await Promise.all(
+        batch.map(async (candidate) => {
+          await this.sendNotification.execute({
+            userId: candidate.studentUserId,
+            title: "Haftalık program hatırlatması",
+            message:
+              "Bu haftaki programını henüz tamamlamadın. Görevlerini tamamlamayı unutma!",
+            type: NotificationType.WEEKLY_REMINDER,
+            metadata: {
+              weekStart,
+              studentId: candidate.studentId,
+              engagementId: candidate.engagementId,
+              href: "/student/weekly",
+            },
+          });
+          return true;
+        })
       );
-      if (alreadySent) continue;
-
-      const program = await this.programs.findByEngagementAndWeek(
-        engagement.id,
-        weekStartDate
-      );
-      const completionPercent = program?.completionRate().percent ?? 0;
-      if (completionPercent >= COMPLETION_THRESHOLD) continue;
-
-      await this.sendNotification.execute({
-        userId: student.userId,
-        title: "Haftalık program hatırlatması",
-        message:
-          "Bu haftaki programını henüz tamamlamadın. Görevlerini tamamlamayı unutma!",
-        type: NotificationType.WEEKLY_REMINDER,
-        metadata: {
-          weekStart,
-          studentId: student.id,
-          engagementId: engagement.id,
-          href: "/student/weekly",
-        },
-      });
-      sent += 1;
+      sent += results.filter(Boolean).length;
     }
 
     return { sent };
   }
 
-  /** Çarşamba ve sonrası (Pazartesi = 0) */
   private isMidWeekOrLater(): boolean {
-    const today = todayLocalISO();
-    const ref = new Date(`${today}T12:00:00+03:00`);
+    const today = new Date();
     const weekday = new Intl.DateTimeFormat("en-US", {
       timeZone: "Europe/Istanbul",
       weekday: "short",
-    }).format(ref);
+    }).format(today);
     const map: Record<string, number> = {
       Sun: 0,
       Mon: 1,

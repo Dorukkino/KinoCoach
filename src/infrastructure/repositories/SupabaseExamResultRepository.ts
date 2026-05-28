@@ -19,13 +19,14 @@ export class SupabaseExamResultRepository implements IExamResultRepository {
     return mapExamResultRow(data);
   }
 
-  async findByStudentId(studentId: string) {
+  async findByStudentId(studentId: string, limit = 100) {
     const { data, error } = await this.supabase
       .from("exam_results")
       .select("id, student_id, exam_date, scores_json, note, created_at")
       .eq("student_id", studentId)
       .order("exam_date", { ascending: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(limit);
     if (error || !data) return [];
     return [...data]
       .sort((a, b) => {

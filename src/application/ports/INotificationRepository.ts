@@ -13,6 +13,7 @@ export interface INotificationRepository {
   create(input: CreateNotificationInput): Promise<Notification>;
   findByUserId(userId: string, limit?: number): Promise<Notification[]>;
   countUnread(userId: string): Promise<number>;
+  countUnreadInApp(userId: string): Promise<number>;
   markAsRead(id: string, userId: string): Promise<void>;
   markAllAsRead(userId: string): Promise<void>;
   delete(id: string, userId: string): Promise<void>;

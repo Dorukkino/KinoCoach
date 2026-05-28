@@ -131,7 +131,7 @@ export function StudentLessonNetClient({
     channelName: `question-sessions-${studentId}`,
     table: "question_sessions",
     filter: `student_id=eq.${studentId}`,
-    pollIntervalMs: 5000,
+    debounceMs: 500,
     onChange: refreshQuestionSessions,
   });
 
@@ -139,7 +139,7 @@ export function StudentLessonNetClient({
     channelName: "coach-lessons",
     table: "coach_lessons",
     enabled: !readOnly,
-    pollIntervalMs: 10000,
+    debounceMs: 500,
     onChange: loadLessons,
   });
 

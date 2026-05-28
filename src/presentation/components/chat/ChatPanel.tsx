@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MessageDto } from "@/application/dto";
+import type { MessageThreadCursor } from "@/application/ports/IMessageRepository";
 import {
   listMessagesAction,
   markThreadMessagesReadAction,
@@ -10,6 +11,14 @@ import {
 } from "@/app/actions/messages";
 import { formatChatTimestamp } from "@/lib/dates";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
+
+const MAX_MESSAGES_IN_MEMORY = 200;
+const VIRTUAL_WINDOW = 120;
+
+function capMessages(list: MessageDto[]): MessageDto[] {
+  if (list.length <= MAX_MESSAGES_IN_MEMORY) return list;
+  return list.slice(list.length - MAX_MESSAGES_IN_MEMORY);
+}
 
 export function ChatPanel({
   currentUserId,
@@ -29,7 +38,14 @@ export function ChatPanel({
   initialMessages?: MessageDto[];
 }) {
   const skipInitialLoad = useRef(initialMessages !== undefined);
-  const [messages, setMessages] = useState<MessageDto[]>(initialMessages ?? []);
+  const [messages, setMessages] = useState<MessageDto[]>(
+    capMessages(initialMessages ?? [])
+  );
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<MessageThreadCursor | null>(
+    null
+  );
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [text, setText] = useState("");
   const [isLoading, startTransition] = useTransition();
   const [isSending, setIsSending] = useState(false);
@@ -40,6 +56,12 @@ export function ChatPanel({
   const threadRef = useRef<HTMLDivElement>(null);
   const hasScrolledInitially = useRef(false);
   const markReadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const visibleMessages =
+    messages.length > VIRTUAL_WINDOW
+      ? messages.slice(messages.length - VIRTUAL_WINDOW)
+      : messages;
+  const hiddenCount = messages.length - visibleMessages.length;
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = threadRef.current;
@@ -59,7 +81,10 @@ export function ChatPanel({
 
   useEffect(() => {
     hasScrolledInitially.current = false;
-  }, [otherUserId]);
+    setMessages(capMessages(initialMessages ?? []));
+    setHasMore(false);
+    setNextCursor(null);
+  }, [otherUserId, initialMessages]);
 
   const markCurrentThreadRead = useCallback(() => {
     if (markReadTimeoutRef.current) {
@@ -72,9 +97,7 @@ export function ChatPanel({
         .then(() => {
           onThreadReadRef.current?.(otherUserId);
         })
-        .catch(() => {
-          // Okundu bilgisi kritik yol değil; navigation veya mesaj yüklemeyi bekletmesin.
-        });
+        .catch(() => {});
     }, 600);
   }, [otherUserId]);
 
@@ -93,36 +116,84 @@ export function ChatPanel({
     hasScrolledInitially.current = true;
   }, [messages.length, lastMessageId, scrollToBottom]);
 
-  const load = useCallback(() => {
-    startTransition(async () => {
-      const list = await listMessagesAction(otherUserId);
-      setMessages((prev) => {
-        const pendingMessages = prev.filter(
-          (message) =>
-            message.id.startsWith("pending-") &&
-            message.senderId === currentUserId &&
-            message.receiverId === otherUserId &&
-            !list.some((saved) => {
-              const sentCloseTogether =
-                Math.abs(
-                  new Date(saved.createdAt).getTime() -
-                    new Date(message.createdAt).getTime()
-                ) < 30000;
-              return (
-                saved.senderId === message.senderId &&
-                saved.receiverId === message.receiverId &&
-                saved.content === message.content &&
-                sentCloseTogether
-              );
-            })
-        );
-        return [...list, ...pendingMessages];
+  const mergeThread = useCallback(
+    (list: MessageDto[], pendingMessages: MessageDto[]) => {
+      const merged = capMessages([...list, ...pendingMessages]);
+      return merged;
+    },
+    []
+  );
+
+  const load = useCallback(
+    (before?: MessageThreadCursor) => {
+      startTransition(async () => {
+        const result = await listMessagesAction(otherUserId, before);
+        setMessages((prev) => {
+          const pendingMessages = prev.filter(
+            (message) =>
+              message.id.startsWith("pending-") &&
+              message.senderId === currentUserId &&
+              message.receiverId === otherUserId &&
+              !result.messages.some((saved) => {
+                const sentCloseTogether =
+                  Math.abs(
+                    new Date(saved.createdAt).getTime() -
+                      new Date(message.createdAt).getTime()
+                  ) < 30000;
+                return (
+                  saved.senderId === message.senderId &&
+                  saved.receiverId === message.receiverId &&
+                  saved.content === message.content &&
+                  sentCloseTogether
+                );
+              })
+          );
+          if (before) {
+            return capMessages([...result.messages, ...prev]);
+          }
+          return mergeThread(result.messages, pendingMessages);
+        });
+        setHasMore(result.hasMore);
+        setNextCursor(result.nextCursor);
+        const last = result.messages[result.messages.length - 1];
+        if (last && !before) {
+          onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
+        }
+        if (!before) markCurrentThreadRead();
       });
-      const last = list[list.length - 1];
-      if (last) onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
-      markCurrentThreadRead();
-    });
-  }, [currentUserId, markCurrentThreadRead, otherUserId, startTransition]);
+    },
+    [currentUserId, markCurrentThreadRead, mergeThread, otherUserId, startTransition]
+  );
+
+  const loadOlder = useCallback(async () => {
+    if (!hasMore || !nextCursor || loadingOlder) return;
+    setLoadingOlder(true);
+    const el = threadRef.current;
+    const prevHeight = el?.scrollHeight ?? 0;
+    try {
+      const result = await listMessagesAction(otherUserId, nextCursor);
+      setMessages((prev) =>
+        capMessages([...result.messages, ...prev])
+      );
+      setHasMore(result.hasMore);
+      setNextCursor(result.nextCursor);
+      requestAnimationFrame(() => {
+        if (el) {
+          el.scrollTop = el.scrollHeight - prevHeight;
+        }
+      });
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [hasMore, loadingOlder, nextCursor, otherUserId]);
+
+  const handleThreadScroll = useCallback(() => {
+    const el = threadRef.current;
+    if (!el || loadingOlder) return;
+    if (el.scrollTop < 48 && hasMore) {
+      void loadOlder();
+    }
+  }, [hasMore, loadOlder, loadingOlder]);
 
   const handleRealtimeMessage = useCallback(
     (payload?: { eventType?: string; new?: Record<string, unknown> }) => {
@@ -136,19 +207,28 @@ export function ChatPanel({
       const receiverId = String(row.receiver_id ?? "");
       if (senderId !== otherUserId || receiverId !== currentUserId) return;
 
+      const incomingCreatedAt = String(row.created_at);
       const incoming: MessageDto = {
         id: String(row.id),
         senderId,
         receiverId,
         content: String(row.content ?? ""),
-        createdAt: String(row.created_at),
+        createdAt: incomingCreatedAt,
         attachmentUrl: row.attachment_url ? String(row.attachment_url) : null,
         isMine: false,
       };
 
       setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (
+          last &&
+          new Date(incomingCreatedAt).getTime() <
+            new Date(last.createdAt).getTime()
+        ) {
+          return prev;
+        }
         if (prev.some((message) => message.id === incoming.id)) return prev;
-        return [...prev, incoming];
+        return capMessages([...prev, incoming]);
       });
       onLastMessageRef.current?.(
         otherUserId,
@@ -201,7 +281,7 @@ export function ChatPanel({
     textRef.current = "";
     setText("");
     setSendError(null);
-    setMessages((prev) => [...prev, optimistic]);
+    setMessages((prev) => capMessages([...prev, optimistic]));
     onLastMessageRef.current?.(otherUserId, content, optimistic.createdAt);
 
     setIsSending(true);
@@ -239,8 +319,22 @@ export function ChatPanel({
           otherUserName
         )}
       </header>
-      <div ref={threadRef} className="chat-thread flex-1">
-        {messages.map((m) => (
+      <div
+        ref={threadRef}
+        className="chat-thread flex-1"
+        onScroll={handleThreadScroll}
+      >
+        {loadingOlder && (
+          <p className="text-xs text-center text-[var(--muted)] py-2 m-0">
+            Eski mesajlar yükleniyor…
+          </p>
+        )}
+        {hiddenCount > 0 && (
+          <p className="text-xs text-center text-[var(--muted)] py-2 m-0">
+            {hiddenCount} eski mesaj bellekte tutuluyor
+          </p>
+        )}
+        {visibleMessages.map((m) => (
           <div
             key={m.id}
             className={`chat-bubble ${m.isMine ? "mine" : "theirs"}`}

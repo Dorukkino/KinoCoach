@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { signOutAction } from "@/app/actions/auth";
 import { NotificationBell } from "@/presentation/components/notifications/NotificationBell";
 import { CoachClientCacheProvider } from "@/presentation/providers/CoachClientCacheProvider";
+import { RealtimeEventBusProvider } from "@/presentation/providers/RealtimeEventBusProvider";
 
 export function AppShell({
   role,
@@ -61,5 +62,15 @@ export function AppShell({
     </div>
   );
 
-  return <CoachClientCacheProvider>{shell}</CoachClientCacheProvider>;
+  const withRealtime = (
+    <RealtimeEventBusProvider userId={userId}>{shell}</RealtimeEventBusProvider>
+  );
+
+  if (role === "coach") {
+    return (
+      <CoachClientCacheProvider>{withRealtime}</CoachClientCacheProvider>
+    );
+  }
+
+  return withRealtime;
 }

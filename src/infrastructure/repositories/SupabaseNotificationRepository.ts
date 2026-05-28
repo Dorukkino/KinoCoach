@@ -3,7 +3,7 @@ import {
   CreateNotificationInput,
   INotificationRepository,
 } from "@/application/ports/INotificationRepository";
-import { NotificationTypeValue } from "@/domain/value-objects/NotificationType";
+import { NotificationTypeValue, NotificationType } from "@/domain/value-objects/NotificationType";
 import { mapNotificationRow } from "../supabase/mappers";
 
 const NOTIFICATION_COLUMNS =
@@ -46,6 +46,17 @@ export class SupabaseNotificationRepository implements INotificationRepository {
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("is_read", false);
+    if (error) return 0;
+    return count ?? 0;
+  }
+
+  async countUnreadInApp(userId: string) {
+    const { count, error } = await this.supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("is_read", false)
+      .neq("type", NotificationType.NEW_MESSAGE);
     if (error) return 0;
     return count ?? 0;
   }

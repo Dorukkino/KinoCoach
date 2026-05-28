@@ -25,23 +25,25 @@ export class SupabaseCoachNoteRepository implements ICoachNoteRepository {
     return mapCoachNoteRow(data);
   }
 
-  async findByEngagement(engagementId: string) {
+  async findByEngagement(engagementId: string, limit = 100) {
     const { data, error } = await this.supabase
       .from("coach_notes")
       .select(COACH_NOTE_COLUMNS)
       .eq("engagement_id", engagementId)
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      .limit(limit);
     if (error || !data) return [];
     return data.map(mapCoachNoteRow);
   }
 
-  async findByEngagementIds(engagementIds: string[]) {
+  async findByEngagementIds(engagementIds: string[], limit = 200) {
     if (engagementIds.length === 0) return [];
     const { data, error } = await this.supabase
       .from("coach_notes")
       .select(COACH_NOTE_COLUMNS)
       .in("engagement_id", engagementIds)
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      .limit(limit);
     if (error || !data) return [];
     return data.map((row) => {
       const note = mapCoachNoteRow(row);

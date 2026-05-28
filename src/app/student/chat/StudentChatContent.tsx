@@ -41,7 +41,7 @@ export async function StudentChatContent() {
   }
 
   const coachUserId = activeEngagement.coachId;
-  const [coachName, lastTimestamps, initialMessages] = await Promise.all([
+  const [coachName, lastTimestamps, thread] = await Promise.all([
     fetchCoachName(coachUserId),
     getLastMessageTimestampsAction([coachUserId]),
     listMessagesAction(coachUserId),
@@ -57,7 +57,7 @@ export async function StudentChatContent() {
         coachUserId={coachUserId}
         coachName={coachName}
         initialLastTimestamp={lastTimestamps[coachUserId]}
-        initialMessages={initialMessages}
+        initialMessages={thread.messages}
       />
     </>
   );

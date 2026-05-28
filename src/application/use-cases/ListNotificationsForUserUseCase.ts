@@ -22,9 +22,6 @@ export class ListNotificationsForUserUseCase {
   }
 
   async countUnread(userId: string): Promise<number> {
-    const list = await this.notifications.findByUserId(userId, 200);
-    return list.filter(
-      (n) => !n.isRead && !IN_APP_EXCLUDED_NOTIFICATION_TYPES.has(n.type)
-    ).length;
+    return this.notifications.countUnreadInApp(userId);
   }
 }

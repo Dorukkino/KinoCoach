@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { requireCoach } from "./lib";
 import { ensureCoachProfile } from "./ensureCoachProfile";
 import { createAdminContainer } from "@/infrastructure/di/container";
+import { measureAction } from "@/infrastructure/performance/measureAction";
 import {
   coachCacheTags,
   revalidateCoachDashboard,
@@ -96,8 +97,10 @@ export async function addStudentAction(input: {
 }
 
 export async function listActiveStudentsAction(): Promise<CoachStudentRowDto[]> {
-  const { session } = await requireCoach();
-  return getCachedActiveStudents(session.userId);
+  return measureAction("listActiveStudentsAction", async () => {
+    const { session } = await requireCoach();
+    return getCachedActiveStudents(session.userId);
+  });
 }
 
 /**
