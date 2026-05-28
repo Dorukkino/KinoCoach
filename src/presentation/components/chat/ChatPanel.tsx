@@ -74,12 +74,33 @@ export function ChatPanel({
   const load = useCallback(() => {
     startTransition(async () => {
       const list = await listMessagesAction(otherUserId);
-      setMessages(list);
+      setMessages((prev) => {
+        const pendingMessages = prev.filter(
+          (message) =>
+            message.id.startsWith("pending-") &&
+            message.senderId === currentUserId &&
+            message.receiverId === otherUserId &&
+            !list.some((saved) => {
+              const sentCloseTogether =
+                Math.abs(
+                  new Date(saved.createdAt).getTime() -
+                    new Date(message.createdAt).getTime()
+                ) < 30000;
+              return (
+                saved.senderId === message.senderId &&
+                saved.receiverId === message.receiverId &&
+                saved.content === message.content &&
+                sentCloseTogether
+              );
+            })
+        );
+        return [...list, ...pendingMessages];
+      });
       const last = list[list.length - 1];
       if (last) onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
       await markCurrentThreadRead();
     });
-  }, [markCurrentThreadRead, otherUserId, startTransition]);
+  }, [currentUserId, markCurrentThreadRead, otherUserId, startTransition]);
 
   const handleRealtimeMessage = useCallback(
     (payload?: { eventType?: string; new?: Record<string, unknown> }) => {
@@ -135,6 +156,7 @@ export function ChatPanel({
     table: "messages",
     filter: `receiver_id=eq.${currentUserId}`,
     debounceMs: 0,
+    pollIntervalMs: 2000,
     onChange: handleRealtimeMessage,
   });
 
@@ -170,13 +192,13 @@ export function ChatPanel({
         onLastMessageRef.current?.(otherUserId, saved.content, saved.createdAt);
       })
       .catch(() => {
-        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
         setText((prev) => {
           if (prev.trim()) return prev;
           textRef.current = content;
           return content;
         });
         setSendError("Mesaj gönderilemedi. Tekrar deneyin.");
+        load();
       })
       .finally(() => setIsSending(false));
   };

@@ -16,7 +16,7 @@ interface UseSupabaseTableRealtimeOptions {
   enabled?: boolean;
   /** Rapid-fire event'leri birleştirme süresi (ms). Varsayılan: 1000 */
   debounceMs?: number;
-  /** @deprecated Polling kaldırıldı — sadece realtime event'ler kullanılır */
+  /** Realtime bağlantısı düşerse F5 gerektirmeyen düşük frekanslı yedek yenileme. */
   pollIntervalMs?: number;
   reloadOnVisible?: boolean;
   onChange: (payload?: RealtimePayload) => void;
@@ -32,6 +32,7 @@ export function useSupabaseTableRealtime({
   filter,
   enabled = true,
   debounceMs = 1000,
+  pollIntervalMs,
   reloadOnVisible = true,
   onChange,
 }: UseSupabaseTableRealtimeOptions) {
@@ -80,11 +81,28 @@ export function useSupabaseTableRealtime({
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    const pollInterval =
+      pollIntervalMs && pollIntervalMs > 0
+        ? window.setInterval(() => {
+            if (document.visibilityState === "visible") {
+              onChangeRef.current();
+            }
+          }, pollIntervalMs)
+        : null;
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (pollInterval) window.clearInterval(pollInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);
     };
-  }, [channelName, debounceMs, enabled, filter, reloadOnVisible, table]);
+  }, [
+    channelName,
+    debounceMs,
+    enabled,
+    filter,
+    pollIntervalMs,
+    reloadOnVisible,
+    table,
+  ]);
 }

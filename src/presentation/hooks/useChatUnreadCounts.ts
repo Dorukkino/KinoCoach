@@ -47,6 +47,7 @@ export function useChatUnreadCount(userId: string) {
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
     debounceMs: 0,
+    pollIntervalMs: 2000,
     onChange: handleRealtimeChange,
   });
 
@@ -92,6 +93,7 @@ export function useChatUnreadCountsBySender(userId: string) {
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
     debounceMs: 0,
+    pollIntervalMs: 2000,
     onChange: handleRealtimeChange,
   });
 

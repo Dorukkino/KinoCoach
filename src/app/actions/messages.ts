@@ -56,16 +56,42 @@ export async function listMessagesAction(otherUserId: string) {
 }
 
 export async function sendMessageAction(receiverId: string, content: string) {
-  const { container, session } = await requireSession();
+  const { session } = await requireSession();
   const peerIds = await getAllowedChatPeerIds(session);
   if (!peerIds.includes(receiverId)) {
     throw new Error("Bu kullanıcıya mesaj gönderme yetkiniz yok.");
   }
-  return container.sendMessage.execute({
-    senderId: session.userId,
-    receiverId,
-    content,
-  });
+
+  const trimmedContent = content.trim();
+  if (!trimmedContent) {
+    throw new Error("Mesaj boş olamaz.");
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("messages")
+    .insert({
+      sender_id: session.userId,
+      receiver_id: receiverId,
+      content: trimmedContent,
+      attachment_url: null,
+    })
+    .select("id, sender_id, receiver_id, content, created_at, attachment_url")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "Mesaj gönderilemedi.");
+  }
+
+  return {
+    id: String(data.id),
+    senderId: String(data.sender_id),
+    receiverId: String(data.receiver_id),
+    content: String(data.content ?? ""),
+    createdAt: new Date(String(data.created_at)).toISOString(),
+    attachmentUrl: data.attachment_url ? String(data.attachment_url) : null,
+    isMine: true,
+  };
 }
 
 export async function countUnreadChatMessagesAction(): Promise<number> {

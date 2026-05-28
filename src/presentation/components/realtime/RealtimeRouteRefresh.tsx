@@ -28,7 +28,7 @@ function TableRefresh({
 export function RealtimeRouteRefresh({
   channelPrefix,
   tables,
-  pollIntervalMs = 5000,
+  pollIntervalMs,
 }: {
   channelPrefix: string;
   tables: string[];
