@@ -37,6 +37,12 @@ export function useSupabaseTableRealtime({
     const supabase = createSupabaseBrowserClient();
 
     const debouncedOnChange = () => {
+      if (debounceMs <= 0) {
+        if (document.visibilityState === "visible") {
+          onChangeRef.current();
+        }
+        return;
+      }
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         if (document.visibilityState === "visible") {

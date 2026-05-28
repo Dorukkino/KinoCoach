@@ -23,7 +23,7 @@ export function useChatUnreadCount(userId: string) {
     channelName: `chat-unread-${userId}`,
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
-    debounceMs: 250,
+    debounceMs: 0,
     onChange: reload,
   });
 
@@ -46,7 +46,7 @@ export function useChatUnreadCountsBySender(userId: string) {
     channelName: `chat-unread-by-sender-${userId}`,
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
-    debounceMs: 250,
+    debounceMs: 0,
     onChange: reload,
   });
 

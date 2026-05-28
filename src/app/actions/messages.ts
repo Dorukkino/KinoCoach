@@ -2,33 +2,65 @@
 
 import { requireSession } from "./lib";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
-import type { ServerContainer } from "@/infrastructure/di/container";
 
-async function getAllowedChatSenderIds(
-  container: ServerContainer,
+async function getAllowedChatPeerIds(
   session: Awaited<ReturnType<typeof requireSession>>["session"]
 ) {
+  const admin = createSupabaseAdminClient();
+
   if (session.role.isCoach()) {
-    const { rows } = await container.loadActiveCoachStudents.execute(session.userId);
-    return rows
-      .map((student) => student.userId)
+    const { data: engagements, error: engagementError } = await admin
+      .from("coaching_engagements")
+      .select("student_id")
+      .eq("coach_id", session.userId)
+      .eq("status", "active");
+
+    if (engagementError || !engagements || engagements.length === 0) return [];
+
+    const studentIds = engagements.map((row) => String(row.student_id));
+    const { data: students, error: studentError } = await admin
+      .from("students")
+      .select("user_id")
+      .in("id", studentIds);
+
+    if (studentError || !students) return [];
+    return students
+      .map((student) => student.user_id)
       .filter((userId): userId is string => Boolean(userId));
   }
 
-  const student = await container.students.findByUserId(session.userId);
-  if (!student) return [];
+  const { data: student, error: studentError } = await admin
+    .from("students")
+    .select("id")
+    .eq("user_id", session.userId)
+    .maybeSingle();
 
-  const activeEngagement = await container.engagements.findActiveByStudent(student.id);
-  return activeEngagement ? [activeEngagement.coachId] : [];
+  if (studentError || !student) return [];
+
+  const { data: engagement, error: engagementError } = await admin
+    .from("coaching_engagements")
+    .select("coach_id")
+    .eq("student_id", student.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (engagementError || !engagement) return [];
+  return [String(engagement.coach_id)];
 }
 
 export async function listMessagesAction(otherUserId: string) {
   const { container, session } = await requireSession();
+  const peerIds = await getAllowedChatPeerIds(session);
+  if (!peerIds.includes(otherUserId)) return [];
   return container.listMessages.execute(session.userId, otherUserId);
 }
 
 export async function sendMessageAction(receiverId: string, content: string) {
   const { container, session } = await requireSession();
+  const peerIds = await getAllowedChatPeerIds(session);
+  if (!peerIds.includes(receiverId)) {
+    throw new Error("Bu kullanıcıya mesaj gönderme yetkiniz yok.");
+  }
   return container.sendMessage.execute({
     senderId: session.userId,
     receiverId,
@@ -37,8 +69,8 @@ export async function sendMessageAction(receiverId: string, content: string) {
 }
 
 export async function countUnreadChatMessagesAction(): Promise<number> {
-  const { container, session } = await requireSession();
-  const senderIds = await getAllowedChatSenderIds(container, session);
+  const { session } = await requireSession();
+  const senderIds = await getAllowedChatPeerIds(session);
   if (senderIds.length === 0) return 0;
 
   const admin = createSupabaseAdminClient();
@@ -56,8 +88,8 @@ export async function countUnreadChatMessagesAction(): Promise<number> {
 export async function countUnreadChatMessagesBySenderAction(): Promise<
   Record<string, number>
 > {
-  const { container, session } = await requireSession();
-  const senderIds = await getAllowedChatSenderIds(container, session);
+  const { session } = await requireSession();
+  const senderIds = await getAllowedChatPeerIds(session);
   if (senderIds.length === 0) return {};
 
   const admin = createSupabaseAdminClient();
@@ -78,8 +110,8 @@ export async function countUnreadChatMessagesBySenderAction(): Promise<
 }
 
 export async function markThreadMessagesReadAction(otherUserId: string) {
-  const { container, session } = await requireSession();
-  const senderIds = await getAllowedChatSenderIds(container, session);
+  const { session } = await requireSession();
+  const senderIds = await getAllowedChatPeerIds(session);
   if (!senderIds.includes(otherUserId)) return;
 
   const admin = createSupabaseAdminClient();

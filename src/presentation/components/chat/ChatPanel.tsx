@@ -31,7 +31,10 @@ export function ChatPanel({
   const skipInitialLoad = useRef(initialMessages !== undefined);
   const [messages, setMessages] = useState<MessageDto[]>(initialMessages ?? []);
   const [text, setText] = useState("");
-  const [pending, startTransition] = useTransition();
+  const [isLoading, startTransition] = useTransition();
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const textRef = useRef("");
   const onLastMessageRef = useRef(onLastMessage);
   const onThreadReadRef = useRef(onThreadRead);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -95,15 +98,17 @@ export function ChatPanel({
     channelName: `chat-${currentUserId}-${otherUserId}`,
     table: "messages",
     filter: `receiver_id=eq.${currentUserId}`,
-    debounceMs: 250,
+    debounceMs: 0,
     onChange: load,
   });
 
   const send = () => {
-    const content = text.trim();
-    if (!content || pending) return;
+    const content = textRef.current.trim();
+    if (!content) return;
 
-    const optimisticId = `pending-${Date.now()}`;
+    const optimisticId = `pending-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
     const optimistic: MessageDto = {
       id: optimisticId,
       senderId: currentUserId,
@@ -114,22 +119,30 @@ export function ChatPanel({
       isMine: true,
     };
 
+    textRef.current = "";
     setText("");
+    setSendError(null);
     setMessages((prev) => [...prev, optimistic]);
     onLastMessageRef.current?.(otherUserId, content, optimistic.createdAt);
 
-    startTransition(async () => {
-      try {
-        const saved = await sendMessageAction(otherUserId, content);
+    setIsSending(true);
+    void sendMessageAction(otherUserId, content)
+      .then((saved) => {
         setMessages((prev) =>
           prev.map((m) => (m.id === optimisticId ? saved : m))
         );
         onLastMessageRef.current?.(otherUserId, saved.content, saved.createdAt);
-      } catch {
+      })
+      .catch(() => {
         setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
-        setText(content);
-      }
-    });
+        setText((prev) => {
+          if (prev.trim()) return prev;
+          textRef.current = content;
+          return content;
+        });
+        setSendError("Mesaj gönderilemedi. Tekrar deneyin.");
+      })
+      .finally(() => setIsSending(false));
   };
 
   return (
@@ -173,23 +186,37 @@ export function ChatPanel({
           </div>
         ))}
       </div>
-      <div className="p-4 border-t border-[var(--border)] flex gap-2">
-        <input
-          className="input mb-0 flex-1"
-          placeholder="Mesaj yaz…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-        />
+      <form
+        className="p-4 border-t border-[var(--border)] flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+      >
+        <div className="flex-1">
+          <input
+            className="input mb-0 w-full"
+            placeholder="Mesaj yaz…"
+            value={text}
+            onChange={(e) => {
+              textRef.current = e.target.value;
+              setText(e.target.value);
+            }}
+            aria-invalid={sendError ? "true" : undefined}
+          />
+          {sendError && (
+            <p className="text-xs text-red-600 mt-1 mb-0">{sendError}</p>
+          )}
+        </div>
         <button
-          type="button"
+          type="submit"
           className="btn btn-primary"
-          disabled={pending}
-          onClick={send}
+          disabled={!text.trim()}
+          aria-busy={isLoading || isSending}
         >
           Gönder
         </button>
-      </div>
+      </form>
     </div>
   );
 }
