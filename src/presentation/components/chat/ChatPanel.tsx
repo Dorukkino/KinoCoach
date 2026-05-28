@@ -156,7 +156,6 @@ export function ChatPanel({
     table: "messages",
     filter: `receiver_id=eq.${currentUserId}`,
     debounceMs: 0,
-    pollIntervalMs: 2000,
     onChange: handleRealtimeMessage,
   });
 
