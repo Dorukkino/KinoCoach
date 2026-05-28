@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MessageDto } from "@/application/dto";
 import { ChatPanel } from "@/presentation/components/chat/ChatPanel";
 import { formatChatTimestamp } from "@/lib/dates";
+import { useChatUnreadCountsBySender } from "@/presentation/hooks/useChatUnreadCounts";
 
 export function StudentChatClient({
   studentUserId,
@@ -22,6 +23,9 @@ export function StudentChatClient({
   const [lastTimestamp, setLastTimestamp] = useState<string | undefined>(
     initialLastTimestamp
   );
+  const { unreadCounts, reload: reloadUnreadCounts } =
+    useChatUnreadCountsBySender(studentUserId);
+  const unreadCount = unreadCounts[coachUserId] ?? 0;
 
   const handleLastMessage = (
     _userId: string,
@@ -46,6 +50,11 @@ export function StudentChatClient({
             >
               {coachName}
             </span>
+            {unreadCount > 0 && (
+              <span className="chat-unread-badge">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
             {lastTimestamp && (
               <span
                 className="text-[10px] flex-shrink-0"
@@ -73,6 +82,7 @@ export function StudentChatClient({
         otherUserId={coachUserId}
         otherUserName={coachName}
         onLastMessage={handleLastMessage}
+        onThreadRead={() => void reloadUnreadCounts()}
         initialMessages={initialMessages}
       />
     </div>

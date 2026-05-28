@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MessageDto } from "@/application/dto";
-import { listMessagesAction, sendMessageAction } from "@/app/actions/messages";
+import {
+  listMessagesAction,
+  markThreadMessagesReadAction,
+  sendMessageAction,
+} from "@/app/actions/messages";
 import { formatChatTimestamp } from "@/lib/dates";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
@@ -13,6 +17,7 @@ export function ChatPanel({
   otherUserName,
   profileHref,
   onLastMessage,
+  onThreadRead,
   initialMessages,
 }: {
   currentUserId: string;
@@ -20,6 +25,7 @@ export function ChatPanel({
   otherUserName: string;
   profileHref?: string;
   onLastMessage?: (userId: string, text: string, createdAt: string) => void;
+  onThreadRead?: (userId: string) => void;
   initialMessages?: MessageDto[];
 }) {
   const skipInitialLoad = useRef(initialMessages !== undefined);
@@ -27,6 +33,7 @@ export function ChatPanel({
   const [text, setText] = useState("");
   const [pending, startTransition] = useTransition();
   const onLastMessageRef = useRef(onLastMessage);
+  const onThreadReadRef = useRef(onThreadRead);
   const threadRef = useRef<HTMLDivElement>(null);
   const hasScrolledInitially = useRef(false);
 
@@ -43,7 +50,16 @@ export function ChatPanel({
   }, [onLastMessage]);
 
   useEffect(() => {
+    onThreadReadRef.current = onThreadRead;
+  }, [onThreadRead]);
+
+  useEffect(() => {
     hasScrolledInitially.current = false;
+  }, [otherUserId]);
+
+  const markCurrentThreadRead = useCallback(async () => {
+    await markThreadMessagesReadAction(otherUserId);
+    onThreadReadRef.current?.(otherUserId);
   }, [otherUserId]);
 
   useEffect(() => {
@@ -58,8 +74,9 @@ export function ChatPanel({
       setMessages(list);
       const last = list[list.length - 1];
       if (last) onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
+      await markCurrentThreadRead();
     });
-  }, [otherUserId, startTransition]);
+  }, [markCurrentThreadRead, otherUserId, startTransition]);
 
   useEffect(() => {
     if (skipInitialLoad.current) {
@@ -68,10 +85,11 @@ export function ChatPanel({
       if (last) {
         onLastMessageRef.current?.(otherUserId, last.content, last.createdAt);
       }
+      void markCurrentThreadRead();
       return;
     }
     load();
-  }, [initialMessages, load, otherUserId]);
+  }, [initialMessages, load, markCurrentThreadRead, otherUserId]);
 
   useSupabaseTableRealtime({
     channelName: `chat-${currentUserId}-${otherUserId}`,

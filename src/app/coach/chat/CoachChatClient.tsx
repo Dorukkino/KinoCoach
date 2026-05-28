@@ -5,6 +5,7 @@ import { useState } from "react";
 import { MessageDto, StudentCardDto } from "@/application/dto";
 import { ChatPanel } from "@/presentation/components/chat/ChatPanel";
 import { formatChatTimestamp } from "@/lib/dates";
+import { useChatUnreadCountsBySender } from "@/presentation/hooks/useChatUnreadCounts";
 
 export function CoachChatClient({
   coachUserId,
@@ -24,6 +25,8 @@ export function CoachChatClient({
   const [lastTimestamps, setLastTimestamps] = useState<Record<string, string>>(
     initialLastTimestamps
   );
+  const { unreadCounts, reload: reloadUnreadCounts } =
+    useChatUnreadCountsBySender(coachUserId);
   const active = students.find((s) => s.id === activeId);
 
   if (students.length === 0) {
@@ -46,6 +49,7 @@ export function CoachChatClient({
         {students.map((s) => {
           const last = s.userId ? lastMessages[s.userId] : undefined;
           const ts = s.userId ? lastTimestamps[s.userId] : undefined;
+          const unreadCount = s.userId ? unreadCounts[s.userId] ?? 0 : 0;
           return (
             <div
               key={s.id}
@@ -74,6 +78,11 @@ export function CoachChatClient({
                 >
                   {s.name}
                 </Link>
+                {unreadCount > 0 && (
+                  <span className="chat-unread-badge">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
                 {ts && (
                   <span
                     className="text-[10px] flex-shrink-0"
@@ -105,6 +114,7 @@ export function CoachChatClient({
           otherUserName={active.name}
           profileHref={`/coach/students/${active.id}`}
           onLastMessage={handleLastMessage}
+          onThreadRead={() => void reloadUnreadCounts()}
           initialMessages={
             active.id === selectedStudentId ? initialMessages : undefined
           }

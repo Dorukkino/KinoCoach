@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icons, NavIconKey } from "../icons";
+import { useChatUnreadCount } from "@/presentation/hooks/useChatUnreadCounts";
 
 interface NavItem {
   id: string;
@@ -44,17 +45,20 @@ const STUDENT_NAV: { section: string; items: NavItem[] }[] = [
 
 export function Sidebar({
   role,
+  userId,
   collapsed,
   onToggle,
   userName,
 }: {
   role: "coach" | "student";
+  userId: string;
   collapsed: boolean;
   onToggle: () => void;
   userName: string;
 }) {
   const pathname = usePathname();
   const nav = role === "coach" ? COACH_NAV : STUDENT_NAV;
+  const { unreadCount: chatUnreadCount } = useChatUnreadCount(userId);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -96,6 +100,11 @@ export function Sidebar({
                 >
                   <Icon />
                   {!collapsed && <span>{item.label}</span>}
+                  {item.id === "chat" && chatUnreadCount > 0 && (
+                    <span className="nav-badge" aria-label={`${chatUnreadCount} okunmamış mesaj`}>
+                      {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

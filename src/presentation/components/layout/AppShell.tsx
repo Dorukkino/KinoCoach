@@ -35,6 +35,7 @@ export function AppShell({
     <div className="app" data-collapsed={collapsed}>
       <Sidebar
         role={role}
+        userId={userId}
         collapsed={collapsed}
         onToggle={() => setCollapsed(!collapsed)}
         userName={userName}
