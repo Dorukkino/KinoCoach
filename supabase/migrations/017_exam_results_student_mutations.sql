@@ -1,4 +1,5 @@
 -- Öğrenciler kendi deneme netlerini ekleyebilir, güncelleyebilir ve silebilir.
+DROP POLICY IF EXISTS exam_student_insert ON public.exam_results;
 CREATE POLICY exam_student_insert ON public.exam_results
   FOR INSERT
   WITH CHECK (
@@ -8,6 +9,7 @@ CREATE POLICY exam_student_insert ON public.exam_results
     )
   );
 
+DROP POLICY IF EXISTS exam_student_update ON public.exam_results;
 CREATE POLICY exam_student_update ON public.exam_results
   FOR UPDATE
   USING (
@@ -17,6 +19,7 @@ CREATE POLICY exam_student_update ON public.exam_results
     )
   );
 
+DROP POLICY IF EXISTS exam_student_delete ON public.exam_results;
 CREATE POLICY exam_student_delete ON public.exam_results
   FOR DELETE
   USING (

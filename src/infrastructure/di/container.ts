@@ -196,8 +196,8 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
     listStudentWeeks: new ListStudentWeeksUseCase(programs, engagements),
     updateExamResult: new UpdateExamResultUseCase(
       exams,
-      students,
-      engagements,
+      adminStudents ?? students,
+      adminEngagements ?? engagements,
       sendNotification ?? undefined
     ),
     listExamResults: new ListExamResultsUseCase(exams),

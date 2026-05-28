@@ -52,7 +52,7 @@ export async function deleteExamResultAction(examResultId: string): Promise<void
     throw new Error("Forbidden");
   }
 
-  await container.updateExamResult.delete(examResultId);
+  await container.updateExamResult.delete(examResultId, "student");
 
   revalidatePath("/coach/exams");
   revalidatePath(`/coach/students/${studentId}`);

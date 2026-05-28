@@ -87,8 +87,45 @@ export class UpdateExamResultUseCase {
     return this.toDto(result);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(
+    id: string,
+    deletedBy: ExamResultCreatedBy = "coach"
+  ): Promise<void> {
+    const existing = await this.exams.findById(id);
+    if (!existing) {
+      await this.exams.delete(id);
+      return;
+    }
+
     await this.exams.delete(id);
+    await this.students.touchLastActive(existing.studentId);
+
+    if (this.sendNotification && deletedBy === "student") {
+      try {
+        const student = await this.students.findById(existing.studentId);
+        const engagement = await this.engagements.findActiveByStudent(
+          existing.studentId
+        );
+        if (!student || !engagement) return;
+
+        const dateLabel = existing.date.toLocaleDateString("tr-TR");
+        const total = existing.total();
+
+        await this.sendNotification.execute({
+          userId: engagement.coachId,
+          title: "Öğrenci deneme sonucu sildi",
+          message: `${student.name} ${dateLabel} tarihli deneme sonucunu sildi. Toplam net: ${total}.`,
+          type: NotificationType.EXAM_RESULT_DELETED,
+          metadata: {
+            studentId: existing.studentId,
+            examResultId: id,
+            href: `/coach/students/${existing.studentId}`,
+          },
+        });
+      } catch {
+        // Bildirim hatası silmeyi geri almaz
+      }
+    }
   }
 
   private toDto(result: {

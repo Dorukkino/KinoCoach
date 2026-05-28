@@ -2,6 +2,7 @@ import { ExamResult } from "@/domain/entities/ExamResult";
 import { ExamScoresProps } from "@/domain/value-objects/ExamScores";
 
 export interface IExamResultRepository {
+  findById(id: string): Promise<ExamResult | null>;
   findByStudentId(studentId: string): Promise<ExamResult[]>;
   create(
     studentId: string,

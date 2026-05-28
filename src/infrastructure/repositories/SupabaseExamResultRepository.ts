@@ -9,6 +9,16 @@ const EXAM_RESULT_COLUMNS =
 export class SupabaseExamResultRepository implements IExamResultRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
+  async findById(id: string) {
+    const { data, error } = await this.supabase
+      .from("exam_results")
+      .select(EXAM_RESULT_COLUMNS)
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) return null;
+    return mapExamResultRow(data);
+  }
+
   async findByStudentId(studentId: string) {
     const { data, error } = await this.supabase
       .from("exam_results")
