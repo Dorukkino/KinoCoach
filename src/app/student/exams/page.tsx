@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { StudentExamsContent } from "./StudentExamsContent";
-import { GenericPageSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function StudentExamsPage() {
   return (
@@ -10,7 +10,7 @@ export default function StudentExamsPage() {
           <h1>Deneme Netlerim</h1>
         </div>
       </div>
-      <Suspense fallback={<GenericPageSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <StudentExamsContent />
       </Suspense>
     </div>

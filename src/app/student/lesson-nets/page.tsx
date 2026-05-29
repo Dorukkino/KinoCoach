@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { StudentLessonNetsContent } from "./StudentLessonNetsContent";
-import { GenericPageSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function StudentLessonNetsPage() {
   return (
@@ -11,7 +11,7 @@ export default function StudentLessonNetsPage() {
           <p>Haftalık çözüm kayıtlarınız</p>
         </div>
       </div>
-      <Suspense fallback={<GenericPageSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <StudentLessonNetsContent />
       </Suspense>
     </div>

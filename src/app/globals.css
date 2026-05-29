@@ -285,6 +285,10 @@ a {
   font-weight: 600;
 }
 
+.login-card .loading-screen {
+  min-height: 120px;
+}
+
 @keyframes loading-spin {
   to {
     transform: rotate(360deg);

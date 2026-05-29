@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
-import { ChatPageSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 import { StudentChatContent } from "./StudentChatContent";
 
 export default function StudentChatPage() {
@@ -15,7 +15,7 @@ export default function StudentChatPage() {
           <h1>Chat</h1>
         </div>
       </div>
-      <Suspense fallback={<ChatPageSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <StudentChatContent />
       </Suspense>
     </div>

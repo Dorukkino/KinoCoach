@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { CoachDashboardRealtime } from "./CoachDashboardRealtime";
 import { CoachDashboardContent } from "./CoachDashboardContent";
-import { CoachDashboardSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function CoachDashboardPage() {
   return (
@@ -12,7 +12,7 @@ export default function CoachDashboardPage() {
           <h1>Dashboard</h1>
         </div>
       </div>
-      <Suspense fallback={<CoachDashboardSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <CoachDashboardContent />
       </Suspense>
     </div>

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
 import { CoachNotesContent } from "./CoachNotesContent";
-import { NotesPageSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function CoachNotesPage() {
   return (
@@ -16,7 +16,7 @@ export default function CoachNotesPage() {
           <p>Öğrenci bazlı özel koç notları</p>
         </div>
       </div>
-      <Suspense fallback={<NotesPageSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <CoachNotesContent />
       </Suspense>
     </div>

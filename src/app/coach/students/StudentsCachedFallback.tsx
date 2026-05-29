@@ -1,7 +1,7 @@
 "use client";
 
 import { useCoachClientCache } from "@/presentation/providers/CoachClientCacheProvider";
-import { StudentsListSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 import { StudentsPageClient } from "./StudentsPageClient";
 
 export function StudentsCachedFallback() {
@@ -16,5 +16,5 @@ export function StudentsCachedFallback() {
     );
   }
 
-  return <StudentsListSkeleton />;
+  return <LoadingScreen />;
 }

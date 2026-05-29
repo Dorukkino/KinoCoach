@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { StudentDashboardRealtime } from "./StudentDashboardRealtime";
 import { StudentDashboardContent } from "./StudentDashboardContent";
-import { StudentDashboardSkeleton } from "@/presentation/components/skeletons";
 import { getStudentDashboardWithInvitationsAction } from "@/app/actions/dashboard";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 async function StudentDashboardLoader() {
   const { dashboard, invitations } =
@@ -22,7 +22,7 @@ export default function StudentDashboardPage() {
           <h1>Merhaba</h1>
         </div>
       </div>
-      <Suspense fallback={<StudentDashboardSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <StudentDashboardLoader />
       </Suspense>
     </div>

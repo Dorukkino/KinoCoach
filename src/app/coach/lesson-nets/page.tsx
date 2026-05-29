@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { RealtimeRouteRefresh } from "@/presentation/components/realtime/RealtimeRouteRefresh";
-import { StudentLinkListSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 import { CoachLessonNetsContent } from "./CoachLessonNetsContent";
 
 export default function CoachLessonNetsPage() {
@@ -16,7 +16,7 @@ export default function CoachLessonNetsPage() {
           <p>Öğrencilerin ders net girişlerini inceleyin</p>
         </div>
       </div>
-      <Suspense fallback={<StudentLinkListSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <CoachLessonNetsContent />
       </Suspense>
     </div>

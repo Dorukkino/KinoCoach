@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ChatPageSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 import { CoachChatContent } from "./CoachChatContent";
 
 export default function CoachChatPage({
@@ -15,7 +15,7 @@ export default function CoachChatPage({
           <p>Öğrencilerinizle mesajlaşın</p>
         </div>
       </div>
-      <Suspense fallback={<ChatPageSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <CoachChatPageInner searchParams={searchParams} />
       </Suspense>
     </div>

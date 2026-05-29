@@ -1,4 +1,4 @@
-import { StudentDashboardSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function StudentDashboardLoading() {
   return (
@@ -8,7 +8,7 @@ export default function StudentDashboardLoading() {
           <h1>Dashboard</h1>
         </div>
       </div>
-      <StudentDashboardSkeleton />
+      <LoadingScreen />
     </div>
   );
 }

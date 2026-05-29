@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { StudentWeeklyContent } from "./StudentWeeklyContent";
-import { WeeklyGridSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function StudentWeeklyPage() {
   return (
@@ -11,7 +11,7 @@ export default function StudentWeeklyPage() {
           <p>Görevleri tamamladıkça işaretleyin</p>
         </div>
       </div>
-      <Suspense fallback={<WeeklyGridSkeleton />}>
+      <Suspense fallback={<LoadingScreen />}>
         <StudentWeeklyContent />
       </Suspense>
     </div>

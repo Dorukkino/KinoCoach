@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState, useTransition } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { mapAuthError } from "@/infrastructure/auth/authErrors";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 function UpdatePasswordPageInner() {
   const router = useRouter();
@@ -183,7 +184,7 @@ export default function UpdatePasswordPage() {
       fallback={
         <div className="login-wrap">
           <div className="login-card">
-            <p className="text-sm text-[var(--muted)]">Yükleniyor…</p>
+            <LoadingScreen />
           </div>
         </div>
       }

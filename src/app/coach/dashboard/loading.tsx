@@ -1,4 +1,4 @@
-import { CoachDashboardSkeleton } from "@/presentation/components/skeletons";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 export default function CoachDashboardLoading() {
   return (
@@ -8,7 +8,7 @@ export default function CoachDashboardLoading() {
           <h1>Dashboard</h1>
         </div>
       </div>
-      <CoachDashboardSkeleton />
+      <LoadingScreen />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
 import { signInAction } from "@/app/actions/auth";
+import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 function LoginPageInner() {
   const router = useRouter();
@@ -72,7 +73,7 @@ export default function LoginPage() {
       fallback={
         <div className="login-wrap">
           <div className="login-card">
-            <p className="text-sm text-[var(--muted)]">Yükleniyor…</p>
+            <LoadingScreen />
           </div>
         </div>
       }
