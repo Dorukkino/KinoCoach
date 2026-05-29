@@ -63,7 +63,7 @@ function buildContainer(supabase: SupabaseClient, admin?: SupabaseClient) {
   const users = new SupabaseUserRepository(supabase);
   const programs = new SupabaseWeeklyProgramRepository(supabase);
   const exams = new SupabaseExamResultRepository(supabase);
-  const messages = new SupabaseMessageRepository(supabase);
+  const messages = new SupabaseMessageRepository(admin ?? supabase);
   const notes = new SupabaseCoachNoteRepository(supabase);
   const motivation = new SupabaseMotivationRepository(supabase);
   const lessonNets = new SupabaseLessonNetRepository(supabase);
