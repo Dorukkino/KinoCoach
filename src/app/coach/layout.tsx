@@ -7,6 +7,7 @@ const getCoachLayoutData = cache(async () => {
   const container = await getCachedServerContainer();
   const session = await container.auth.getSession();
   if (!session) redirect("/login");
+  if (session.role.isAdmin()) redirect("/admin/dashboard");
   if (!session.role.isCoach()) redirect("/student/dashboard");
 
   const profile = await container.users.findById(session.userId);

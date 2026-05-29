@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
-import { signInAction } from "@/app/actions/auth";
+import { adminSignInAction } from "@/app/actions/auth";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
-function LoginPageInner() {
+function AdminLoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
@@ -18,19 +18,14 @@ function LoginPageInner() {
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email"));
     const password = String(fd.get("password"));
+
     startTransition(async () => {
       try {
-        const { role } = await signInAction(email, password);
-        const target =
-          role === "admin"
-            ? "/admin/dashboard"
-            : role === "student"
-              ? "/student/dashboard"
-              : "/coach/dashboard";
-        router.push(target);
+        await adminSignInAction(email, password);
+        router.push("/admin/dashboard");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Giriş başarısız");
+        setError(err instanceof Error ? err.message : "Admin girişi başarısız");
       }
     });
   };
@@ -40,32 +35,33 @@ function LoginPageInner() {
       <div className="login-card">
         <div className="flex items-center gap-2 mb-6">
           <div className="brand-mark">k</div>
-          <span className="font-semibold text-lg">Kino</span>
+          <div>
+            <span className="font-semibold text-lg block">Kino Admin</span>
+            <span className="text-xs text-[var(--muted)]">Yönetici erişimi</span>
+          </div>
         </div>
-        <h1 className="text-xl font-bold m-0 mb-1">Giriş yap</h1>
-        <p className="text-sm text-[var(--muted)] mb-6">E-posta ve şifrenizle devam edin</p>
+        <h1 className="text-xl font-bold m-0 mb-1">Admin girişi</h1>
+        <p className="text-sm text-[var(--muted)] mb-6">
+          Bu ekran yalnızca sistem yöneticileri içindir.
+        </p>
         <form onSubmit={handleSubmit}>
-          <label className="label">E-posta</label>
+          <label className="label">Admin e-posta</label>
           <input name="email" type="email" className="input" required />
           <label className="label">Şifre</label>
           <input name="password" type="password" className="input" required />
           {error && <p className="text-sm text-[var(--risk)] mb-3">{error}</p>}
-          <button type="submit" className="btn btn-primary w-full justify-center" disabled={pending}>
-            Giriş yap
+          <button
+            type="submit"
+            className="btn btn-primary w-full justify-center"
+            disabled={pending}
+          >
+            Admin paneline gir
           </button>
         </form>
         <p className="text-sm text-[var(--muted)] mt-4 text-center">
-          <Link
-            href="/forgot-password"
-            className="text-[var(--accent-ink)] font-medium"
-          >
-            Şifremi unuttum
-          </Link>
-        </p>
-        <p className="text-sm text-[var(--muted)] mt-2 text-center">
-          Koç hesabı yok mu?{" "}
-          <Link href="/register" className="text-[var(--accent-ink)] font-medium">
-            Kayıt ol
+          Koç veya öğrenci misiniz?{" "}
+          <Link href="/login" className="text-[var(--accent-ink)] font-medium">
+            Normal girişe dön
           </Link>
         </p>
       </div>
@@ -73,7 +69,7 @@ function LoginPageInner() {
   );
 }
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   return (
     <Suspense
       fallback={
@@ -84,7 +80,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginPageInner />
+      <AdminLoginPageInner />
     </Suspense>
   );
 }

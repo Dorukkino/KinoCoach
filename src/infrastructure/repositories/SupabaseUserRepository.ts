@@ -3,7 +3,7 @@ import { IUserRepository } from "@/application/ports/IUserRepository";
 import { mapUserProfile } from "../supabase/mappers";
 import { UserRole } from "@/domain/value-objects/UserRole";
 
-const USER_COLUMNS = "id, email, role, full_name";
+const USER_COLUMNS = "id, email, role, full_name, account_status";
 
 export class SupabaseUserRepository implements IUserRepository {
   constructor(private readonly supabase: SupabaseClient) {}

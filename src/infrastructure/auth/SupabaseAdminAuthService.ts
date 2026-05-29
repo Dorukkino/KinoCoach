@@ -96,4 +96,18 @@ export class SupabaseAdminAuthService implements IAdminAuthService {
 
     return { userId: data.user.id, email };
   }
+
+  async updateUserMetadata(
+    userId: string,
+    metadata: { role?: string; fullName?: string }
+  ): Promise<void> {
+    const userMetadata: Record<string, string> = {};
+    if (metadata.role) userMetadata.role = metadata.role;
+    if (metadata.fullName) userMetadata.full_name = metadata.fullName;
+
+    const { error } = await this.admin.auth.admin.updateUserById(userId, {
+      user_metadata: userMetadata,
+    });
+    if (error) throw new Error(mapAuthError(error.message));
+  }
 }

@@ -136,6 +136,8 @@ export function mapUserProfile(row: Record<string, unknown>): UserProfile {
     email: String(row.email),
     role: UserRole.from(String(row.role)),
     fullName: String(row.full_name),
+    accountStatus:
+      row.account_status === "disabled" ? "disabled" : "active",
   };
 }
 

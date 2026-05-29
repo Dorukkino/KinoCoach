@@ -1,5 +1,7 @@
 import { UserRole } from "@/domain/value-objects/UserRole";
 
+export type AccountStatus = "active" | "disabled";
+
 export interface AuthSession {
   userId: string;
   email: string;
@@ -48,4 +50,8 @@ export interface IAdminAuthService {
     password: string,
     fullName: string
   ): Promise<CreateCoachAuthResult>;
+  updateUserMetadata(
+    userId: string,
+    metadata: { role?: string; fullName?: string }
+  ): Promise<void>;
 }

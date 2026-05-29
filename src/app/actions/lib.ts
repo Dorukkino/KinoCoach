@@ -1,6 +1,9 @@
 import "server-only";
 import { cache } from "react";
-import { getCachedServerContainer } from "@/infrastructure/di/container";
+import {
+  createAdminContainer,
+  getCachedServerContainer,
+} from "@/infrastructure/di/container";
 
 export const getContainer = getCachedServerContainer;
 
@@ -15,4 +18,10 @@ export async function requireCoach() {
   const { container, session } = await requireSession();
   if (!session.role.isCoach()) throw new Error("Forbidden");
   return { container, session };
+}
+
+export async function requireAdmin() {
+  const { session } = await requireSession();
+  if (!session.role.isAdmin()) throw new Error("Forbidden");
+  return { container: createAdminContainer(), session };
 }

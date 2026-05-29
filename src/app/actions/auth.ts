@@ -12,6 +12,16 @@ export async function signInAction(email: string, password: string) {
   return { role: session.role.value };
 }
 
+export async function adminSignInAction(email: string, password: string) {
+  const container = await getContainer();
+  const session = await container.auth.signIn(email, password);
+  if (!session.role.isAdmin()) {
+    await container.auth.signOut();
+    throw new Error("Bu giriş ekranı yalnızca admin kullanıcılar içindir.");
+  }
+  return { role: session.role.value };
+}
+
 export async function signUpCoachAction(
   email: string,
   password: string,

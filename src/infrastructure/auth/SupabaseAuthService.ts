@@ -23,30 +23,29 @@ export class SupabaseAuthService implements IAuthService {
       return null;
     }
 
-    // user_metadata'dan role ve fullName çek — DB sorgusu olmadan
+    const { data: profile } = await this.supabase
+      .from("users")
+      .select("role, full_name, account_status")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.account_status === "disabled") {
+      await this.supabase.auth.signOut();
+      throw new Error("Bu hesap devre dışı bırakılmış.");
+    }
+
+    // Metadata hızlı fallback olarak kullanılır; kalıcı yetki DB profilindedir.
     const metaRole = user.user_metadata?.role;
     const metaFullName = user.user_metadata?.full_name;
 
-    let role: UserRole;
-    let fullName: string;
-
-    if (metaRole) {
-      // JWT metadata'da role varsa DB'ye gitmeye gerek yok
-      role = UserRole.from(String(metaRole));
-      fullName = String(metaFullName ?? user.email?.split("@")[0] ?? "");
-    } else {
-      // Fallback: DB'den çek
-      const { data: profile } = await this.supabase
-        .from("users")
-        .select("role, full_name")
-        .eq("id", user.id)
-        .single();
-
-      role = profile?.role
-        ? UserRole.from(String(profile.role))
+    const role = profile?.role
+      ? UserRole.from(String(profile.role))
+      : metaRole
+        ? UserRole.from(String(metaRole))
         : UserRole.coach();
-      fullName = String(profile?.full_name ?? metaFullName ?? user.email?.split("@")[0] ?? "");
-    }
+    const fullName = String(
+      profile?.full_name ?? metaFullName ?? user.email?.split("@")[0] ?? ""
+    );
 
     this.cachedSession = {
       userId: user.id,

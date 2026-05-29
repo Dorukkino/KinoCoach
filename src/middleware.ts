@@ -9,6 +9,7 @@ import {
 const PUBLIC = [
   "/",
   "/login",
+  "/admin/login",
   "/register",
   "/forgot-password",
   "/auth/callback",
@@ -45,17 +46,39 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (PUBLIC.some((p) => path === p)) {
+    if (user && path === "/admin/login") {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile?.role === "admin") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
+      return response;
+    }
+
     if (user && (path === "/login" || path === "/register")) {
-      // Role kontrolünü layout'a bırakıyoruz — default coach dashboard'a yönlendir
-      return NextResponse.redirect(
-        new URL("/coach/dashboard", request.url)
-      );
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      const target =
+        profile?.role === "admin"
+          ? "/admin/dashboard"
+          : profile?.role === "student"
+            ? "/student/dashboard"
+            : "/coach/dashboard";
+      return NextResponse.redirect(new URL(target, request.url));
     }
     return response;
   }
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(
+      new URL(path.startsWith("/admin") ? "/admin/login" : "/login", request.url)
+    );
   }
 
   // Role kontrolünü layout'lara bırakıyoruz — middleware sadece auth guard

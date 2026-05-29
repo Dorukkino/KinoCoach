@@ -10,6 +10,7 @@ const getStudentLayoutData = cache(async () => {
   const container = await getCachedServerContainer();
   const session = await container.auth.getSession();
   if (!session) redirect("/login");
+  if (session.role.isAdmin()) redirect("/admin/dashboard");
   if (!session.role.isStudent()) redirect("/coach/dashboard");
 
   const student = await container.students.findByUserId(session.userId);

@@ -1,10 +1,12 @@
 import { UserRole } from "@/domain/value-objects/UserRole";
+import { AccountStatus } from "./IAuthService";
 
 export interface UserProfile {
   id: string;
   email: string;
   role: UserRole;
   fullName: string;
+  accountStatus: AccountStatus;
 }
 
 export interface IUserRepository {
