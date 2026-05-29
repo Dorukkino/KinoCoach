@@ -93,7 +93,7 @@ export function WeeklyGrid({
                           onChange={() => {
                             if (!readOnly) onToggle?.(r, c);
                           }}
-                          className={`mt-1 ${readOnly ? "cursor-not-allowed" : "cursor-pointer"}`}
+                          className={`weekly-task-checkbox ${readOnly ? "cursor-not-allowed" : "cursor-pointer"}`}
                           onClick={(e) => e.stopPropagation()}
                         />
                       )}
