@@ -232,7 +232,16 @@ export function ChatPanel({
 
       const senderId = String(row.sender_id ?? "");
       const receiverId = String(row.receiver_id ?? "");
-      if (senderId !== otherUserId || receiverId !== currentUserId) return;
+      if (
+        !(
+          senderId === otherUserId && receiverId === currentUserId
+        ) &&
+        !(
+          senderId === currentUserId && receiverId === otherUserId
+        )
+      ) {
+        return;
+      }
 
       const incomingCreatedAt = String(row.created_at);
       const incoming: MessageDto = {
@@ -242,7 +251,7 @@ export function ChatPanel({
         content: String(row.content ?? ""),
         createdAt: incomingCreatedAt,
         attachmentUrl: row.attachment_url ? String(row.attachment_url) : null,
-        isMine: false,
+        isMine: senderId === currentUserId,
       };
 
       setMessages((prev) => {
@@ -262,7 +271,7 @@ export function ChatPanel({
         incoming.content,
         incoming.createdAt
       );
-      void markCurrentThreadRead();
+      if (!incoming.isMine) void markCurrentThreadRead();
     },
     [currentUserId, load, markCurrentThreadRead, otherUserId]
   );
@@ -285,6 +294,7 @@ export function ChatPanel({
     table: "messages",
     filter: `receiver_id=eq.${currentUserId}`,
     debounceMs: 0,
+    pollIntervalMs: 5000,
     onChange: handleRealtimeMessage,
   });
 
