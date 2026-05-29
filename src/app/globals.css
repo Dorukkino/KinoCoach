@@ -835,6 +835,111 @@ a {
   color: var(--risk-ink);
 }
 
+.qz-lesson-manager {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.qz-lesson-manager-copy strong,
+.qz-lesson-manager-copy span {
+  display: block;
+}
+
+.qz-lesson-manager-copy strong {
+  color: #24221d;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.qz-lesson-manager-copy span {
+  margin-top: 2px;
+  color: #928c82;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.qz-lesson-manager-form {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.qz-lesson-manager-form input {
+  width: min(100%, 240px);
+  height: 34px;
+  padding: 0 11px;
+  border: 1px solid #ebe7df;
+  border-radius: 9px;
+  background: #fff;
+  color: #24221d;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.qz-lesson-manager-form input:focus {
+  outline: none;
+  border-color: #d8d1c6;
+  box-shadow: 0 0 0 3px rgba(26, 26, 23, 0.04);
+}
+
+.qz-lesson-manager-form .btn {
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.qz-lesson-chips {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.qz-lesson-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 6px 0 10px;
+  border: 1px solid #ebe7df;
+  border-radius: 999px;
+  background: #fcfbf8;
+  color: #3c3832;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.qz-lesson-chip button,
+.qz-subj-delete {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #9a9489;
+  line-height: 1;
+  transition: background 120ms, color 120ms;
+}
+
+.qz-lesson-chip button {
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+}
+
+.qz-lesson-chip button:hover:not(:disabled),
+.qz-subj-delete:hover:not(:disabled) {
+  background: var(--risk-soft);
+  color: var(--risk-ink);
+}
+
+.qz-lesson-chip button:disabled,
+.qz-subj-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .qz-summary {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1005,10 +1110,28 @@ a {
 }
 
 .qz-subj {
+  position: relative;
   background: #fff;
   color: #3c3832;
   font-size: 10px;
   font-weight: 800;
+}
+
+.qz-subj > span {
+  display: inline-block;
+  max-width: calc(100% - 22px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.qz-subj-delete {
+  width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  font-size: 14px;
+  vertical-align: middle;
 }
 
 .qz-cell {
@@ -6507,11 +6630,16 @@ a {
   }
 
   .student-detail-stats,
+  .qz-lesson-manager,
   .qz-summary,
   .coach-question-stat-grid,
   .student-overview-layout,
   .overview-note-grid {
     grid-template-columns: 1fr;
+  }
+
+  .qz-lesson-manager-form {
+    justify-content: flex-start;
   }
 
   .coach-notes-overview,
@@ -6531,6 +6659,15 @@ a {
 
   .student-weekly-toolbar {
     justify-content: flex-start;
+  }
+
+  .qz-lesson-manager-form {
+    flex-direction: column;
+  }
+
+  .qz-lesson-manager-form input,
+  .qz-lesson-manager-form .btn {
+    width: 100%;
   }
 
   .student-program-head,

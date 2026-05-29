@@ -146,6 +146,9 @@ const parseCellNumber = (value: string) => {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 };
 
+const normalizeLessonName = (name: string) =>
+  name.trim().toLocaleLowerCase("tr-TR");
+
 const sumWeeklyCell = (cell?: WeeklyCell): SessionTotals => ({
   correct: parseCellNumber(cell?.correct ?? ""),
   wrong: parseCellNumber(cell?.wrong ?? ""),
@@ -291,34 +294,77 @@ export function StudentLessonNetClient({
 
   const handleDeleteLesson = async (lesson: CoachLesson) => {
     if (effectiveReadOnly) return;
+    const hasCurrentWeekData =
+      sessions.some((session) => session.lessonName === lesson.name) ||
+      detailWeekDays.some(
+        (day) => sumWeeklyCell(weeklyCells[lesson.name]?.[day.date]).total > 0
+      );
+    const confirmed = window.confirm(
+      hasCurrentWeekData
+        ? `${lesson.name} dersi silinsin mi? Bu haftadaki bu derse ait girilmiş soru çözüm değerleri de kaldırılır.`
+        : `${lesson.name} dersi silinsin mi?`
+    );
+    if (!confirmed) return;
+
     setDeletingId(lesson.id);
+    setError("");
+    setSaveMessage("");
     try {
       await deleteCoachLessonAction(lesson.id);
-      // Silme başarılı — DB'den taze listeyi çek
+      const matchingSessions = sessions.filter(
+        (session) => session.lessonName === lesson.name
+      );
+      for (const session of matchingSessions) {
+        await deleteQuestionSessionAction(session.id);
+      }
       const fresh = await getCoachLessonsAction();
       setLessons(fresh);
+      setSessions((prev) =>
+        prev.filter((session) => session.lessonName !== lesson.name)
+      );
+      setWeeklyCells((prev) => {
+        const next = { ...prev };
+        delete next[lesson.name];
+        return next;
+      });
       if (form.lessonName === lesson.name) {
         setForm((prev) => ({ ...prev, lessonName: "" }));
       }
+      await loadWeeks();
+      setSaveMessage(`${lesson.name} dersi silindi.`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Ders silinemedi.");
+      setError(e instanceof Error ? e.message : "Ders silinemedi.");
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleAddLesson = async () => {
+  const handleAddLesson = async (nextView: View | null = "add-session") => {
     if (effectiveReadOnly) return;
     const name = newLessonName.trim();
     if (!name) return;
+    const normalizedName = normalizeLessonName(name);
+    const alreadyExists = lessonNames.some(
+      (lessonName) => normalizeLessonName(lessonName) === normalizedName
+    );
+    if (alreadyExists) {
+      setError("Bu ders zaten listede.");
+      return;
+    }
+
     setSaving(true);
+    setError("");
+    setSaveMessage("");
     try {
       const lesson = await addCoachLessonAction(name);
       const fresh = await getCoachLessonsAction();
       setLessons(fresh);
       setForm((prev) => ({ ...prev, lessonName: lesson.name }));
       setNewLessonName("");
-      setView("add-session");
+      if (nextView) setView(nextView);
+      setSaveMessage(`${lesson.name} dersi eklendi.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ders eklenemedi.");
     } finally {
       setSaving(false);
     }
@@ -471,6 +517,12 @@ export function StudentLessonNetClient({
     sessions.forEach((session) => names.add(session.lessonName));
     return Array.from(names);
   }, [lessons, sessions]);
+
+  const lessonsByName = useMemo(() => {
+    const map = new Map<string, CoachLesson>();
+    lessons.forEach((lesson) => map.set(lesson.name, lesson));
+    return map;
+  }, [lessons]);
 
   useEffect(() => {
     const next: WeeklyCellMap = {};
@@ -894,7 +946,7 @@ export function StudentLessonNetClient({
             <button
               className="btn btn-primary"
               disabled={!newLessonName.trim() || saving}
-              onClick={handleAddLesson}
+              onClick={() => void handleAddLesson()}
               style={{ opacity: newLessonName.trim() && !saving ? 1 : 0.5 }}
             >
               {saving ? "Ekleniyor…" : "Ekle"}
@@ -908,6 +960,54 @@ export function StudentLessonNetClient({
           <LoadingScreen className="panel" />
         ) : (
           <div className="student-question-list">
+            {!effectiveReadOnly && (
+              <section className="panel qz-lesson-manager" aria-label="Ders yönetimi">
+                <div className="qz-lesson-manager-copy">
+                  <strong>Derslerini yönet</strong>
+                  <span>Yeni ders ekle, eklediğin dersleri tablodan kaldır.</span>
+                </div>
+                <div className="qz-lesson-manager-form">
+                  <input
+                    value={newLessonName}
+                    onChange={(e) => {
+                      setNewLessonName(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="Ders adı yaz..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void handleAddLesson(null);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={!newLessonName.trim() || saving}
+                    onClick={() => void handleAddLesson(null)}
+                  >
+                    {saving ? "Ekleniyor..." : "Ders Ekle"}
+                  </button>
+                </div>
+                {lessons.length > 0 && (
+                  <div className="qz-lesson-chips">
+                    {lessons.map((lesson) => (
+                      <span key={lesson.id} className="qz-lesson-chip">
+                        {lesson.name}
+                        <button
+                          type="button"
+                          title={`${lesson.name} dersini sil`}
+                          aria-label={`${lesson.name} dersini sil`}
+                          disabled={deletingId === lesson.id}
+                          onClick={() => void handleDeleteLesson(lesson)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
             <section className="qz-summary" aria-label="Soru çözüm özeti">
               <article className="qz-sum-card">
                 <span className="qz-sum-l">Toplam Soru</span>
@@ -964,7 +1064,24 @@ export function StudentLessonNetClient({
 
                       return (
                         <tr key={lessonName}>
-                          <td className="qz-subj">{lessonName}</td>
+                          <td className="qz-subj">
+                            <span>{lessonName}</span>
+                            {!effectiveReadOnly && lessonsByName.has(lessonName) && (
+                              <button
+                                type="button"
+                                className="qz-subj-delete"
+                                title={`${lessonName} dersini sil`}
+                                aria-label={`${lessonName} dersini sil`}
+                                disabled={deletingId === lessonsByName.get(lessonName)?.id}
+                                onClick={() => {
+                                  const lesson = lessonsByName.get(lessonName);
+                                  if (lesson) void handleDeleteLesson(lesson);
+                                }}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </td>
                           {detailWeekDays.map((day) => {
                             const cell = weeklyCells[lessonName]?.[day.date] ?? emptyWeeklyCell();
                             const disabled = effectiveReadOnly || day.date > today();

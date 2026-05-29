@@ -96,12 +96,25 @@ export async function updateCoachLessonAction(id: string, name: string): Promise
 }
 
 export async function deleteCoachLessonAction(id: string): Promise<void> {
-  await requireSession();
-  // Anon client RLS'de DELETE iznine sahip olmayabilir — admin client kullan
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase
+  const { session } = await requireSession();
+  const server = await createSupabaseServerClient();
+  const coachId = await resolveCoachId(session.userId, server);
+  const admin = createSupabaseAdminClient();
+
+  const { data: existing, error: lookupError } = await admin
+    .from("coach_lessons")
+    .select("id")
+    .eq("id", id)
+    .eq("coach_id", coachId)
+    .maybeSingle();
+
+  if (lookupError) throw new Error(lookupError.message);
+  if (!existing) throw new Error("Ders bulunamadı veya yetkiniz yok");
+
+  const { error } = await admin
     .from("coach_lessons")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("coach_id", coachId);
   if (error) throw new Error(error.message);
 }
