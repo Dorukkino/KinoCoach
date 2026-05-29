@@ -122,6 +122,29 @@ export function StudentWeeklyTab({
     saveGrid(next.toJSON());
   };
 
+  const handleToggleCell = (row: number, col: number) => {
+    if (!canToggle || !program) return;
+
+    const previousProgram = program;
+    const nextGrid = Grid7x10.fromJSON(program.grid).toggleDone(row, col).toJSON();
+    setProgram({ ...program, grid: nextGrid });
+
+    startTransition(async () => {
+      try {
+        const updated = await toggleWeeklyTaskAction(
+          studentId,
+          selectedWeek,
+          row,
+          col
+        );
+        setProgram(updated);
+      } catch (error) {
+        console.error("Failed to toggle weekly task", error);
+        setProgram(previousProgram);
+      }
+    });
+  };
+
   return (
     <>
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
@@ -146,21 +169,7 @@ export function StudentWeeklyTab({
           role={role}
           readOnly={isPastWeek}
           onEditCell={canEdit ? handleEditCell : undefined}
-          onToggle={
-            canToggle
-              ? (row, col) => {
-                  startTransition(async () => {
-                    const updated = await toggleWeeklyTaskAction(
-                      studentId,
-                      selectedWeek,
-                      row,
-                      col
-                    );
-                    setProgram(updated);
-                  });
-                }
-              : undefined
-          }
+          onToggle={canToggle ? handleToggleCell : undefined}
         />
       )}
 
