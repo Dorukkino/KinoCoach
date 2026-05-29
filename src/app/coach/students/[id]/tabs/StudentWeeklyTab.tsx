@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { CSSProperties } from "react";
 import { WeeklyGrid } from "@/presentation/components/weekly/WeeklyGrid";
 import { CellPickerModal } from "@/presentation/components/weekly/CellPickerModal";
@@ -33,10 +33,20 @@ const DETAIL_DAYS = [
   "Pazar",
 ];
 
+const STUDENT_PROGRAM_DAYS = DETAIL_DAYS;
+
 function detailCellStyle(cell: TaskCell): CSSProperties {
   return {
     borderLeft: `3px solid ${toneToHex(cell.tone)}`,
     opacity: cell.done ? 0.62 : 1,
+  };
+}
+
+function studentTaskStyle(cell: TaskCell): CSSProperties {
+  const hex = toneToHex(cell.tone);
+  return {
+    backgroundColor: `${hex}0d`,
+    borderLeftColor: hex,
   };
 }
 
@@ -113,6 +123,14 @@ export function StudentWeeklyTab({
   const isPastWeek = selectedWeek < currentWeek;
   const canEdit = role === "coach" && !isPastWeek;
   const canToggle = role === "student" && !isPastWeek;
+  const previousWeek = weeks.find((week) => week < currentWeek);
+  const programStats = useMemo(() => {
+    if (!program) return null;
+    const total = program.grid.flat().filter(Boolean).length;
+    const done = program.grid.flat().filter((cell) => cell?.done).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return { total, done, pct };
+  }, [program]);
 
   const saveGrid = (grid: WeeklyProgramDto["grid"]) => {
     startTransition(async () => {
@@ -169,25 +187,52 @@ export function StudentWeeklyTab({
 
   return (
     <>
-      <div
-        className={
-          detailVariant
-            ? "student-weekly-toolbar"
-            : "flex items-center justify-between gap-3 mb-4 flex-wrap"
-        }
-      >
-        <WeekPicker
-          weeks={weeks}
-          selectedWeek={selectedWeek}
-          currentWeek={currentWeek}
-          onSelect={setSelectedWeek}
-        />
-        {isPastWeek && (
-          <span className="text-xs text-[var(--muted)] italic">
-            Geçmiş hafta — yalnızca görüntüleme
-          </span>
-        )}
-      </div>
+      {role === "student" && !detailVariant ? (
+        <div className="student-program-head">
+          <div className="student-program-title">
+            <h1>Haftalık Program</h1>
+          </div>
+
+          <div className="student-program-actions">
+            <WeekPicker
+              weeks={weeks}
+              selectedWeek={selectedWeek}
+              currentWeek={currentWeek}
+              onSelect={setSelectedWeek}
+            />
+            <button
+              type="button"
+              className="student-program-history"
+              disabled={!previousWeek}
+              onClick={() => {
+                if (previousWeek) setSelectedWeek(previousWeek);
+              }}
+            >
+              Geçmiş haftalar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={
+            detailVariant
+              ? "student-weekly-toolbar"
+              : "flex items-center justify-between gap-3 mb-4 flex-wrap"
+          }
+        >
+          <WeekPicker
+            weeks={weeks}
+            selectedWeek={selectedWeek}
+            currentWeek={currentWeek}
+            onSelect={setSelectedWeek}
+          />
+          {isPastWeek && (
+            <span className="text-xs text-[var(--muted)] italic">
+              Geçmiş hafta — yalnızca görüntüleme
+            </span>
+          )}
+        </div>
+      )}
 
       {!program ? (
         <LoadingScreen className="panel" />
@@ -196,6 +241,13 @@ export function StudentWeeklyTab({
           grid={program.grid}
           readOnly={isPastWeek}
           onEditCell={canEdit ? handleEditCell : undefined}
+        />
+      ) : role === "student" ? (
+        <StudentProgramGrid
+          grid={program.grid}
+          readOnly={isPastWeek}
+          completionPercent={programStats?.pct ?? program.completionPercent}
+          onToggle={canToggle ? handleToggleCell : undefined}
         />
       ) : (
         <WeeklyGrid
@@ -217,6 +269,93 @@ export function StudentWeeklyTab({
         />
       )}
     </>
+  );
+}
+
+function StudentProgramGrid({
+  grid,
+  readOnly,
+  completionPercent,
+  onToggle,
+}: {
+  grid: WeeklyProgramDto["grid"];
+  readOnly: boolean;
+  completionPercent: number;
+  onToggle?: (row: number, col: number) => void;
+}) {
+  const total = grid.flat().filter(Boolean).length;
+  const done = grid.flat().filter((cell) => cell?.done).length;
+
+  return (
+    <section className="student-program-shell" aria-label="Haftalık program tablosu">
+      <div className="student-program-progress">
+        <div className="student-program-progress-copy">
+          <strong>%{completionPercent}</strong>
+          <span>{done} / {total} görev tamamlandı</span>
+        </div>
+        <div
+          className="student-program-progress-track"
+          aria-label={`Haftalık program tamamlanma oranı yüzde ${completionPercent}`}
+        >
+          <span style={{ width: `${completionPercent}%` }} />
+        </div>
+      </div>
+
+      {readOnly && (
+        <p className="student-program-readonly">
+          Geçmiş hafta - yalnızca görüntüleme
+        </p>
+      )}
+
+      <div className="student-program-scroll">
+        <div className="student-program-grid">
+          <div className="student-program-corner">#</div>
+          {STUDENT_PROGRAM_DAYS.map((day) => (
+            <div key={day} className="student-program-day">
+              {day}
+            </div>
+          ))}
+
+          {grid.map((row, rowIndex) => (
+            <Fragment key={`student-program-row-${rowIndex}`}>
+              <div className="student-program-row-number">{rowIndex + 1}</div>
+              {row.map((cell, colIndex) => (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className={`student-program-cell${cell ? " has-task" : ""}${cell?.done ? " is-done" : ""}`}
+                >
+                  {cell ? (
+                    <button
+                      type="button"
+                      className="student-program-task"
+                      style={studentTaskStyle(cell)}
+                      disabled={readOnly}
+                      aria-pressed={cell.done}
+                      onClick={() => onToggle?.(rowIndex, colIndex)}
+                    >
+                      <span
+                        className="student-program-check"
+                        aria-hidden="true"
+                      >
+                        {cell.done ? "✓" : ""}
+                      </span>
+                      <span className="student-program-task-title">
+                        {cell.title}
+                      </span>
+                      {cell.sub && (
+                        <span className="student-program-task-sub">
+                          {cell.sub}
+                        </span>
+                      )}
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

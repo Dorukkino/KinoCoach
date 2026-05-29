@@ -19,7 +19,6 @@ import {
   getWeekStartISO,
   getWeekStartForISO,
   mergeWeeksNearToday,
-  sortByDateNearToday,
 } from "@/lib/dates";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
@@ -55,6 +54,14 @@ type SessionTotals = {
   wrong: number;
   blank: number;
 };
+
+type WeeklyCell = {
+  correct: string;
+  wrong: string;
+  blank: string;
+};
+
+type WeeklyCellMap = Record<string, Record<string, WeeklyCell>>;
 
 interface StudentLessonNetClientProps {
   studentId: string;
@@ -113,6 +120,65 @@ const getWeekDays = (weekStart: string) => {
   });
 };
 
+const DEFAULT_LESSON_NAMES = [
+  "Matematik",
+  "Türkçe",
+  "Geometri",
+  "Fizik",
+  "Kimya",
+  "Biyoloji",
+  "Tarih",
+  "Coğrafya",
+  "Felsefe",
+  "Edebiyat",
+];
+
+const emptyWeeklyCell = (): WeeklyCell => ({
+  correct: "",
+  wrong: "",
+  blank: "",
+});
+
+const numberToCellValue = (value: number) => (value > 0 ? String(value) : "");
+
+const parseCellNumber = (value: string) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+};
+
+const sumWeeklyCell = (cell?: WeeklyCell): SessionTotals => ({
+  correct: parseCellNumber(cell?.correct ?? ""),
+  wrong: parseCellNumber(cell?.wrong ?? ""),
+  blank: parseCellNumber(cell?.blank ?? ""),
+  total:
+    parseCellNumber(cell?.correct ?? "") +
+    parseCellNumber(cell?.wrong ?? "") +
+    parseCellNumber(cell?.blank ?? ""),
+});
+
+const getCellTone = (cell?: WeeklyCell) => {
+  const totals = sumWeeklyCell(cell);
+  if (totals.total === 0) return "";
+  const accuracy = totals.correct / totals.total;
+  if (accuracy >= 0.72) return "good";
+  if (accuracy >= 0.5) return "warn";
+  return "risk";
+};
+
+const serializeWeeklyCells = (
+  lessonNames: string[],
+  weekDays: ReturnType<typeof getWeekDays>,
+  cells: WeeklyCellMap
+) =>
+  lessonNames
+    .flatMap((lessonName) =>
+      weekDays.map((day) => {
+        const totals = sumWeeklyCell(cells[lessonName]?.[day.date]);
+        return `${lessonName}|${day.date}|${totals.correct}|${totals.wrong}|${totals.blank}`;
+      })
+    )
+    .join(";");
+
 export function StudentLessonNetClient({
   studentId,
   readOnly = false,
@@ -140,6 +206,9 @@ export function StudentLessonNetClient({
   const [newLessonName, setNewLessonName] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [weekSaving, setWeekSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [weeklyCells, setWeeklyCells] = useState<WeeklyCellMap>({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const lessonInputRef = useRef<HTMLInputElement>(null);
@@ -298,32 +367,92 @@ export function StudentLessonNetClient({
     }
   };
 
-  const handleDeleteSession = async (id: string) => {
-    if (effectiveReadOnly) return;
-    if (!confirm("Bu kaydı silmek istiyor musunuz?")) return;
-    startTransition(async () => {
-      await deleteQuestionSessionAction(id);
-      setSessions((prev) => prev.filter((s) => s.id !== id));
-    });
+  const handleCellChange = (
+    lessonName: string,
+    date: string,
+    field: keyof WeeklyCell,
+    value: string
+  ) => {
+    if (effectiveReadOnly || date > today()) return;
+    const normalized = value.replace(/[^\d]/g, "");
+    setSaveMessage("");
+    setWeeklyCells((prev) => ({
+      ...prev,
+      [lessonName]: {
+        ...(prev[lessonName] ?? {}),
+        [date]: {
+          ...(prev[lessonName]?.[date] ?? emptyWeeklyCell()),
+          [field]: normalized,
+        },
+      },
+    }));
   };
 
-  // Ders bazlı özet
-  const summary = sessions.reduce<Record<string, { total: number; correct: number; wrong: number; blank: number }>>(
-    (acc, s) => {
-      if (!acc[s.lessonName]) acc[s.lessonName] = { total: 0, correct: 0, wrong: 0, blank: 0 };
-      acc[s.lessonName].total   += s.total;
-      acc[s.lessonName].correct += s.correct;
-      acc[s.lessonName].wrong   += s.wrong;
-      acc[s.lessonName].blank   += s.blank;
-      return acc;
-    },
-    {}
-  );
+  const handleSaveWeek = async () => {
+    if (effectiveReadOnly || weekSaving) return;
 
-  const sortedSessions = useMemo(
-    () => sortByDateNearToday(sessions, (s) => s.date),
-    [sessions]
-  );
+    setWeekSaving(true);
+    setError("");
+    setSaveMessage("");
+
+    try {
+      const persistedCells: WeeklyCellMap = {};
+
+      sessions.forEach((session) => {
+        persistedCells[session.lessonName] = persistedCells[session.lessonName] ?? {};
+        const current = sumWeeklyCell(persistedCells[session.lessonName][session.date]);
+        persistedCells[session.lessonName][session.date] = {
+          correct: numberToCellValue(current.correct + session.correct),
+          wrong: numberToCellValue(current.wrong + session.wrong),
+          blank: numberToCellValue(current.blank + session.blank),
+        };
+      });
+
+      if (
+        serializeWeeklyCells(lessonNames, detailWeekDays, persistedCells) ===
+        serializeWeeklyCells(lessonNames, detailWeekDays, weeklyCells)
+      ) {
+        setSaveMessage("Kaydedilecek değişiklik yok.");
+        return;
+      }
+
+      for (const session of sessions) {
+        await deleteQuestionSessionAction(session.id);
+      }
+
+      for (const lessonName of lessonNames) {
+        for (const day of detailWeekDays) {
+          if (day.date > today()) continue;
+          const cellTotals = sumWeeklyCell(weeklyCells[lessonName]?.[day.date]);
+          if (cellTotals.total === 0) continue;
+
+          const result = await createQuestionSessionAction({
+            studentId,
+            lessonName,
+            date: day.date,
+            total: cellTotals.total,
+            correct: cellTotals.correct,
+            wrong: cellTotals.wrong,
+            blank: cellTotals.blank,
+            note: "",
+          });
+
+          if (!result.ok) {
+            throw new Error(result.error);
+          }
+        }
+      }
+
+      const freshSessions = await listQuestionSessionsAction(studentId, selectedWeek);
+      setSessions(freshSessions);
+      await loadWeeks();
+      setSaveMessage("Hafta kaydedildi.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Hafta kaydedilemedi.");
+    } finally {
+      setWeekSaving(false);
+    }
+  };
 
   const detailTotals = useMemo(
     () =>
@@ -335,6 +464,44 @@ export function StudentLessonNetClient({
   );
 
   const detailWeekDays = useMemo(() => getWeekDays(selectedWeek), [selectedWeek]);
+
+  const lessonNames = useMemo(() => {
+    const names = new Set(DEFAULT_LESSON_NAMES);
+    lessons.forEach((lesson) => names.add(lesson.name));
+    sessions.forEach((session) => names.add(session.lessonName));
+    return Array.from(names);
+  }, [lessons, sessions]);
+
+  useEffect(() => {
+    const next: WeeklyCellMap = {};
+
+    sessions.forEach((session) => {
+      next[session.lessonName] = next[session.lessonName] ?? {};
+      const current = sumWeeklyCell(next[session.lessonName][session.date]);
+      next[session.lessonName][session.date] = {
+        correct: numberToCellValue(current.correct + session.correct),
+        wrong: numberToCellValue(current.wrong + session.wrong),
+        blank: numberToCellValue(current.blank + session.blank),
+      };
+    });
+
+    setWeeklyCells(next);
+  }, [sessions]);
+
+  const weeklyTotals = useMemo(
+    () =>
+      lessonNames.reduce<SessionTotals>((acc, lessonName) => {
+        detailWeekDays.forEach((day) => {
+          const cellTotals = sumWeeklyCell(weeklyCells[lessonName]?.[day.date]);
+          acc.correct += cellTotals.correct;
+          acc.wrong += cellTotals.wrong;
+          acc.blank += cellTotals.blank;
+          acc.total += cellTotals.total;
+        });
+        return acc;
+      }, emptyTotals()),
+    [detailWeekDays, lessonNames, weeklyCells]
+  );
 
   const detailRows = useMemo(() => {
     const rows = new Map<
@@ -492,12 +659,21 @@ export function StudentLessonNetClient({
     );
   }
 
+  const totalNet = calculateNet(weeklyTotals.correct, weeklyTotals.wrong);
+  const successRate = weeklyTotals.total
+    ? Math.round((weeklyTotals.correct / weeklyTotals.total) * 100)
+    : 0;
+
   return (
     <div>
-      {/* ── HAFTA SEÇİCİ + EKLE BUTONU ── */}
+      {/* ── BAŞLIK + HAFTA KAYDET ── */}
       {view === "list" && (
-        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="page-head student-question-head">
+          <div className="page-title">
+            <h1>Soru Çözüm Listem</h1>
+            <p>Her ders için günlük çözdüğün soruları Doğru / Yanlış / Boş olarak gir</p>
+          </div>
+          <div className="student-question-actions">
             <WeekPicker
               weeks={weeks}
               selectedWeek={selectedWeek}
@@ -505,19 +681,20 @@ export function StudentLessonNetClient({
               onSelect={setSelectedWeek}
             />
             {isPastWeek && (
-              <span className="text-xs text-[var(--muted)] italic">
+              <span className="student-question-readonly">
                 Geçmiş hafta — yalnızca görüntüleme
               </span>
             )}
+            {!effectiveReadOnly && (
+              <button
+                className="btn btn-primary student-question-save"
+                disabled={weekSaving}
+                onClick={handleSaveWeek}
+              >
+                {weekSaving ? "Kaydediliyor..." : "Haftayı Kaydet"}
+              </button>
+            )}
           </div>
-          {!effectiveReadOnly && (
-            <button
-              className="btn btn-primary"
-              onClick={() => { setView("add-session"); setError(""); }}
-            >
-              + Soru Çözümü Ekle
-            </button>
-          )}
         </div>
       )}
 
@@ -726,83 +903,158 @@ export function StudentLessonNetClient({
         </div>
       )}
 
-      {/* ── ÖZET KARTLARI ── */}
-      {!sessionsLoading && sessions.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
-          {Object.entries(summary).map(([lesson, s]) => (
-            <div key={lesson} className="panel" style={{ padding: "14px 18px", minWidth: 160 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{lesson}</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", display: "flex", flexDirection: "column", gap: 2 }}>
-                <span>Toplam: <strong style={{ color: "var(--ink)" }}>{s.total}</strong></span>
-                <span>Net: <strong style={{ color: "var(--accent-ink)" }}>{formatNet(calculateNet(s.correct, s.wrong))}</strong></span>
-                <span style={{ color: "var(--good-ink)" }}>Doğru: <strong>{s.correct}</strong></span>
-                <span style={{ color: "var(--risk-ink)" }}>Yanlış: <strong>{s.wrong}</strong></span>
-                <span>Boş: <strong style={{ color: "var(--ink)" }}>{s.blank}</strong></span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {view === "list" && (
+        sessionsLoading ? (
+          <LoadingScreen className="panel" />
+        ) : (
+          <div className="student-question-list">
+            <section className="qz-summary" aria-label="Soru çözüm özeti">
+              <article className="qz-sum-card">
+                <span className="qz-sum-l">Toplam Soru</span>
+                <span className="qz-sum-v">{weeklyTotals.total}</span>
+              </article>
+              <article className="qz-sum-card">
+                <span className="qz-sum-l"><span className="qz-dot d" /> Doğru</span>
+                <span className="qz-sum-v">{weeklyTotals.correct}</span>
+              </article>
+              <article className="qz-sum-card">
+                <span className="qz-sum-l"><span className="qz-dot y" /> Yanlış</span>
+                <span className="qz-sum-v">{weeklyTotals.wrong}</span>
+              </article>
+              <article className="qz-sum-card">
+                <span className="qz-sum-l"><span className="qz-dot b" /> Boş</span>
+                <span className="qz-sum-v">{weeklyTotals.blank}</span>
+              </article>
+              <article className="qz-sum-card accent">
+                <span className="qz-sum-l">Net</span>
+                <span className="qz-sum-v">{formatNet(totalNet)}</span>
+                <span className="qz-sum-sub">başarı %{successRate}</span>
+              </article>
+            </section>
 
-      {/* ── KAYIT LİSTESİ ── */}
-      {sessionsLoading && view === "list" ? (
-        <LoadingScreen className="panel" />
-      ) : sortedSessions.length === 0 && view === "list" ? (
-        <div className="panel p-8 text-center text-sm text-[var(--muted)]">
-          {effectiveReadOnly
-            ? "Bu hafta için soru çözüm kaydı yok."
-            : "Bu hafta henüz soru çözüm kaydı eklemediniz. Yukarıdaki butondan ekleyebilirsiniz."}
-        </div>
-      ) : sortedSessions.length > 0 ? (
-        <div className="panel overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left text-[var(--muted)] bg-[var(--bg-elev)]">
-                <th className="p-3">Tarih</th>
-                <th className="p-3">Ders</th>
-                <th className="p-3">Toplam</th>
-                <th className="p-3" style={{ color: "var(--good-ink)" }}>Doğru</th>
-                <th className="p-3" style={{ color: "var(--risk-ink)" }}>Yanlış</th>
-                <th className="p-3">Boş</th>
-                <th className="p-3 font-bold">Net</th>
-                <th className="p-3">Not</th>
-                {!effectiveReadOnly && <th className="p-3"></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedSessions.map((s) => (
-                <tr key={s.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-elev)]">
-                  <td className="p-3">{s.date}</td>
-                  <td className="p-3 font-medium">{s.lessonName}</td>
-                  <td className="p-3">{s.total}</td>
-                  <td className="p-3" style={{ color: "var(--good-ink)", fontWeight: 600 }}>{s.correct}</td>
-                  <td className="p-3" style={{ color: "var(--risk-ink)", fontWeight: 600 }}>{s.wrong}</td>
-                  <td className="p-3">{s.blank}</td>
-                  <td className="p-3 font-semibold">{formatNet(calculateNet(s.correct, s.wrong))}</td>
-                  <td className="p-3 text-[var(--muted)] max-w-[180px]">
-                    {s.note ? (
-                      <span className="text-xs leading-snug block truncate" title={s.note}>{s.note}</span>
-                    ) : (
-                      <span className="text-xs text-[var(--muted-2)]">—</span>
-                    )}
-                  </td>
-                  {!effectiveReadOnly && (
-                    <td className="p-3">
-                      <button
-                        onClick={() => handleDeleteSession(s.id)}
-                        style={{ color: "var(--muted-2)", fontSize: 16, lineHeight: 1 }}
-                        title="Sil"
-                      >
-                        ×
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+            <section className="panel qz-panel">
+              <header className="panel-head qz-panel-head">
+                <div className="panel-title">
+                  <h3>Bu haftaki soru çözümlerin</h3>
+                  <p>Hücrelere D / Y / B sayılarını gir, otomatik toplanır</p>
+                </div>
+                <div className="qz-legend">
+                  <span className="qz-legend-item"><span className="qz-dot d" /> Doğru</span>
+                  <span className="qz-legend-item"><span className="qz-dot y" /> Yanlış</span>
+                  <span className="qz-legend-item"><span className="qz-dot b" /> Boş</span>
+                </div>
+              </header>
+              <div className="qz-panel-body">
+                <table className="qz-grid">
+                  <thead>
+                    <tr>
+                      <th className="qz-head-sub">Ders</th>
+                      {detailWeekDays.map((day) => (
+                        <th key={day.date}>{day.label}</th>
+                      ))}
+                      <th className="qz-head-total">Top.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lessonNames.map((lessonName) => {
+                      const rowTotal = detailWeekDays.reduce(
+                        (sum, day) => sum + sumWeeklyCell(weeklyCells[lessonName]?.[day.date]).total,
+                        0
+                      );
+
+                      return (
+                        <tr key={lessonName}>
+                          <td className="qz-subj">{lessonName}</td>
+                          {detailWeekDays.map((day) => {
+                            const cell = weeklyCells[lessonName]?.[day.date] ?? emptyWeeklyCell();
+                            const disabled = effectiveReadOnly || day.date > today();
+                            const tone = getCellTone(cell);
+
+                            return (
+                              <td
+                                key={day.date}
+                                className={`qz-cell ${tone}${disabled ? " ro" : ""}`}
+                              >
+                                <div className="qz-row">
+                                  <span className="qz-tag d">D</span>
+                                  <input
+                                    inputMode="numeric"
+                                    value={cell.correct}
+                                    onChange={(e) =>
+                                      handleCellChange(lessonName, day.date, "correct", e.target.value)
+                                    }
+                                    placeholder="—"
+                                    disabled={disabled}
+                                  />
+                                </div>
+                                <div className="qz-row">
+                                  <span className="qz-tag y">Y</span>
+                                  <input
+                                    inputMode="numeric"
+                                    value={cell.wrong}
+                                    onChange={(e) =>
+                                      handleCellChange(lessonName, day.date, "wrong", e.target.value)
+                                    }
+                                    placeholder="—"
+                                    disabled={disabled}
+                                  />
+                                </div>
+                                <div className="qz-row">
+                                  <span className="qz-tag b">B</span>
+                                  <input
+                                    inputMode="numeric"
+                                    value={cell.blank}
+                                    onChange={(e) =>
+                                      handleCellChange(lessonName, day.date, "blank", e.target.value)
+                                    }
+                                    placeholder="—"
+                                    disabled={disabled}
+                                  />
+                                </div>
+                              </td>
+                            );
+                          })}
+                          <td className="qz-row-total"><b>{rowTotal}</b></td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="qz-foot">
+                      <td>Günlük</td>
+                      {detailWeekDays.map((day) => {
+                        const dayTotals = lessonNames.reduce(
+                          (acc, lessonName) => {
+                            const cellTotals = sumWeeklyCell(weeklyCells[lessonName]?.[day.date]);
+                            acc.correct += cellTotals.correct;
+                            acc.wrong += cellTotals.wrong;
+                            acc.blank += cellTotals.blank;
+                            return acc;
+                          },
+                          { correct: 0, wrong: 0, blank: 0 }
+                        );
+
+                        return (
+                          <td key={day.date}>
+                            <div className="qz-foot-line"><span className="qz-tag d">D</span>{dayTotals.correct}</div>
+                            <div className="qz-foot-line"><span className="qz-tag y">Y</span>{dayTotals.wrong}</div>
+                            <div className="qz-foot-line"><span className="qz-tag b">B</span>{dayTotals.blank}</div>
+                          </td>
+                        );
+                      })}
+                      <td className="qz-grand"><b>{weeklyTotals.total}</b></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {(error || saveMessage) && (
+              <p className={error ? "student-question-error" : "student-question-success"}>
+                {error || saveMessage}
+              </p>
+            )}
+          </div>
+        )
+      )}
     </div>
   );
 }

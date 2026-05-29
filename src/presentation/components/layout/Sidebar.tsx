@@ -33,7 +33,7 @@ const STUDENT_NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Genel",
     items: [
-      { id: "dashboard", label: "Dashboard", href: "/student/dashboard", icon: "Dashboard" },
+      { id: "dashboard", label: "Genel Bakış", href: "/student/dashboard", icon: "Dashboard" },
       { id: "weekly", label: "Programım", href: "/student/weekly", icon: "Calendar" },
       { id: "exams", label: "Deneme Netlerim", href: "/student/exams", icon: "Trial" },
       { id: "lesson-nets", label: "Soru Çözüm", href: "/student/lesson-nets", icon: "Lessons" },

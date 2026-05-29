@@ -2,7 +2,7 @@ import { createServerContainer } from "@/infrastructure/di/container";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 import { redirect } from "next/navigation";
 import { StudentChatClient } from "./StudentChatClient";
-import { getLastMessageTimestampsAction, listMessagesAction } from "@/app/actions/messages";
+import { listMessagesAction } from "@/app/actions/messages";
 
 async function fetchCoachName(coachId: string): Promise<string> {
   try {
@@ -41,24 +41,17 @@ export async function StudentChatContent() {
   }
 
   const coachUserId = activeEngagement.coachId;
-  const [coachName, lastTimestamps, thread] = await Promise.all([
+  const [coachName, thread] = await Promise.all([
     fetchCoachName(coachUserId),
-    getLastMessageTimestampsAction([coachUserId]),
     listMessagesAction(coachUserId),
   ]);
 
   return (
-    <>
-      <p className="text-sm text-[var(--muted)] m-0 mb-4">
-        Koçunuz: <strong>{coachName}</strong>
-      </p>
-      <StudentChatClient
-        studentUserId={session.userId}
-        coachUserId={coachUserId}
-        coachName={coachName}
-        initialLastTimestamp={lastTimestamps[coachUserId]}
-        initialMessages={thread.messages}
-      />
-    </>
+    <StudentChatClient
+      studentUserId={session.userId}
+      coachUserId={coachUserId}
+      coachName={coachName}
+      initialMessages={thread.messages}
+    />
   );
 }

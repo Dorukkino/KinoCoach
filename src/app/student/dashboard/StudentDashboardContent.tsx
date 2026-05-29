@@ -1,8 +1,12 @@
-import Link from "next/link";
-import type { CoachingInvitationDto } from "@/application/dto";
+import type {
+  CoachingInvitationDto,
+  ExamResultDto,
+  WeeklyProgramDto,
+} from "@/application/dto";
+import type { QuestionSessionDto } from "@/app/actions/question-sessions";
 import { StudentInvitationsBanner } from "./StudentInvitationsBanner";
-import { StudentMotivationBanner } from "./StudentMotivationBanner";
 import type { MotivationCardDto } from "@/application/dto";
+import { StudentDashboardOverview } from "./StudentDashboardOverview";
 
 export interface StudentDashboardData {
   studentId: string;
@@ -15,23 +19,20 @@ export interface StudentDashboardData {
 export function StudentDashboardContent({
   dashboard,
   invitations,
+  weeklyProgram,
+  examRows,
+  questionSessions,
+  weekStart,
 }: {
   dashboard: StudentDashboardData;
   invitations: CoachingInvitationDto[];
+  weeklyProgram: WeeklyProgramDto | null;
+  examRows: ExamResultDto[];
+  questionSessions: QuestionSessionDto[];
+  weekStart: string;
 }) {
   return (
     <>
-      <p className="text-lg font-semibold m-0 mb-4">Merhaba, {dashboard.name}</p>
-      <p className="text-sm text-[var(--muted)] m-0 mb-4">
-        {dashboard.hasActiveCoach ? (
-          <>
-            Koçun: <strong>{dashboard.coachName}</strong>
-          </>
-        ) : (
-          "Henüz aktif bir koçun yok."
-        )}
-      </p>
-
       <StudentInvitationsBanner
         studentId={dashboard.studentId}
         invitations={invitations}
@@ -46,20 +47,13 @@ export function StudentDashboardContent({
         </div>
       )}
 
-      {dashboard.hasActiveCoach && (
-        <StudentMotivationBanner
-          studentId={dashboard.studentId}
-          initialMotivation={dashboard.motivation}
-        />
-      )}
-
-      {dashboard.hasActiveCoach && (
-        <div className="flex gap-3 flex-wrap">
-          <Link href="/student/chat" className="btn btn-outline">
-            Koça mesaj
-          </Link>
-        </div>
-      )}
+      <StudentDashboardOverview
+        dashboard={dashboard}
+        initialProgram={weeklyProgram}
+        initialExamRows={examRows}
+        initialQuestionSessions={questionSessions}
+        weekStart={weekStart}
+      />
     </>
   );
 }

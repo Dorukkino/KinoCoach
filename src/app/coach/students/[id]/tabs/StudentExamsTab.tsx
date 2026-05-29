@@ -16,7 +16,6 @@ import {
   deleteExamResultAction,
 } from "@/app/actions/exams";
 import { ExamResultDto } from "@/application/dto";
-import { ExamLineChart } from "@/presentation/components/charts/ExamLineChart";
 import { ChartDataService } from "@/application/services/ChartDataService";
 import { ExamResult } from "@/domain/entities/ExamResult";
 import { ExamScores } from "@/domain/value-objects/ExamScores";
@@ -68,7 +67,6 @@ const emptyForm = (): AddFormState => ({
 
 export function StudentExamsTab({
   studentId,
-  role = "coach",
   initialRows,
   detailVariant = false,
 }: {
@@ -82,6 +80,7 @@ export function StudentExamsTab({
   const [loading, setLoading] = useState(initialRows === undefined);
   const [subject, setSubject] = useState<ExamSubjectKey>("total");
   const [showForm, setShowForm] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [editingRow, setEditingRow] = useState<ExamResultDto | null>(null);
   const [openMenu, setOpenMenu] = useState<RowMenuState | null>(null);
   const [form, setForm] = useState<AddFormState>(emptyForm());
@@ -255,6 +254,7 @@ export function StudentExamsTab({
     selectedLatestValue !== null && selectedPreviousValue !== null
       ? selectedLatestValue - selectedPreviousValue
       : null;
+  const latestTotalValue = latestChartRow?.total ?? null;
 
   const entities = chartRowsForDisplay.map(
     (r) =>
@@ -430,256 +430,218 @@ export function StudentExamsTab({
   }
 
   return (
-    <div>
-      {/* Ekleme butonu */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2 flex-wrap">
-          {(["total", "turkish", "math", "science", "social", "english"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              className={`filter-tab${subject === s ? " active" : ""}`}
-              onClick={() => setSubject(s)}
-            >
-              {SUBJECT_LABELS[s]}
-            </button>
-          ))}
+    <div className="student-exams-screen">
+      <div className="page-head student-exams-page-head">
+        <div className="page-title">
+          <h1>Deneme Netleri</h1>
+          <p>
+            {chartRows.length} deneme
+            {latestTotalValue !== null
+              ? ` · son denemede toplam ${formatNet(latestTotalValue)} net`
+              : ""}
+          </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={openCreateForm}
-        >
-          + Deneme Ekle
-        </button>
+        <div className="student-exams-actions">
+          <div className="student-exams-filter-wrap">
+            <button
+              type="button"
+              className="student-exams-outline-btn"
+              onClick={() => setShowFilterMenu((current) => !current)}
+              aria-expanded={showFilterMenu}
+            >
+              <span aria-hidden="true">≡</span>
+              Filtrele
+            </button>
+            {showFilterMenu && (
+              <div className="student-exams-filter-menu">
+                {(["total", "turkish", "math", "science", "social"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={subject === s ? "active" : ""}
+                    onClick={() => {
+                      setSubject(s);
+                      setShowFilterMenu(false);
+                    }}
+                  >
+                    {SUBJECT_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button type="button" className="coach-exam-add-btn" onClick={openCreateForm}>
+            + Deneme Ekle
+          </button>
+        </div>
       </div>
 
-      {/* Ekleme formu */}
       {showForm && (
-        <div className="panel p-5 mb-5">
-          <div className="flex items-center justify-between mb-4">
-            <span style={{ fontWeight: 700, fontSize: 15 }}>Yeni Deneme Sonucu</span>
-            <button
-              onClick={closeForm}
-              style={{
-                width: 28, height: 28, borderRadius: "50%",
-                background: "var(--bg)", border: "1px solid var(--border)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 18, color: "var(--muted)",
-              }}
-            >×</button>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
-            {/* Tarih — tam satır */}
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label className="label">Tarih</label>
-              <DateInputTR
-                ref={firstInputRef}
-                value={form.date}
-                onChange={(iso) => set("date", iso)}
-              />
-            </div>
-
-            <div>
-              <label className="label">Türkçe Net</label>
-              <input
-                type="number"
-                step="0.25"
-                min="0"
-                max="40"
-                className="input"
-                placeholder="0"
-                value={form.turkish}
-                onChange={(e) => set("turkish", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="label">Matematik Net</label>
-              <input
-                type="number"
-                step="0.25"
-                min="0"
-                max="40"
-                className="input"
-                placeholder="0"
-                value={form.math}
-                onChange={(e) => set("math", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="label">Fen Net</label>
-              <input
-                type="number"
-                step="0.25"
-                min="0"
-                max="20"
-                className="input"
-                placeholder="0"
-                value={form.science}
-                onChange={(e) => set("science", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="label">Sosyal Net</label>
-              <input
-                type="number"
-                step="0.25"
-                min="0"
-                max="20"
-                className="input"
-                placeholder="0"
-                value={form.social}
-                onChange={(e) => set("social", e.target.value)}
-              />
-            </div>
-
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label className="label">
-                İngilizce Net{" "}
-                <span style={{ fontWeight: 400, color: "var(--muted)", fontSize: 12 }}>(isteğe bağlı)</span>
-              </label>
-              <input
-                type="number"
-                step="0.25"
-                min="0"
-                max="80"
-                className="input"
-                placeholder="Girilmeyebilir"
-                value={form.english}
-                onChange={(e) => set("english", e.target.value)}
-              />
-            </div>
-
-            {/* Not — tam satır */}
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label className="label">Not (isteğe bağlı)</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="Örn: TYT Deneme 3, 2 saat, AYT Matematik…"
-                value={form.note ?? ""}
-                onChange={(e) => set("note", e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Toplam önizleme */}
-          {[form.turkish, form.math, form.science, form.social].every((v) => v !== "") && (
-            <div style={{
-              marginTop: 8,
-              padding: "10px 14px",
-              borderRadius: "var(--radius-sm)",
-              background: "var(--accent-soft)",
-              color: "var(--accent-ink)",
-              fontSize: 13,
-              fontWeight: 600,
-            }}>
-              Toplam Net:{" "}
-              {(
-                parseFloat(form.turkish || "0") +
-                parseFloat(form.math || "0") +
-                parseFloat(form.science || "0") +
-                parseFloat(form.social || "0") +
-                ((form.english ?? "").trim() !== "" ? parseFloat(form.english || "0") : 0)
-              ).toFixed(2)}
-            </div>
-          )}
-
-          {error && (
-            <p style={{ color: "var(--risk)", fontSize: 13, marginTop: 8 }}>{error}</p>
-          )}
-
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={closeForm}
-            >
-              İptal
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={saving}
-              onClick={handleSubmit}
-              style={{ opacity: saving ? 0.6 : 1 }}
-            >
-              {saving ? "Kaydediliyor…" : "Kaydet"}
-            </button>
-          </div>
-        </div>
+        <ExamResultModal
+          form={form}
+          title={editingRow ? "Deneme neti düzenle" : "Deneme net ekle"}
+          saving={saving}
+          error={error}
+          firstInputRef={firstInputRef}
+          onChange={set}
+          onClose={closeForm}
+          onSubmit={handleSubmit}
+        />
       )}
 
-      {/* Grafik */}
       {loading ? (
         <LoadingScreen className="panel" />
       ) : (
-        <>
-      {chartRows.length > 0 && (
-        <div className="panel p-4 mb-4">
-          <ExamLineChart data={chart.points} />
-        </div>
-      )}
+        <div className="student-exams-content">
+          {chartRows.length > 0 ? (
+            <section className="coach-exam-chart-card student-exams-chart-card">
+              <div className="coach-exam-chart-head">
+                <div>
+                  <h2>{chart.label} gelişimi</h2>
+                  <p>Son {chartRowsForDisplay.length} deneme</p>
+                </div>
+                <div className="coach-exam-filter-tabs">
+                  {(["total", "turkish", "math", "science", "social"] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`coach-exam-filter${subject === s ? " active" : ""}`}
+                      onClick={() => setSubject(s)}
+                    >
+                      {SUBJECT_LABELS[s]}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-      {/* Tablo */}
-      {tableRows.length === 0 ? (
-        <div className="panel p-8 text-center text-sm text-[var(--muted)]">
-          Henüz deneme sonucu eklenmedi.
-        </div>
-      ) : (
-        <div className="panel overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left text-[var(--muted)] bg-[var(--bg-elev)]">
-                <th className="p-3">Tarih</th>
-                <th className="p-3">Türkçe</th>
-                <th className="p-3">Mat</th>
-                <th className="p-3">Fen</th>
-                <th className="p-3">Sosyal</th>
-                {tableRows.some((r) => r.english != null) && (
-                  <th className="p-3">İng</th>
-                )}
-                <th className="p-3 font-bold">Toplam</th>
-                <th className="p-3">Not</th>
-                {role === "student" && <th className="p-3"></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {tableRows.map((r) => (
-                <tr key={r.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-elev)]">
-                  <td className="p-3">{r.date}</td>
-                  <td className="p-3">{r.turkish}</td>
-                  <td className="p-3">{r.math}</td>
-                  <td className="p-3">{r.science}</td>
-                  <td className="p-3">{r.social}</td>
-                  {tableRows.some((x) => x.english != null) && (
-                    <td className="p-3">{r.english != null ? r.english : "—"}</td>
+              <div className="coach-exam-chart-body student-exams-chart-body">
+                <aside className="coach-exam-summary">
+                  <span>Son sonuç</span>
+                  <strong>{formatNet(selectedLatestValue)}</strong>
+                  {selectedDelta !== null && (
+                    <em className={selectedDelta >= 0 ? "positive" : "negative"}>
+                      {formatDelta(selectedDelta)} net
+                    </em>
                   )}
-                  <td className="p-3 font-semibold">{r.total}</td>
-                  <td className="p-3 text-[var(--muted)]">{r.note || "—"}</td>
-                  {role === "student" && (
-                    <td className="p-3">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(r.id)}
-                        style={{ color: "var(--muted-2)", fontSize: 16, lineHeight: 1 }}
-                        title="Sil"
-                      >
-                        ×
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <small>geçen denemeye göre</small>
+                </aside>
+                <CoachDetailExamChart data={chart.points} />
+              </div>
+            </section>
+          ) : (
+            <div className="coach-detail-empty-card">
+              <span>Henüz deneme sonucu eklenmedi.</span>
+              <button type="button" className="coach-exam-add-btn" onClick={openCreateForm}>
+                + Deneme Ekle
+              </button>
+            </div>
+          )}
+
+          {tableRows.length > 0 && (
+            <section className="coach-exam-table-card">
+              <div className="coach-exam-table-head">
+                <div>
+                  <h2>Deneme listesi</h2>
+                  <p>Hücreye tıklayarak değer düzenle</p>
+                </div>
+              </div>
+              <div className="coach-exam-table-scroll">
+                <table className="coach-exam-table">
+                  <thead>
+                    <tr>
+                      <th>Tarih</th>
+                      <th>Türkçe</th>
+                      <th>Matematik</th>
+                      <th>Fen</th>
+                      <th>Sosyal</th>
+                      {tableRows.some((r) => r.english != null) && <th>İngilizce</th>}
+                      <th>Toplam</th>
+                      <th aria-label="İşlemler" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableRows.map((r) => (
+                      <tr key={r.id}>
+                        <td>
+                          <button type="button" className="student-exams-cell-btn" onClick={() => openEditForm(r)}>
+                            {formatTRDate(r.date)}
+                          </button>
+                        </td>
+                        <td>
+                          <button type="button" className="student-exams-cell-btn" onClick={() => openEditForm(r)}>
+                            {formatNet(r.turkish)}
+                          </button>
+                        </td>
+                        <td>
+                          <button type="button" className="student-exams-cell-btn" onClick={() => openEditForm(r)}>
+                            {formatNet(r.math)}
+                          </button>
+                        </td>
+                        <td>
+                          <button type="button" className="student-exams-cell-btn" onClick={() => openEditForm(r)}>
+                            {formatNet(r.science)}
+                          </button>
+                        </td>
+                        <td>
+                          <button type="button" className="student-exams-cell-btn" onClick={() => openEditForm(r)}>
+                            {formatNet(r.social)}
+                          </button>
+                        </td>
+                        {tableRows.some((x) => x.english != null) && (
+                          <td>
+                            <button type="button" className="student-exams-cell-btn" onClick={() => openEditForm(r)}>
+                              {r.english != null ? formatNet(r.english) : "—"}
+                            </button>
+                          </td>
+                        )}
+                        <td>
+                          <button
+                            type="button"
+                            className="student-exams-cell-btn student-exams-total-cell"
+                            onClick={() => openEditForm(r)}
+                          >
+                            {formatNet(r.total)}
+                          </button>
+                        </td>
+                        <td className="coach-exam-row-actions">
+                          <button
+                            type="button"
+                            className="coach-exam-kebab"
+                            aria-label="Deneme işlemleri"
+                            onClick={(event) => toggleRowMenu(r.id, event)}
+                          >
+                            ...
+                          </button>
+                          {openMenu?.id === r.id && (
+                            <>
+                              <button
+                                type="button"
+                                className="coach-exam-menu-scrim"
+                                aria-label="Menüyü kapat"
+                                onClick={() => setOpenMenu(null)}
+                              />
+                              <div
+                                className="coach-exam-row-menu"
+                                style={{ top: openMenu.top, left: openMenu.left }}
+                              >
+                                <button type="button" onClick={() => openEditForm(r)}>
+                                  Düzenle
+                                </button>
+                                <button type="button" className="danger" onClick={() => handleDelete(r.id)}>
+                                  Sil
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </div>
-      )}
-        </>
       )}
     </div>
   );
@@ -905,8 +867,8 @@ function CoachDetailExamChart({
         {areaPath && <path d={areaPath} className="coach-exam-area" />}
         {linePath && <path d={linePath} className="coach-exam-line" />}
 
-        {points.map((point) => (
-          <g key={`${point.date}-${point.value}`}>
+        {points.map((point, index) => (
+          <g key={`${point.date}-${point.value}-${index}`}>
             <circle cx={point.x} cy={point.y} r="4.4" className="coach-exam-dot" />
             <text
               x={point.x}

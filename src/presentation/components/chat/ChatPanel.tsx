@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { MessageDto } from "@/application/dto";
 import type { MessageThreadCursor } from "@/application/ports/IMessageRepository";
 import {
+  deleteThreadMessagesAction,
   listMessagesAction,
   markThreadMessagesReadAction,
   sendMessageAction,
@@ -47,7 +48,7 @@ export function ChatPanel({
   otherUserName: string;
   otherUserMeta?: string | null;
   profileHref?: string;
-  visualVariant?: "default" | "coach";
+  visualVariant?: "default" | "coach" | "student";
   onLastMessage?: (userId: string, text: string, createdAt: string) => void;
   onThreadRead?: (userId: string) => void;
   initialMessages?: MessageDto[];
@@ -65,6 +66,8 @@ export function ChatPanel({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, startTransition] = useTransition();
   const [isSending, setIsSending] = useState(false);
+  const [isDeletingThread, setIsDeletingThread] = useState(false);
+  const [isStudentMenuOpen, setIsStudentMenuOpen] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const textRef = useRef("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +83,8 @@ export function ChatPanel({
       : messages;
   const hiddenCount = messages.length - visibleMessages.length;
   const isCoachVariant = visualVariant === "coach";
+  const isStudentVariant = visualVariant === "student";
+  const isRichVariant = isCoachVariant || isStudentVariant;
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     const el = threadRef.current;
@@ -103,6 +108,7 @@ export function ChatPanel({
     setHasMore(false);
     setNextCursor(null);
     setSelectedFile(null);
+    setIsStudentMenuOpen(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [otherUserId, initialMessages]);
 
@@ -342,7 +348,34 @@ export function ChatPanel({
       });
   };
 
-  if (!isCoachVariant) {
+  const handleDeleteThread = () => {
+    if (isDeletingThread) return;
+    const confirmed = window.confirm(
+      `${otherUserName} ile olan konuşma geçmişi silinsin mi?`
+    );
+    if (!confirmed) return;
+
+    setIsStudentMenuOpen(false);
+    setIsDeletingThread(true);
+    setSendError(null);
+
+    void deleteThreadMessagesAction(otherUserId)
+      .then(() => {
+        setMessages([]);
+        setHasMore(false);
+        setNextCursor(null);
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      })
+      .catch(() => {
+        setSendError("Konuşma geçmişi silinemedi. Tekrar deneyin.");
+      })
+      .finally(() => {
+        setIsDeletingThread(false);
+      });
+  };
+
+  if (!isRichVariant) {
     return (
       <div className="panel flex flex-col h-[520px]">
         <header className="p-4 border-b border-[var(--border)] font-semibold">
@@ -434,7 +467,11 @@ export function ChatPanel({
   }
 
   return (
-    <div className="coach-chat-thread-card">
+    <div
+      className={`coach-chat-thread-card ${
+        isStudentVariant ? "student-chat-thread-card" : ""
+      }`}
+    >
       <header className="coach-chat-thread-head">
         <CoachChatAvatar name={otherUserName} />
         <div className="coach-chat-thread-title">
@@ -450,6 +487,34 @@ export function ChatPanel({
             Çevrimiçi{otherUserMeta ? ` · ${otherUserMeta}` : ""}
           </div>
         </div>
+        {isStudentVariant && (
+          <div className="student-chat-menu-wrap">
+            <button
+              type="button"
+              className="student-chat-menu-btn"
+              title="Sohbet seçenekleri"
+              aria-label="Sohbet seçenekleri"
+              aria-expanded={isStudentMenuOpen}
+              disabled={isDeletingThread}
+              onClick={() => setIsStudentMenuOpen((open) => !open)}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 12h.01M19 12h.01M5 12h.01" />
+              </svg>
+            </button>
+            {isStudentMenuOpen && (
+              <div className="student-chat-menu">
+                <button
+                  type="button"
+                  disabled={isDeletingThread}
+                  onClick={handleDeleteThread}
+                >
+                  Konuşma geçmişini sil
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="coach-chat-day-sep">
