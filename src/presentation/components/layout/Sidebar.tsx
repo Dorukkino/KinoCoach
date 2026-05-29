@@ -103,7 +103,6 @@ function StudentNavLink({
   chatUnreadCount,
   disablePrefetch,
   onRoutePrefetch,
-  onNavigate,
 }: {
   item: NavItem;
   active: boolean;
@@ -111,7 +110,6 @@ function StudentNavLink({
   chatUnreadCount: number;
   disablePrefetch: boolean;
   onRoutePrefetch: (href: string) => void;
-  onNavigate: (href: string) => void;
 }) {
   const Icon = Icons[item.icon];
 
@@ -122,10 +120,6 @@ function StudentNavLink({
       prefetch={disablePrefetch ? false : undefined}
       className={`nav-item${active ? " active" : ""}`}
       title={collapsed ? item.label : undefined}
-      onClick={(event) => {
-        event.preventDefault();
-        onNavigate(item.href);
-      }}
       onMouseEnter={() => {
         if (!disablePrefetch) onRoutePrefetch(item.href);
       }}
@@ -190,14 +184,6 @@ export function Sidebar({
       router.prefetch(href);
     },
     [role, isStudentChatRoute, router]
-  );
-
-  const navigateStudentRoute = useCallback(
-    (href: string) => {
-      if (pathname === href) return;
-      router.push(href);
-    },
-    [pathname, router]
   );
 
   useEffect(() => {
@@ -290,9 +276,8 @@ export function Sidebar({
                   active={active}
                   collapsed={collapsed}
                   chatUnreadCount={chatUnreadCount}
-                    disablePrefetch={isStudentChatRoute}
+                  disablePrefetch={isStudentChatRoute}
                   onRoutePrefetch={prefetchStudentRoute}
-                    onNavigate={navigateStudentRoute}
                 />
               );
             })}
