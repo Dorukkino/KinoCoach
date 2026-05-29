@@ -23,7 +23,7 @@ export function StudentChatClient({
   const [lastTimestamp, setLastTimestamp] = useState<string | undefined>(
     initialLastTimestamp
   );
-  const { unreadCounts, reload: reloadUnreadCounts } =
+  const { unreadCounts, reload: reloadUnreadCounts, clearSender } =
     useChatUnreadCountsBySender(studentUserId);
   const unreadCount = unreadCounts[coachUserId] ?? 0;
 
@@ -82,7 +82,10 @@ export function StudentChatClient({
         otherUserId={coachUserId}
         otherUserName={coachName}
         onLastMessage={handleLastMessage}
-        onThreadRead={() => void reloadUnreadCounts()}
+        onThreadRead={(userId) => {
+          clearSender(userId);
+          window.setTimeout(() => void reloadUnreadCounts(), 800);
+        }}
         initialMessages={initialMessages}
       />
     </div>

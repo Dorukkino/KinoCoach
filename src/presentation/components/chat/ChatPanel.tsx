@@ -93,6 +93,7 @@ export function ChatPanel({
 
     markReadTimeoutRef.current = setTimeout(() => {
       markReadTimeoutRef.current = null;
+      onThreadReadRef.current?.(otherUserId);
       void markThreadMessagesReadAction(otherUserId)
         .then(() => {
           onThreadReadRef.current?.(otherUserId);

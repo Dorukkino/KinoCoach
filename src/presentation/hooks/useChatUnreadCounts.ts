@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   countUnreadChatMessagesAction,
   countUnreadChatMessagesBySenderAction,
@@ -12,6 +12,16 @@ type MessageRealtimePayload = {
   new?: Record<string, unknown>;
 };
 
+const CHAT_THREAD_READ_EVENT = "kino:chat-thread-read";
+
+function emitChatThreadRead(senderId: string, count: number) {
+  window.dispatchEvent(
+    new CustomEvent(CHAT_THREAD_READ_EVENT, {
+      detail: { senderId, count },
+    })
+  );
+}
+
 export function useChatUnreadCount(userId: string) {
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -22,6 +32,20 @@ export function useChatUnreadCount(userId: string) {
 
   useEffect(() => {
     void reload();
+  }, [reload]);
+
+  useEffect(() => {
+    const handleThreadRead = (event: Event) => {
+      const { count } = (event as CustomEvent<{ count?: number }>).detail ?? {};
+      if (typeof count !== "number" || count <= 0) {
+        void reload();
+        return;
+      }
+      setUnreadCount((current) => Math.max(0, current - count));
+    };
+
+    window.addEventListener(CHAT_THREAD_READ_EVENT, handleThreadRead);
+    return () => window.removeEventListener(CHAT_THREAD_READ_EVENT, handleThreadRead);
   }, [reload]);
 
   const handleRealtimeChange = useCallback(
@@ -55,15 +79,31 @@ export function useChatUnreadCount(userId: string) {
 
 export function useChatUnreadCountsBySender(userId: string) {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const unreadCountsRef = useRef<Record<string, number>>({});
 
   const reload = useCallback(async () => {
     const counts = await countUnreadChatMessagesBySenderAction();
     setUnreadCounts(counts);
   }, []);
 
+  const clearSender = useCallback((senderId: string) => {
+    const clearedCount = unreadCountsRef.current[senderId] ?? 0;
+    if (clearedCount <= 0) return;
+    setUnreadCounts((counts) => {
+      const next = { ...counts };
+      delete next[senderId];
+      return next;
+    });
+    emitChatThreadRead(senderId, clearedCount);
+  }, []);
+
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    unreadCountsRef.current = unreadCounts;
+  }, [unreadCounts]);
 
   const handleRealtimeChange = useCallback(
     (payload?: MessageRealtimePayload) => {
@@ -95,5 +135,5 @@ export function useChatUnreadCountsBySender(userId: string) {
     onChange: handleRealtimeChange,
   });
 
-  return { unreadCounts, reload };
+  return { unreadCounts, reload, clearSender };
 }

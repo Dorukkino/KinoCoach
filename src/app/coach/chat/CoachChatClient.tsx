@@ -25,7 +25,7 @@ export function CoachChatClient({
   const [lastTimestamps, setLastTimestamps] = useState<Record<string, string>>(
     initialLastTimestamps
   );
-  const { unreadCounts, reload: reloadUnreadCounts } =
+  const { unreadCounts, reload: reloadUnreadCounts, clearSender } =
     useChatUnreadCountsBySender(coachUserId);
   const active = students.find((s) => s.id === activeId);
 
@@ -114,7 +114,10 @@ export function CoachChatClient({
           otherUserName={active.name}
           profileHref={`/coach/students/${active.id}`}
           onLastMessage={handleLastMessage}
-          onThreadRead={() => void reloadUnreadCounts()}
+          onThreadRead={(userId) => {
+            clearSender(userId);
+            window.setTimeout(() => void reloadUnreadCounts(), 800);
+          }}
           initialMessages={
             active.id === selectedStudentId ? initialMessages : undefined
           }
