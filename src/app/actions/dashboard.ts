@@ -12,7 +12,11 @@ import { fetchCoachActivityFeedViaRpc } from "@/infrastructure/queries/fetchCoac
 import { coachCacheTags } from "@/infrastructure/cache/revalidate-coach-cache";
 import { measureAction } from "@/infrastructure/performance/measureAction";
 import type { CoachStudentRowDto } from "@/application/use-cases/ListActiveStudentsForCoachUseCase";
-import type { DashboardStatsDto, MotivationCardDto } from "@/application/dto";
+import type {
+  CoachingInvitationDto,
+  DashboardStatsDto,
+  MotivationCardDto,
+} from "@/application/dto";
 
 export type { ActivityItem } from "@/infrastructure/queries/buildActivityFeed";
 
@@ -98,6 +102,26 @@ async function fetchCoachName(coachId: string): Promise<string> {
   return "Koçunuz";
 }
 
+function resolveCoachName(row: unknown, fallback = "Koç"): string {
+  const data = row as { full_name?: unknown; email?: unknown } | null;
+  const fullName = String(data?.full_name ?? "").trim();
+  if (fullName) return fullName;
+  const email = String(data?.email ?? "");
+  return email.split("@")[0] || fallback;
+}
+
+function toMotivationCard(
+  row: { message?: unknown; created_at?: unknown } | null | undefined,
+  coachName: string
+): MotivationCardDto | null {
+  if (!row) return null;
+  return {
+    message: String(row.message ?? ""),
+    coachName,
+    createdAt: String(row.created_at),
+  };
+}
+
 export async function getCoachDashboardStudentsAction() {
   return measureAction("getCoachDashboardStudentsAction", async () => {
     const { session } = await requireSession();
@@ -179,77 +203,112 @@ export async function getStudentDashboardAction() {
 
 export async function getStudentDashboardWithInvitationsAction() {
   return measureAction("getStudentDashboardWithInvitationsAction", async () => {
-    const { container, session } = await requireSession();
-    const student = await container.students.findByUserId(session.userId);
+    const { session } = await requireSession();
+    const admin = createSupabaseAdminClient();
+
+    const { data: student } = await admin
+      .from("students")
+      .select("id, name")
+      .eq("user_id", session.userId)
+      .maybeSingle();
+
     if (!student) {
-      return { dashboard: null, invitations: [] as Awaited<
-        ReturnType<typeof import("./invitations").listMyPendingInvitationsAction>
-      > };
+      return { dashboard: null, invitations: [] as CoachingInvitationDto[] };
     }
 
-    const activeEngagement = await container.engagements.findActiveByStudent(
-      student.id
+    const studentId = String(student.id);
+    const studentName = String(student.name);
+
+    const [engagementResult, invitationsResult] = await Promise.all([
+      admin
+        .from("coaching_engagements")
+        .select("id, coach_id")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .maybeSingle(),
+      admin
+        .from("coaching_invitations")
+        .select("id, student_id, coach_id, status, token, expires_at, created_at")
+        .eq("student_id", studentId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    const activeEngagement = engagementResult.data;
+    const invitations = invitationsResult.data ?? [];
+    const coachIds = Array.from(
+      new Set([
+        ...invitations.map((i) => String(i.coach_id)),
+        ...(activeEngagement ? [String(activeEngagement.coach_id)] : []),
+      ])
     );
 
-    let dashboard: Awaited<ReturnType<typeof getStudentDashboardAction>>;
-    if (!activeEngagement) {
-      dashboard = {
-        studentId: student.id,
-        name: student.name,
-        coachName: null,
-        motivation: null,
-        hasActiveCoach: false,
-      };
-    } else {
-      const [coachName, latestMotivation] = await Promise.all([
-        fetchCoachName(activeEngagement.coachId),
-        container.getMotivation.fetchLatest(activeEngagement.id),
-      ]);
-      const motivation = container.getMotivation.toCardDto(
-        latestMotivation ? [latestMotivation] : [],
-        coachName
-      );
-      dashboard = {
-        studentId: student.id,
-        name: student.name,
-        coachName,
-        motivation,
-        hasActiveCoach: true,
-      };
+    const [motivationResult, coachRowsResult] = await Promise.all([
+      activeEngagement
+        ? admin
+            .from("motivation_messages")
+            .select("message, created_at")
+            .eq("engagement_id", String(activeEngagement.id))
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      coachIds.length > 0
+        ? admin
+            .from("users")
+            .select("id, full_name, email")
+            .in("id", coachIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const coachNames = new Map<string, string>();
+    for (const row of coachRowsResult.data ?? []) {
+      coachNames.set(String(row.id), resolveCoachName(row));
     }
 
-    const invitations = await container.invitations.findPendingForStudent(
-      student.id
-    );
+    const coachId = activeEngagement
+      ? String(activeEngagement.coach_id)
+      : null;
+    const coachName = coachId
+      ? coachNames.get(coachId) ?? "Koçunuz"
+      : null;
+    const dashboard = {
+      studentId,
+      name: studentName,
+      coachName,
+      motivation:
+        activeEngagement && coachName
+          ? toMotivationCard(motivationResult.data, coachName)
+          : null,
+      hasActiveCoach: Boolean(activeEngagement),
+    };
+
     if (invitations.length === 0) {
       return { dashboard, invitations: [] };
     }
 
-    const coachIds = Array.from(new Set(invitations.map((i) => i.coachId)));
-    const admin = createSupabaseAdminClient();
-    const { data: coachRows } = await admin
-      .from("users")
-      .select("id, full_name, email")
-      .in("id", coachIds);
-    const coachNames = new Map<string, string>();
-    for (const row of coachRows ?? []) {
-      const full = String(row.full_name ?? "").trim();
-      const email = String(row.email ?? "");
-      coachNames.set(String(row.id), full || email.split("@")[0] || "Koç");
+    if (coachNames.size === 0) {
+      const { data: coachRows } = await admin
+        .from("users")
+        .select("id, full_name, email")
+        .in("id", coachIds);
+      for (const row of coachRows ?? []) {
+        coachNames.set(String(row.id), resolveCoachName(row));
+      }
     }
 
     return {
       dashboard,
       invitations: invitations.map((inv) => ({
-        id: inv.id,
-        studentId: inv.studentId,
-        studentName: student.name,
-        coachId: inv.coachId,
-        coachName: coachNames.get(inv.coachId) ?? "Koç",
-        status: inv.status,
-        token: inv.token,
-        expiresAt: inv.expiresAt.toISOString(),
-        createdAt: inv.createdAt.toISOString(),
+        id: String(inv.id),
+        studentId: String(inv.student_id),
+        studentName,
+        coachId: String(inv.coach_id),
+        coachName: coachNames.get(String(inv.coach_id)) ?? "Koç",
+        status: String(inv.status) as CoachingInvitationDto["status"],
+        token: String(inv.token),
+        expiresAt: String(inv.expires_at),
+        createdAt: String(inv.created_at),
       })),
     };
   });

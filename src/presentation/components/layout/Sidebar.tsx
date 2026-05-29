@@ -52,6 +52,8 @@ const COACH_PREFETCH_HREFS = [
   "/coach/chat",
 ];
 
+const STUDENT_PREFETCH_HREFS = ["/student/dashboard"];
+
 function CoachNavLink({
   item,
   active,
@@ -99,11 +101,13 @@ function StudentNavLink({
   active,
   collapsed,
   chatUnreadCount,
+  onRoutePrefetch,
 }: {
   item: NavItem;
   active: boolean;
   collapsed: boolean;
   chatUnreadCount: number;
+  onRoutePrefetch: (href: string) => void;
 }) {
   const Icon = Icons[item.icon];
 
@@ -113,6 +117,8 @@ function StudentNavLink({
       href={item.href}
       className={`nav-item${active ? " active" : ""}`}
       title={collapsed ? item.label : undefined}
+      onMouseEnter={() => onRoutePrefetch(item.href)}
+      onFocus={() => onRoutePrefetch(item.href)}
     >
       <Icon />
       {!collapsed && <span>{item.label}</span>}
@@ -161,6 +167,16 @@ export function Sidebar({
     [role, isChatRoute, router, prefetchStudents]
   );
 
+  const prefetchStudentRoute = useCallback(
+    (href: string) => {
+      if (role !== "student") return;
+      if (prefetchedRoutesRef.current.has(href)) return;
+      prefetchedRoutesRef.current.add(href);
+      router.prefetch(href);
+    },
+    [role, router]
+  );
+
   useEffect(() => {
     if (role !== "coach") return;
     if (isChatRoute) return;
@@ -180,6 +196,25 @@ export function Sidebar({
     const timeoutId = window.setTimeout(prefetchInitialRoutes, 1500);
     return () => window.clearTimeout(timeoutId);
   }, [role, pathname, isChatRoute, prefetchCoachRoute]);
+
+  useEffect(() => {
+    if (role !== "student") return;
+
+    const prefetchInitialRoutes = () => {
+      for (const href of STUDENT_PREFETCH_HREFS) {
+        if (href === pathname) continue;
+        prefetchStudentRoute(href);
+      }
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(prefetchInitialRoutes);
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = window.setTimeout(prefetchInitialRoutes, 1200);
+    return () => window.clearTimeout(timeoutId);
+  }, [role, pathname, prefetchStudentRoute]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -231,6 +266,7 @@ export function Sidebar({
                   active={active}
                   collapsed={collapsed}
                   chatUnreadCount={chatUnreadCount}
+                  onRoutePrefetch={prefetchStudentRoute}
                 />
               );
             })}
