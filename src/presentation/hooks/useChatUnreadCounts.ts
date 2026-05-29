@@ -10,6 +10,7 @@ import { useSupabaseTableRealtime } from "./useSupabaseTableRealtime";
 type MessageRealtimePayload = {
   eventType?: string;
   new?: Record<string, unknown>;
+  old?: Record<string, unknown>;
 };
 
 const CHAT_THREAD_READ_EVENT = "kino:chat-thread-read";
@@ -50,18 +51,25 @@ export function useChatUnreadCount(userId: string) {
 
   const handleRealtimeChange = useCallback(
     (payload?: MessageRealtimePayload) => {
-      const row = payload?.new;
+      const row = payload?.new ?? payload?.old;
+      if (!payload) {
+        void reload();
+        return;
+      }
+
+      if (!row || String(row.receiver_id) !== userId) return;
+
       if (
         payload?.eventType === "INSERT" &&
-        row &&
-        String(row.receiver_id) === userId &&
         row.read_at == null
       ) {
         setUnreadCount((count) => count + 1);
         return;
       }
 
-      void reload();
+      if (payload?.eventType === "UPDATE" || payload?.eventType === "DELETE") {
+        void reload();
+      }
     },
     [reload, userId]
   );
@@ -71,7 +79,6 @@ export function useChatUnreadCount(userId: string) {
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
     debounceMs: 0,
-    pollIntervalMs: 3000,
     onChange: handleRealtimeChange,
   });
 
@@ -108,11 +115,16 @@ export function useChatUnreadCountsBySender(userId: string) {
 
   const handleRealtimeChange = useCallback(
     (payload?: MessageRealtimePayload) => {
-      const row = payload?.new;
+      const row = payload?.new ?? payload?.old;
+      if (!payload) {
+        void reload();
+        return;
+      }
+
+      if (!row || String(row.receiver_id) !== userId) return;
+
       if (
         payload?.eventType === "INSERT" &&
-        row &&
-        String(row.receiver_id) === userId &&
         row.read_at == null
       ) {
         const senderId = String(row.sender_id);
@@ -123,7 +135,9 @@ export function useChatUnreadCountsBySender(userId: string) {
         return;
       }
 
-      void reload();
+      if (payload?.eventType === "UPDATE" || payload?.eventType === "DELETE") {
+        void reload();
+      }
     },
     [reload, userId]
   );
@@ -133,7 +147,6 @@ export function useChatUnreadCountsBySender(userId: string) {
     table: "messages",
     filter: `receiver_id=eq.${userId}`,
     debounceMs: 0,
-    pollIntervalMs: 3000,
     onChange: handleRealtimeChange,
   });
 
