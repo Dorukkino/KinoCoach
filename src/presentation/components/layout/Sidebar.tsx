@@ -101,13 +101,17 @@ function StudentNavLink({
   active,
   collapsed,
   chatUnreadCount,
+  disablePrefetch,
   onRoutePrefetch,
+  onNavigate,
 }: {
   item: NavItem;
   active: boolean;
   collapsed: boolean;
   chatUnreadCount: number;
+  disablePrefetch: boolean;
   onRoutePrefetch: (href: string) => void;
+  onNavigate: (href: string) => void;
 }) {
   const Icon = Icons[item.icon];
 
@@ -115,10 +119,19 @@ function StudentNavLink({
     <Link
       key={item.id}
       href={item.href}
+      prefetch={disablePrefetch ? false : undefined}
       className={`nav-item${active ? " active" : ""}`}
       title={collapsed ? item.label : undefined}
-      onMouseEnter={() => onRoutePrefetch(item.href)}
-      onFocus={() => onRoutePrefetch(item.href)}
+      onClick={(event) => {
+        event.preventDefault();
+        onNavigate(item.href);
+      }}
+      onMouseEnter={() => {
+        if (!disablePrefetch) onRoutePrefetch(item.href);
+      }}
+      onFocus={() => {
+        if (!disablePrefetch) onRoutePrefetch(item.href);
+      }}
     >
       <Icon />
       {!collapsed && <span>{item.label}</span>}
@@ -151,6 +164,7 @@ export function Sidebar({
   const { prefetchStudents } = useOptionalCoachClientCache();
   const prefetchedRoutesRef = useRef<Set<string>>(new Set());
   const isChatRoute = role === "coach" && pathname.startsWith("/coach/chat");
+  const isStudentChatRoute = role === "student" && pathname.startsWith("/student/chat");
 
   const prefetchCoachRoute = useCallback(
     (href: string, intent: "idle" | "user" = "user") => {
@@ -170,11 +184,20 @@ export function Sidebar({
   const prefetchStudentRoute = useCallback(
     (href: string) => {
       if (role !== "student") return;
+      if (isStudentChatRoute) return;
       if (prefetchedRoutesRef.current.has(href)) return;
       prefetchedRoutesRef.current.add(href);
       router.prefetch(href);
     },
-    [role, router]
+    [role, isStudentChatRoute, router]
+  );
+
+  const navigateStudentRoute = useCallback(
+    (href: string) => {
+      if (pathname === href) return;
+      router.push(href);
+    },
+    [pathname, router]
   );
 
   useEffect(() => {
@@ -201,6 +224,7 @@ export function Sidebar({
     if (role !== "student") return;
 
     const prefetchInitialRoutes = () => {
+      if (isStudentChatRoute) return;
       for (const href of STUDENT_PREFETCH_HREFS) {
         if (href === pathname) continue;
         prefetchStudentRoute(href);
@@ -214,7 +238,7 @@ export function Sidebar({
 
     const timeoutId = window.setTimeout(prefetchInitialRoutes, 1200);
     return () => window.clearTimeout(timeoutId);
-  }, [role, pathname, prefetchStudentRoute]);
+  }, [role, pathname, isStudentChatRoute, prefetchStudentRoute]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -266,7 +290,9 @@ export function Sidebar({
                   active={active}
                   collapsed={collapsed}
                   chatUnreadCount={chatUnreadCount}
+                    disablePrefetch={isStudentChatRoute}
                   onRoutePrefetch={prefetchStudentRoute}
+                    onNavigate={navigateStudentRoute}
                 />
               );
             })}
