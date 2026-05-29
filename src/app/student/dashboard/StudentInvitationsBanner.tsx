@@ -10,8 +10,10 @@ import {
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 
 export function StudentInvitationsBanner({
+  studentId,
   invitations,
 }: {
+  studentId: string;
   invitations: CoachingInvitationDto[];
 }) {
   const router = useRouter();
@@ -27,9 +29,9 @@ export function StudentInvitationsBanner({
   }, [router]);
 
   useSupabaseTableRealtime({
-    channelName: "student-invitations",
+    channelName: `student-invitations-${studentId}`,
     table: "coaching_invitations",
-    pollIntervalMs: 5000,
+    filter: `student_id=eq.${studentId}`,
     onChange: refreshInvitations,
   });
 

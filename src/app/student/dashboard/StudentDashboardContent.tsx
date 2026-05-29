@@ -32,7 +32,10 @@ export function StudentDashboardContent({
         )}
       </p>
 
-      <StudentInvitationsBanner invitations={invitations} />
+      <StudentInvitationsBanner
+        studentId={dashboard.studentId}
+        invitations={invitations}
+      />
 
       {!dashboard.hasActiveCoach && invitations.length === 0 && (
         <div className="panel p-6 mb-4 border-l-4 border-[var(--accent)]">

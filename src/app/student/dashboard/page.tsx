@@ -9,14 +9,16 @@ async function StudentDashboardLoader() {
     await getStudentDashboardWithInvitationsAction();
   if (!dashboard) return <div>Profil bulunamadı.</div>;
   return (
-    <StudentDashboardContent dashboard={dashboard} invitations={invitations} />
+    <>
+      <StudentDashboardRealtime studentId={dashboard.studentId} />
+      <StudentDashboardContent dashboard={dashboard} invitations={invitations} />
+    </>
   );
 }
 
 export default function StudentDashboardPage() {
   return (
     <div className="screen">
-      <StudentDashboardRealtime />
       <div className="page-head">
         <div className="page-title">
           <h1>Merhaba</h1>

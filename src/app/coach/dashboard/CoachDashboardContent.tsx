@@ -1,13 +1,12 @@
 import { getCoachDashboardAction } from "@/app/actions/dashboard";
 import { StatCard } from "@/presentation/components/dashboard/StatCard";
 import { StudentStatusList } from "@/presentation/components/dashboard/StudentStatusList";
-import { ActivityFeed } from "@/presentation/components/dashboard/ActivityFeed";
 
 export async function CoachDashboardContent() {
   const data = await getCoachDashboardAction();
   if (!data) return null;
 
-  const { stats, students, activities } = data;
+  const { stats, students } = data;
 
   return (
     <>
@@ -20,9 +19,8 @@ export async function CoachDashboardContent() {
         <StatCard label="Ortalama" value={stats.yellowCount} sub="%50–79" />
         <StatCard label="Riskli" value={stats.redCount} sub="&lt; %50" />
       </div>
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid gap-4">
         <StudentStatusList students={students} />
-        <ActivityFeed activities={activities} />
       </div>
     </>
   );
