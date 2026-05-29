@@ -75,9 +75,28 @@ export function useSupabaseTableRealtime({
           debouncedOnChange(payload ?? {});
         },
       });
+
+      const handleVisibilityChange = () => {
+        if (reloadOnVisible && document.visibilityState === "visible") {
+          onChangeRef.current();
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      const pollInterval =
+        pollIntervalMs && pollIntervalMs > 0
+          ? window.setInterval(() => {
+              if (document.visibilityState === "visible") {
+                onChangeRef.current();
+              }
+            }, pollIntervalMs)
+          : null;
+
       return () => {
         unsubscribe();
         if (debounceRef.current) clearTimeout(debounceRef.current);
+        if (pollInterval) window.clearInterval(pollInterval);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
       };
     }
 
