@@ -1,0 +1,1131 @@
+[
+  {
+    "id": "TC001",
+    "title": "Sign in as a coach",
+    "description": "A coach can sign in with valid credentials and arrive on the coach dashboard.",
+    "category": "Coach registration and sign-in",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the coach dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Create a coach account",
+    "description": "A coach can complete registration with valid details and reach the authenticated coach area afterward.",
+    "category": "Coach registration and sign-in",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the required account details with valid values"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the coach dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a successful account creation state is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Review coach dashboard overview",
+    "description": "A signed-in coach can review dashboard summary data, student status, and recent activity from the main dashboard.",
+    "category": "Coach dashboard overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /coach/dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify summary statistics are visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the student status list and recent activity feed are visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Student can update weekly task completion",
+    "description": "This verifies that a student can mark a weekly task as complete and see their completion progress change.",
+    "category": "Student weekly program management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the weekly plan link"
+      },
+      {
+        "type": "action",
+        "description": "Mark a task as complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task completion state is updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the weekly completion progress changes"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Student can add a new exam result and see progress update",
+    "description": "This verifies that a student can enter a new exam result and immediately see the chart and metrics reflect the added result.",
+    "category": "Exam results and progress charts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the exams link"
+      },
+      {
+        "type": "action",
+        "description": "Add a new exam result"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new exam result is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the progress chart updates"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Reject invalid coach sign-in",
+    "description": "A coach entering invalid credentials sees sign-in feedback and does not reach the coach dashboard.",
+    "category": "Coach registration and sign-in",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with invalid@example.com"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with invalid-password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify sign-in validation or access rejection feedback is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the coach dashboard is not displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Student can review personal exam progress",
+    "description": "This verifies that a student can open their exams page and see their own results and progress over time.",
+    "category": "Exam results and progress charts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the exams link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify personal exam results are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify progress charts are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Coach can create a new student account",
+    "description": "This verifies that a coach can create a student account from the student management page and receive the temporary password needed to hand off access.",
+    "category": "Student management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the student management link"
+      },
+      {
+        "type": "action",
+        "description": "Create a new student account"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a temporary password is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new student appears in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Coach can update a student's weekly plan",
+    "description": "This verifies that a coach can edit an assignment in a student's weekly plan and save the updated schedule.",
+    "category": "Student weekly program management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the student management link"
+      },
+      {
+        "type": "action",
+        "description": "Select a student from the list"
+      },
+      {
+        "type": "action",
+        "description": "Open the weekly plan section"
+      },
+      {
+        "type": "action",
+        "description": "Edit a task assignment"
+      },
+      {
+        "type": "action",
+        "description": "Save the weekly plan"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated plan is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the change is reflected in the weekly grid"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Send a message from coach chat",
+    "description": "This test verifies that a coach can send a chat message to a student and see it appear in the conversation thread.",
+    "category": "Realtime chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the coach chat page"
+      },
+      {
+        "type": "action",
+        "description": "Select a student conversation"
+      },
+      {
+        "type": "action",
+        "description": "Write a message"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the message appears in the chat thread"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Send a message from student chat",
+    "description": "This test verifies that a student can send a chat message to the coach and see it appear in the conversation thread.",
+    "category": "Realtime chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the student chat page"
+      },
+      {
+        "type": "action",
+        "description": "Open the coach conversation"
+      },
+      {
+        "type": "action",
+        "description": "Write a message"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the message appears in the chat thread"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "View the student dashboard overview",
+    "description": "This test verifies that a signed-in student can open the dashboard and see their personal overview content, motivation, and weekly progress indicators.",
+    "category": "Student dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the student dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a personal overview is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify motivation and weekly progress indicators are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Coach can view exam trends for a student",
+    "description": "This verifies that a coach can open the exams page and review exam results together with progress charts.",
+    "category": "Exam results and progress charts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the exams link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify exam results are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify progress charts are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Coach can open a student profile from the student list",
+    "description": "This verifies that a coach can select an existing student from the list and reach that student's detail page.",
+    "category": "Student management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the student management link"
+      },
+      {
+        "type": "action",
+        "description": "Select a student from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the student detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify student profile information is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Create a coach note for a student",
+    "description": "This test verifies that a coach can add a new note for a student and see it listed immediately afterward.",
+    "category": "Coach notes",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the student detail page from the coach area"
+      },
+      {
+        "type": "action",
+        "description": "Open the notes section"
+      },
+      {
+        "type": "action",
+        "description": "Add a new note with a unique title and body"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new note appears in the notes list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Student can update multiple weekly tasks",
+    "description": "This verifies that a student can mark several tasks across the weekly grid and see the summary update accordingly.",
+    "category": "Student weekly program management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the weekly plan link"
+      },
+      {
+        "type": "action",
+        "description": "Mark multiple tasks as complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify multiple task completion states are updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the weekly completion summary is updated"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "View a newly received chat message as unread items clear",
+    "description": "This test verifies that a student can open a conversation, read incoming messages, and see the unread indicator clear after viewing.",
+    "category": "Realtime chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the student chat page"
+      },
+      {
+        "type": "action",
+        "description": "Open a conversation with unread messages"
+      },
+      {
+        "type": "action",
+        "description": "Review the incoming messages"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the unread indicator is cleared"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Coach can switch between student detail sections",
+    "description": "This verifies that a coach can move between available sections in a student profile and see the selected section content.",
+    "category": "Student management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the coach password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the student management link"
+      },
+      {
+        "type": "action",
+        "description": "Select a student from the list"
+      },
+      {
+        "type": "action",
+        "description": "Switch to another detail section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected section content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the previous section content is no longer shown"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC019",
+    "title": "Edit an existing coach note",
+    "description": "This test verifies that a coach can update an existing note and see the revised content saved.",
+    "category": "Coach notes",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the coach notes page"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing note for editing"
+      },
+      {
+        "type": "action",
+        "description": "Update the note content"
+      },
+      {
+        "type": "action",
+        "description": "Save the note"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated note content is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC020",
+    "title": "Open and close the coach notification panel",
+    "description": "This test verifies that a coach can open the notification panel, review recent items, and close it successfully.",
+    "category": "Notifications",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the coach dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification panel"
+      },
+      {
+        "type": "action",
+        "description": "Review the recent notifications"
+      },
+      {
+        "type": "action",
+        "description": "Close the notification panel"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the notification panel is dismissed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC021",
+    "title": "Open and close the student notification panel",
+    "description": "This test verifies that a student can open the notification panel, review recent items, and close it successfully.",
+    "category": "Notifications",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the student dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the notification panel"
+      },
+      {
+        "type": "action",
+        "description": "Review the recent notifications"
+      },
+      {
+        "type": "action",
+        "description": "Close the notification panel"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the notification panel is dismissed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC022",
+    "title": "See dashboard updates after an invitation or activity change",
+    "description": "This test verifies that a student dashboard reflects new invitation or activity information after the page refreshes through realtime updates.",
+    "category": "Student dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the student dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the dashboard content to refresh"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify invitation or activity updates are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard content is refreshed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC023",
+    "title": "Filter students on the coach dashboard",
+    "description": "A coach can change the dashboard status filter and see the student list update accordingly.",
+    "category": "Coach dashboard overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /coach/dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Switch the student status filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the student list updates"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC024",
+    "title": "Filter recent activity on the coach dashboard",
+    "description": "A coach can change the dashboard activity filter and see the activity feed update accordingly.",
+    "category": "Coach dashboard overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /coach/dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Switch the activity filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the activity feed updates"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC025",
+    "title": "Dismiss a coach dashboard recommendation",
+    "description": "A coach can dismiss a recommendation banner from the dashboard and it no longer appears.",
+    "category": "Coach dashboard overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /coach/dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Dismiss the recommendation banner"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the banner is no longer visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC026",
+    "title": "See realtime notification updates on the coach dashboard",
+    "description": "This test verifies that a coach dashboard notification list updates when a new notification arrives without manual refresh.",
+    "category": "Notifications",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the coach dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Wait for a new notification to arrive"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the notification list updates with a new item"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC027",
+    "title": "Start coach registration from the landing page",
+    "description": "A public visitor can move from the landing page into the coach registration flow.",
+    "category": "Landing and public access",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to start as a coach"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the coach registration page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the registration form is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC028",
+    "title": "Review public product introduction",
+    "description": "A public visitor can learn the product value proposition on the landing page and reach the sign-in entry point.",
+    "category": "Landing and public access",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the product introduction is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify feature panels are visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to go to sign in"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sign-in page is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC029",
+    "title": "Keep the dashboard usable when no updates are available",
+    "description": "This test verifies that a student can open the dashboard and still see a valid empty or default state when there are no current invitations or activity changes.",
+    "category": "Student dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the student email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the student dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty or default state is displayed for invitations or activity"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the personal overview remains available"
+      }
+    ],
+    "priority": "Low"
+  }
+]

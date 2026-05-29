@@ -124,79 +124,56 @@ export function CellPickerModal({ row, col, existing, onSave, onClose }: Props) 
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.35)" }}
+      className="exam-modal-backdrop"
+      role="presentation"
       onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
     >
-      <div
-        className="panel"
-        style={{
-          width: 420,
-          maxWidth: "calc(100vw - 32px)",
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
+      <section
+        className="exam-modal-card weekly-lesson-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="weekly-lesson-modal-title"
       >
-        {/* Header */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 20px 12px", borderBottom: "1px solid var(--border)",
-        }}>
+        <div className="exam-modal-head">
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>
+            <h2 id="weekly-lesson-modal-title">
               {view === "picker" ? "Hücre Düzenle" : "Yeni Ders Ekle"}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+            </h2>
+            <p>
               {DAY_LONG[col]} · {row + 1}. saat
-            </div>
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: 28, height: 28, borderRadius: "50%",
-              background: "var(--bg)", border: "1px solid var(--border)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, color: "var(--muted)",
-            }}
-          >×</button>
+          <button type="button" aria-label="Kapat" onClick={onClose}>×</button>
         </div>
 
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+        <div className="weekly-lesson-modal-body">
           {view === "picker" ? (
             <>
-              {/* Ders Ekle butonu */}
               <button
+                type="button"
                 onClick={() => setView("add-lesson")}
-                className="btn btn-outline"
-                style={{ width: "100%", marginBottom: 12, justifyContent: "center" }}
+                className="weekly-lesson-add-button"
               >
-                <span style={{ fontSize: 18, lineHeight: 1, marginRight: 4 }}>+</span>
-                Ders Ekle
+                + Ders Ekle
               </button>
 
-              {/* Ders listesi */}
               {loading ? (
-                <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", padding: "12px 0" }}>
+                <p className="weekly-lesson-empty">
                   Yükleniyor…
                 </p>
               ) : lessons.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", padding: "12px 0" }}>
+                <p className="weekly-lesson-empty">
                   Henüz ders eklenmedi. Yukarıdan ekleyin.
                 </p>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 16 }}>
+                <div className="weekly-lesson-list">
                   {lessons.map((l) => (
                     <div key={l.id}>
                       {editingLesson?.id === l.id ? (
-                        /* Düzenleme satırı */
-                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <div className="weekly-lesson-edit-row">
                           <input
                             autoFocus
-                            className="input"
-                            style={{ flex: 1, padding: "6px 10px", fontSize: 13, height: 36 }}
+                            className="weekly-lesson-field"
                             value={editLessonName}
                             onChange={(e) => setEditLessonName(e.target.value)}
                             onKeyDown={(e) => {
@@ -205,87 +182,48 @@ export function CellPickerModal({ row, col, existing, onSave, onClose }: Props) 
                             }}
                           />
                           <button
-                            className="btn btn-primary"
-                            style={{ padding: "6px 12px", fontSize: 12, height: 36, flexShrink: 0 }}
+                            type="button"
+                            className="weekly-lesson-mini-button primary"
                             disabled={saving || !editLessonName.trim()}
                             onClick={handleSaveEdit}
                           >
                             {saving ? "…" : "Kaydet"}
                           </button>
                           <button
-                            className="btn btn-outline"
-                            style={{ padding: "6px 10px", fontSize: 12, height: 36, flexShrink: 0 }}
+                            type="button"
+                            className="weekly-lesson-mini-button ghost"
                             onClick={() => { setEditingLesson(null); setEditLessonName(""); }}
                           >
                             İptal
                           </button>
                         </div>
                       ) : (
-                        /* Normal ders satırı */
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          borderRadius: "var(--radius-sm)",
-                          border: selectedLesson === l.name
-                            ? "2px solid var(--accent)"
-                            : "1px solid var(--border)",
-                          background: selectedLesson === l.name
-                            ? "var(--accent-soft)"
-                            : "var(--bg-elev)",
-                          overflow: "hidden",
-                        }}>
-                          {/* Seçme alanı */}
+                        <div
+                          className={
+                            "weekly-lesson-row" + (selectedLesson === l.name ? " selected" : "")
+                          }
+                        >
                           <button
+                            type="button"
                             onClick={() => setSelectedLesson(l.name)}
-                            style={{
-                              flex: 1,
-                              padding: "10px 14px",
-                              background: "transparent",
-                              border: "none",
-                              color: selectedLesson === l.name ? "var(--accent-ink)" : "var(--ink)",
-                              fontWeight: selectedLesson === l.name ? 600 : 400,
-                              fontSize: 13,
-                              textAlign: "left",
-                              cursor: "pointer",
-                            }}
+                            className="weekly-lesson-select"
                           >
                             {l.name}
                           </button>
-                          {/* Düzenle butonu */}
                           <button
+                            type="button"
                             onClick={() => handleStartEdit(l)}
                             title="Düzenle"
-                            style={{
-                              padding: "8px 10px",
-                              background: "transparent",
-                              border: "none",
-                              borderLeft: "1px solid var(--border)",
-                              color: "var(--muted)",
-                              fontSize: 14,
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
+                            className="weekly-lesson-icon-button"
                           >
                             ✏️
                           </button>
-                          {/* Sil butonu */}
                           <button
+                            type="button"
                             onClick={() => handleDeleteLesson(l)}
                             disabled={deletingId === l.id}
                             title="Sil"
-                            style={{
-                              padding: "8px 10px",
-                              background: "transparent",
-                              border: "none",
-                              borderLeft: "1px solid var(--border)",
-                              color: "var(--risk)",
-                              fontSize: 16,
-                              cursor: deletingId === l.id ? "not-allowed" : "pointer",
-                              opacity: deletingId === l.id ? 0.4 : 1,
-                              display: "flex",
-                              alignItems: "center",
-                            }}
+                            className="weekly-lesson-icon-button danger"
                           >
                             ×
                           </button>
@@ -296,80 +234,56 @@ export function CellPickerModal({ row, col, existing, onSave, onClose }: Props) 
                 </div>
               )}
 
-              {/* Alt bilgi + not + renk — sadece ders seçiliyse */}
               {selectedLesson && (
                 <>
-                  <label className="label">Not / Açıklama (isteğe bağlı)</label>
+                  <label className="weekly-lesson-label">Not / Açıklama (isteğe bağlı)</label>
                   <textarea
-                    className="input"
+                    className="weekly-lesson-textarea"
                     rows={3}
                     value={sub}
                     onChange={(e) => setSub(e.target.value)}
                     placeholder="Örn: 40 soru çöz · Hız ve Hareket konusu · TYT Matematik s.45-60"
-                    style={{ resize: "vertical", marginBottom: 16, fontFamily: "inherit" }}
                   />
 
-                  <label className="label">Renk</label>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                  <label className="weekly-lesson-label">Renk</label>
+                  <div className="weekly-lesson-colors">
                     {PRESET_COLORS.map((c) => (
                       <button
+                        type="button"
                         key={c}
                         onClick={() => setColor(c)}
                         title={c}
-                        style={{
-                          width: 26, height: 26,
-                          borderRadius: "50%",
-                          background: c,
-                          border: color === c ? "3px solid var(--ink)" : "2px solid transparent",
-                          outline: color === c ? "2px solid white" : "none",
-                          outlineOffset: -3,
-                          transition: "border 100ms",
-                          flexShrink: 0,
-                        }}
+                        className={"weekly-lesson-color" + (color === c ? " selected" : "")}
+                        style={{ background: c }}
                       />
                     ))}
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                    <div style={{ position: "relative", width: 36, height: 36, flexShrink: 0 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 8,
-                        background: color,
-                        border: "2px solid var(--border-strong)",
-                        cursor: "pointer",
-                      }} />
+                  <div className="weekly-lesson-custom-color">
+                    <div className="weekly-lesson-color-picker">
+                      <div style={{ background: color }} />
                       <input
                         type="color"
                         value={color}
                         onChange={(e) => setColor(e.target.value)}
-                        style={{
-                          position: "absolute", inset: 0,
-                          opacity: 0, width: "100%", height: "100%",
-                          cursor: "pointer",
-                        }}
                         title="Özel renk seç"
                       />
                     </div>
-                    <span style={{ fontSize: 12, color: "var(--muted)", fontFamily: "monospace" }}>
+                    <span className="weekly-lesson-color-code">
                       {color}
                     </span>
-                    <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                    <span className="weekly-lesson-color-hint">
                       — özel renk için tıkla
                     </span>
                   </div>
 
-                  {/* Önizleme */}
-                  <div style={{
-                    padding: "10px 12px",
-                    borderRadius: "var(--radius-sm)",
-                    backgroundColor: color + "22",
-                    borderLeft: `3px solid ${color}`,
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}>
+                  <div
+                    className="weekly-lesson-preview"
+                    style={{ backgroundColor: color + "22", borderLeftColor: color }}
+                  >
                     {selectedLesson}
                     {sub && (
-                      <div style={{ fontSize: 11, fontWeight: 400, color: "var(--muted)", marginTop: 4, whiteSpace: "pre-wrap" }}>
+                      <div>
                         {sub}
                       </div>
                     )}
@@ -378,12 +292,13 @@ export function CellPickerModal({ row, col, existing, onSave, onClose }: Props) 
               )}
             </>
           ) : (
-            /* Yeni ders ekleme ekranı */
             <>
-              <label className="label">Ders Adı</label>
+              <div className="exam-modal-grid weekly-lesson-add-grid">
+              <label className="optional">
+                <span>Ders Adı</span>
               <input
                 ref={inputRef}
-                className="input"
+                type="text"
                 value={newLessonName}
                 onChange={(e) => setNewLessonName(e.target.value)}
                 placeholder="Matematik, Türkçe, Fizik…"
@@ -391,57 +306,53 @@ export function CellPickerModal({ row, col, existing, onSave, onClose }: Props) 
                   if (e.key === "Enter") handleAddLesson();
                   if (e.key === "Escape") setView("picker");
                 }}
-                style={{ marginBottom: 4 }}
               />
-              <p style={{ fontSize: 12, color: "var(--muted)" }}>
+              </label>
+              </div>
+              <p className="weekly-lesson-help">
                 Bu ders koçun tüm öğrencileri için kullanılabilir olacak.
               </p>
             </>
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{
-          padding: "12px 20px",
-          borderTop: "1px solid var(--border)",
-          display: "flex", gap: 8, justifyContent: "flex-end",
-        }}>
+        <div className="exam-modal-actions">
           {view === "picker" ? (
             <>
               {existing && (
                 <button
+                  type="button"
                   onClick={() => onSave(null)}
-                  className="btn btn-outline"
-                  style={{ color: "var(--risk)", borderColor: "var(--risk)", marginRight: "auto" }}
+                  className="ghost danger"
                 >
                   Hücreyi Temizle
                 </button>
               )}
-              <button onClick={onClose} className="btn btn-outline">İptal</button>
+              <button type="button" onClick={onClose} className="ghost">İptal</button>
               <button
+                type="button"
                 onClick={handleSave}
-                className="btn btn-primary"
+                className="primary"
                 disabled={!selectedLesson}
-                style={{ opacity: selectedLesson ? 1 : 0.5 }}
               >
                 Kaydet
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => setView("picker")} className="btn btn-outline">Geri</button>
+              <button type="button" onClick={() => setView("picker")} className="ghost">Geri</button>
               <button
+                type="button"
                 onClick={handleAddLesson}
-                className="btn btn-primary"
+                className="primary"
                 disabled={!newLessonName.trim() || saving}
-                style={{ opacity: newLessonName.trim() && !saving ? 1 : 0.5 }}
               >
                 {saving ? "Ekleniyor…" : "Ekle"}
               </button>
             </>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -27,6 +27,7 @@ export {
 export {
   listExamResultsAction,
   createExamResultAction,
+  updateExamResultAction,
   deleteExamResultAction,
 } from "./exams";
 

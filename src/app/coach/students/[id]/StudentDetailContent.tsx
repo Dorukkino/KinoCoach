@@ -5,7 +5,6 @@ import {
   getWeeklyProgramAction,
   listWeeklyWeekStartsAction,
 } from "@/app/actions/weekly";
-import type { CoachNoteDto, ExamResultDto, WeeklyProgramDto } from "@/application/dto";
 import { getWeekStartISO, mergeWeeksNearToday } from "@/lib/dates";
 import { notFound } from "next/navigation";
 import { StudentDetailClient } from "./StudentDetailClient";
@@ -31,25 +30,15 @@ export async function StudentDetailContent({
   const tab = resolveTab(initialTab);
   const currentWeek = getWeekStartISO();
 
-  let initialExamRows: ExamResultDto[] | undefined;
-  let initialWeeklyWeeks: string[] | undefined;
-  let initialWeeklyProgram: WeeklyProgramDto | null | undefined;
-  let initialWeeklySelectedWeek: string | undefined;
-  let initialNotes: CoachNoteDto[] | undefined;
-
-  if (tab === "exams") {
-    initialExamRows = await listExamResultsAction(studentId);
-  } else if (tab === "weekly") {
-    const [dbWeeks, program] = await Promise.all([
+  const [initialExamRows, dbWeeks, initialWeeklyProgram, initialNotes] =
+    await Promise.all([
+      listExamResultsAction(studentId),
       listWeeklyWeekStartsAction(studentId),
       getWeeklyProgramAction(studentId, currentWeek),
+      getCoachNoteAction(studentId),
     ]);
-    initialWeeklyWeeks = mergeWeeksNearToday(currentWeek, dbWeeks);
-    initialWeeklyProgram = program;
-    initialWeeklySelectedWeek = currentWeek;
-  } else if (tab === "notes") {
-    initialNotes = await getCoachNoteAction(studentId);
-  }
+  const initialWeeklyWeeks = mergeWeeksNearToday(currentWeek, dbWeeks);
+  const initialWeeklySelectedWeek = currentWeek;
 
   return (
     <StudentDetailClient

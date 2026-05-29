@@ -18,7 +18,7 @@ const COACH_NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Genel",
     items: [
-      { id: "dashboard", label: "Dashboard", href: "/coach/dashboard", icon: "Dashboard" },
+      { id: "dashboard", label: "Genel Bakış", href: "/coach/dashboard", icon: "Dashboard" },
       { id: "students", label: "Öğrencilerim", href: "/coach/students", icon: "Students" },
       { id: "notes", label: "Notlar", href: "/coach/notes", icon: "Notes" },
     ],
@@ -144,12 +144,16 @@ export function Sidebar({
   collapsed,
   onToggle,
   userName,
+  onSignOut,
+  signOutPending,
 }: {
   role: "coach" | "student";
   userId: string;
   collapsed: boolean;
   onToggle: () => void;
   userName: string;
+  onSignOut: () => void;
+  signOutPending: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -241,11 +245,11 @@ export function Sidebar({
         )}
         <button
           type="button"
-          className="ml-auto text-muted text-xs"
+          className="sidebar-toggle"
           onClick={onToggle}
           aria-label="Toggle sidebar"
         >
-          «
+          {collapsed ? "›" : "‹"}
         </button>
       </div>
       <nav className="nav">
@@ -284,13 +288,36 @@ export function Sidebar({
           </div>
         ))}
       </nav>
-      {!collapsed && (
-        <div className="p-4 border-t border-[var(--border)]">
-          <div className="flex items-center gap-2 text-sm font-medium truncate">
-            {userName}
+      <div className="sidebar-user-wrap">
+        {!collapsed ? (
+          <div className="sidebar-user-card">
+            <div className="sidebar-user-avatar">{userName.trim().slice(0, 1).toUpperCase()}</div>
+            <div className="sidebar-user-meta">
+              <span className="sidebar-user-name">{userName}</span>
+              <span className="sidebar-user-role">{role === "coach" ? "Koç hesabı" : "Öğrenci hesabı"}</span>
+            </div>
+            <button
+              type="button"
+              className="sidebar-signout"
+              disabled={signOutPending}
+              onClick={onSignOut}
+              aria-label="Çıkış yap"
+            >
+              Çıkış
+            </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <button
+            type="button"
+            className="sidebar-user-collapsed"
+            title={`${userName} - çıkış yap`}
+            disabled={signOutPending}
+            onClick={onSignOut}
+          >
+            {userName.trim().slice(0, 1).toUpperCase()}
+          </button>
+        )}
+      </div>
     </aside>
   );
 }

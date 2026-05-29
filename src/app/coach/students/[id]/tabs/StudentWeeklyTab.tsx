@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import type { CSSProperties } from "react";
 import { WeeklyGrid } from "@/presentation/components/weekly/WeeklyGrid";
 import { CellPickerModal } from "@/presentation/components/weekly/CellPickerModal";
 import { WeekPicker } from "@/presentation/components/weekly/WeekPicker";
@@ -11,7 +12,7 @@ import {
   toggleWeeklyTaskAction,
 } from "@/app/actions/weekly";
 import { WeeklyProgramDto } from "@/application/dto";
-import { Grid7x10, TaskCell } from "@/domain/value-objects/Grid7x10";
+import { Grid7x10, TaskCell, toneToHex } from "@/domain/value-objects/Grid7x10";
 import { getWeekStartISO, mergeWeeksNearToday, sortWeeksNearToday } from "@/lib/dates";
 import { useSupabaseTableRealtime } from "@/presentation/hooks/useSupabaseTableRealtime";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
@@ -22,18 +23,37 @@ interface PendingCell {
   existing: TaskCell | null;
 }
 
+const DETAIL_DAYS = [
+  "Pazartesi",
+  "Salı",
+  "Çarşamba",
+  "Perşembe",
+  "Cuma",
+  "Cumartesi",
+  "Pazar",
+];
+
+function detailCellStyle(cell: TaskCell): CSSProperties {
+  return {
+    borderLeft: `3px solid ${toneToHex(cell.tone)}`,
+    opacity: cell.done ? 0.62 : 1,
+  };
+}
+
 export function StudentWeeklyTab({
   studentId,
   role,
   initialWeeks,
   initialProgram,
   initialSelectedWeek,
+  detailVariant = false,
 }: {
   studentId: string;
   role: "coach" | "student";
   initialWeeks?: string[];
   initialProgram?: WeeklyProgramDto | null;
   initialSelectedWeek?: string;
+  detailVariant?: boolean;
 }) {
   const currentWeek = useMemo(() => getWeekStartISO(), []);
   const hasInitialWeeks = initialWeeks !== undefined;
@@ -149,7 +169,13 @@ export function StudentWeeklyTab({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <div
+        className={
+          detailVariant
+            ? "student-weekly-toolbar"
+            : "flex items-center justify-between gap-3 mb-4 flex-wrap"
+        }
+      >
         <WeekPicker
           weeks={weeks}
           selectedWeek={selectedWeek}
@@ -165,6 +191,12 @@ export function StudentWeeklyTab({
 
       {!program ? (
         <LoadingScreen className="panel" />
+      ) : detailVariant ? (
+        <CoachDetailWeeklyGrid
+          grid={program.grid}
+          readOnly={isPastWeek}
+          onEditCell={canEdit ? handleEditCell : undefined}
+        />
       ) : (
         <WeeklyGrid
           grid={program.grid}
@@ -185,5 +217,91 @@ export function StudentWeeklyTab({
         />
       )}
     </>
+  );
+}
+
+function CoachDetailWeeklyGrid({
+  grid,
+  readOnly,
+  onEditCell,
+}: {
+  grid: WeeklyProgramDto["grid"];
+  readOnly: boolean;
+  onEditCell?: (row: number, col: number, cell: TaskCell | null) => void;
+}) {
+  const total = grid.flat().filter(Boolean).length;
+  const done = grid.flat().filter((cell) => cell?.done).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <div className="coach-detail-weekly">
+      <div className="coach-detail-weekly-progress">
+        <div>
+          <span className="coach-detail-weekly-pct">%{pct}</span>
+          <span className="coach-detail-weekly-count">
+            {done} / {total} görev
+          </span>
+        </div>
+        <div className="coach-detail-weekly-bar">
+          <span style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      <div className="coach-detail-weekly-scroll">
+        <div className="weekly-grid weekly-grid-detail">
+          <div className="wg-detail-corner">#</div>
+          {DETAIL_DAYS.map((day) => (
+            <div key={day} className="wg-detail-head">
+              {day}
+            </div>
+          ))}
+
+          {grid.map((row, rowIndex) => (
+            <div className="contents" key={`detail-row-${rowIndex}`}>
+              <div className="wg-detail-row-num">{rowIndex + 1}</div>
+              {row.map((cell, colIndex) => (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className={`wg-cell wg-detail-cell${cell ? " filled" : ""}${
+                    cell?.done ? " done" : ""
+                  }`}
+                  style={cell ? detailCellStyle(cell) : undefined}
+                >
+                  {cell ? (
+                    <button
+                      type="button"
+                      className="wg-detail-task"
+                      onClick={() => {
+                        if (!readOnly) onEditCell?.(rowIndex, colIndex, cell);
+                      }}
+                    >
+                      <div className="wg-detail-title">{cell.title}</div>
+                      {cell.sub && (
+                        <div className="wg-detail-sub">{cell.sub}</div>
+                      )}
+                    </button>
+                  ) : !readOnly ? (
+                    <button
+                      type="button"
+                      className="wg-detail-empty"
+                      onClick={() =>
+                        onEditCell?.(rowIndex, colIndex, {
+                          title: "",
+                          sub: "",
+                          tone: "#0d9488",
+                          done: false,
+                        })
+                      }
+                    >
+                      +
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

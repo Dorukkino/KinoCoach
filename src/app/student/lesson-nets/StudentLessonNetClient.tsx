@@ -49,9 +49,17 @@ const emptyForm = (): FormState => ({
 
 type View = "list" | "add-session" | "add-lesson";
 
+type SessionTotals = {
+  total: number;
+  correct: number;
+  wrong: number;
+  blank: number;
+};
+
 interface StudentLessonNetClientProps {
   studentId: string;
   readOnly?: boolean;
+  detailVariant?: boolean;
   initialSessions?: QuestionSessionDto[];
   initialWeeks?: string[];
   initialSelectedWeek?: string;
@@ -62,9 +70,53 @@ const calculateNet = (correct: number, wrong: number) => correct - wrong / 4;
 const formatNet = (value: number) =>
   Number.isInteger(value) ? String(value) : value.toFixed(2);
 
+const emptyTotals = (): SessionTotals => ({
+  total: 0,
+  correct: 0,
+  wrong: 0,
+  blank: 0,
+});
+
+const addToTotals = (target: SessionTotals, session: QuestionSessionDto) => {
+  target.total += session.total;
+  target.correct += session.correct;
+  target.wrong += session.wrong;
+  target.blank += session.blank;
+};
+
+const formatDateISO = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getWeekDays = (weekStart: string) => {
+  const [year, month, day] = weekStart.split("-").map(Number);
+  const start = new Date(year, month - 1, day);
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return {
+      date: formatDateISO(date),
+      label: [
+        "Pazartesi",
+        "Salı",
+        "Çarşamba",
+        "Perşembe",
+        "Cuma",
+        "Cumartesi",
+        "Pazar",
+      ][index],
+    };
+  });
+};
+
 export function StudentLessonNetClient({
   studentId,
   readOnly = false,
+  detailVariant = false,
   initialSessions,
   initialWeeks,
   initialSelectedWeek,
@@ -272,6 +324,173 @@ export function StudentLessonNetClient({
     () => sortByDateNearToday(sessions, (s) => s.date),
     [sessions]
   );
+
+  const detailTotals = useMemo(
+    () =>
+      sessions.reduce<SessionTotals>((acc, session) => {
+        addToTotals(acc, session);
+        return acc;
+      }, emptyTotals()),
+    [sessions]
+  );
+
+  const detailWeekDays = useMemo(() => getWeekDays(selectedWeek), [selectedWeek]);
+
+  const detailRows = useMemo(() => {
+    const rows = new Map<
+      string,
+      {
+        lessonName: string;
+        totals: SessionTotals;
+        days: Record<string, SessionTotals>;
+      }
+    >();
+
+    sessions.forEach((session) => {
+      const row =
+        rows.get(session.lessonName) ??
+        {
+          lessonName: session.lessonName,
+          totals: emptyTotals(),
+          days: {},
+        };
+
+      addToTotals(row.totals, session);
+      row.days[session.date] = row.days[session.date] ?? emptyTotals();
+      addToTotals(row.days[session.date], session);
+      rows.set(session.lessonName, row);
+    });
+
+    return Array.from(rows.values()).sort((a, b) => {
+      if (b.totals.total !== a.totals.total) return b.totals.total - a.totals.total;
+      return a.lessonName.localeCompare(b.lessonName, "tr");
+    });
+  }, [sessions]);
+
+  if (detailVariant && view === "list") {
+    const totalNet = calculateNet(detailTotals.correct, detailTotals.wrong);
+
+    return (
+      <div className="coach-question-detail">
+        <div className="coach-question-toolbar">
+          <WeekPicker
+            weeks={weeks}
+            selectedWeek={selectedWeek}
+            currentWeek={currentWeek}
+            onSelect={setSelectedWeek}
+          />
+          {isPastWeek && (
+            <span className="coach-question-readonly-note">
+              Geçmiş hafta - yalnızca görüntüleme
+            </span>
+          )}
+        </div>
+
+        {!sessionsLoading && (
+          <section className="coach-question-stat-grid" aria-label="Soru çözüm özeti">
+            <article className="coach-question-stat-card">
+              <span>Toplam Soru</span>
+              <strong>{detailTotals.total}</strong>
+            </article>
+            <article className="coach-question-stat-card">
+              <span>Doğru</span>
+              <strong>{detailTotals.correct}</strong>
+              <small className="s-good">isabet</small>
+            </article>
+            <article className="coach-question-stat-card">
+              <span>Yanlış</span>
+              <strong>{detailTotals.wrong}</strong>
+              <small className="s-risk">hata</small>
+            </article>
+            <article className="coach-question-stat-card">
+              <span>Boş</span>
+              <strong>{detailTotals.blank}</strong>
+              <small>işaretlenmedi</small>
+            </article>
+            <article className="coach-question-stat-card net">
+              <span>Net</span>
+              <strong>{formatNet(totalNet)}</strong>
+              <small>başarı neti</small>
+            </article>
+          </section>
+        )}
+
+        {sessionsLoading ? (
+          <LoadingScreen className="coach-question-panel" />
+        ) : detailRows.length === 0 ? (
+          <div className="coach-question-empty">
+            Bu hafta için soru çözüm kaydı yok.
+          </div>
+        ) : (
+          <section className="coach-question-panel">
+            <div className="coach-question-panel-head">
+              <div>
+                <h2>Bu haftaki soru çözümleri</h2>
+                <p>Günlük ders bazlı doğru, yanlış ve boş dağılımı</p>
+              </div>
+              <div className="coach-question-legend">
+                <span className="s-good">Doğru</span>
+                <span className="s-risk">Yanlış</span>
+                <span className="s-empty">Boş</span>
+              </div>
+            </div>
+
+            <div className="coach-question-table-wrap">
+              <table className="coach-question-table">
+                <thead>
+                  <tr>
+                    <th>Ders</th>
+                    {detailWeekDays.map((day) => (
+                      <th key={day.date}>{day.label}</th>
+                    ))}
+                    <th className="total-head">Top.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailRows.map((row) => (
+                    <tr key={row.lessonName}>
+                      <th scope="row">{row.lessonName}</th>
+                      {detailWeekDays.map((day) => {
+                        const cell = row.days[day.date];
+                        const accuracy = cell?.total
+                          ? cell.correct / cell.total
+                          : 0;
+                        const tone =
+                          !cell || cell.total === 0
+                            ? "empty"
+                            : accuracy >= 0.72
+                              ? "good"
+                              : accuracy >= 0.5
+                                ? "warn"
+                                : "risk";
+
+                        return (
+                          <td key={day.date} className={`tone-${tone}`}>
+                            {cell && cell.total > 0 ? (
+                              <div className="coach-question-cell">
+                                <span className="s-good">{cell.correct}</span>
+                                <span className="s-risk">{cell.wrong}</span>
+                                <span className="s-empty">{cell.blank}</span>
+                              </div>
+                            ) : (
+                              <span className="coach-question-dash">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="coach-question-row-total">
+                        <strong>{row.totals.total}</strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

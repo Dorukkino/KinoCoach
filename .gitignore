@@ -37,3 +37,5 @@ next-env.d.ts
 # vitest
 .vitest
 .vercel
+
+testsprite_tests/tmp/

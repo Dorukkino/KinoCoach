@@ -25,6 +25,7 @@ const CACHE_REVALIDATE_SECONDS = 30;
 export interface CoachDashboardCacheResult {
   stats: DashboardStatsDto;
   students: CoachStudentRowDto[];
+  coachName: string;
 }
 
 function getCachedCoachStudents(coachId: string): Promise<CoachStudentRowDto[]> {
@@ -150,12 +151,13 @@ export async function getCoachDashboardAction(): Promise<CoachDashboardCacheResu
     const { session } = await requireSession();
     if (!session.role.isCoach()) return null;
 
-    const [students, stats] = await Promise.all([
+    const [students, stats, coachName] = await Promise.all([
       getCachedCoachStudents(session.userId),
       getCachedCoachStats(session.userId),
+      fetchCoachName(session.userId),
     ]);
 
-    return { stats, students };
+    return { stats, students, coachName };
   });
 }
 

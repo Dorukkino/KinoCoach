@@ -24,6 +24,7 @@ export function StudentNotesTab({
   const [newNote, setNewNote] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [actionMenuId, setActionMenuId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const load = useCallback((showLoading = false) => {
@@ -63,6 +64,7 @@ export function StudentNotesTab({
   };
 
   const startEdit = (note: CoachNoteDto) => {
+    setActionMenuId(null);
     setEditingId(note.id);
     setEditingText(note.note);
   };
@@ -86,6 +88,7 @@ export function StudentNotesTab({
 
   const deleteNote = (noteId: string) => {
     if (!confirm("Bu notu silmek istiyor musun?")) return;
+    setActionMenuId(null);
     startTransition(async () => {
       await deleteCoachNoteAction(noteId);
       setNotes((prev) => prev.filter((note) => note.id !== noteId));
@@ -93,98 +96,96 @@ export function StudentNotesTab({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="panel p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <h3 className="font-semibold m-0">Yeni koç notu</h3>
-            <p className="text-xs text-[var(--muted)] m-0 mt-1">
-              Notlar sadece koç tarafından görüntülenir.
-            </p>
-          </div>
-          <span className="text-xs text-[var(--muted)]">
-            {notes.length} not
-          </span>
-        </div>
+    <div className="student-notes-tab">
+      <section className="student-note-composer" aria-label="Yeni koç notu">
         <textarea
-          className="input min-h-[120px] resize-y"
+          className="student-note-input"
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
-          placeholder="Görüşme özeti, takip edilecek konu veya öğrenciye dair özel not..."
+          placeholder="Yeni not... (örn: Motivasyonu düştü, matematikte eksik var)"
+          spellCheck={false}
         />
-        <div className="flex justify-end">
+        <div className="student-note-composer-actions">
           <button
             type="button"
-            className="btn btn-primary"
+            className="student-note-save"
             disabled={pending || !newNote.trim()}
             onClick={createNote}
           >
-            Not Ekle
+            <span aria-hidden="true">✓</span>
+            Kaydet
           </button>
         </div>
-      </div>
+      </section>
 
       {loading ? (
-        <LoadingScreen className="panel" />
+        <LoadingScreen className="student-note-loading" />
       ) : notes.length === 0 ? (
-        <div className="panel p-8 text-center text-sm text-[var(--muted)]">
+        <div className="student-note-empty">
           Bu öğrenci için henüz not eklenmedi.
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="student-note-list">
           {notes.map((note) => {
             const isEditing = editingId === note.id;
             return (
-              <article key={note.id} className="coach-note-card">
-                <div className="coach-note-card-header">
-                  <div className="min-w-0">
-                    <p className="coach-note-card-eyebrow">Özel koç notu</p>
-                    <h4 className="coach-note-card-title">
-                      {new Date(note.createdAt).toLocaleDateString("tr-TR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </h4>
-                    <p className="coach-note-card-meta">
-                      Son güncelleme:{" "}
-                      {new Date(note.updatedAt).toLocaleString("tr-TR")}
-                    </p>
+              <article key={note.id} className="student-note-card">
+                <div className="student-note-card-top">
+                  <div className="student-note-card-meta">
+                    <time dateTime={note.createdAt}>
+                      {formatNoteDate(note.createdAt)}
+                    </time>
                   </div>
-                  <div className="flex gap-2">
-                    {!isEditing && (
-                      <button
-                        type="button"
-                        className="btn btn-outline text-xs"
-                        disabled={pending}
-                        onClick={() => startEdit(note)}
-                      >
-                        Düzenle
-                      </button>
-                    )}
+                  <div className="student-note-menu-wrap">
                     <button
                       type="button"
-                      className="btn btn-outline text-xs"
+                      className="student-note-menu-btn"
+                      aria-label="Not işlemleri"
+                      aria-expanded={actionMenuId === note.id}
                       disabled={pending}
-                      onClick={() => deleteNote(note.id)}
-                      style={{ borderColor: "var(--risk)", color: "var(--risk)" }}
+                      onClick={() =>
+                        setActionMenuId((current) =>
+                          current === note.id ? null : note.id
+                        )
+                      }
                     >
-                      Sil
+                      ...
                     </button>
+                    {actionMenuId === note.id && !isEditing && (
+                      <div className="student-note-menu">
+                        <button
+                          type="button"
+                          className="student-note-menu-item"
+                          disabled={pending}
+                          onClick={() => startEdit(note)}
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          type="button"
+                          className="student-note-menu-item danger"
+                          disabled={pending}
+                          onClick={() => deleteNote(note.id)}
+                        >
+                          Sil
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {isEditing ? (
-                  <div>
+                  <div className="student-note-edit">
                     <textarea
-                      className="input min-h-[120px] resize-y"
+                      className="student-note-input"
                       value={editingText}
                       onChange={(e) => setEditingText(e.target.value)}
+                      spellCheck={false}
                     />
-                    <div className="flex justify-end gap-2">
+                    <div className="student-note-edit-actions">
                       <button
                         type="button"
-                        className="btn btn-outline"
+                        className="student-note-cancel"
                         disabled={pending}
                         onClick={cancelEdit}
                       >
@@ -192,16 +193,17 @@ export function StudentNotesTab({
                       </button>
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="student-note-save"
                         disabled={pending || !editingText.trim()}
                         onClick={() => saveEdit(note.id)}
                       >
+                        <span aria-hidden="true">✓</span>
                         Kaydet
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <p className="coach-note-card-body">
+                  <p className="student-note-card-body">
                     {note.note}
                   </p>
                 )}
@@ -213,3 +215,14 @@ export function StudentNotesTab({
     </div>
   );
 }
+
+function formatNoteDate(value: string) {
+  return new Date(value)
+    .toLocaleDateString("tr-TR", {
+      day: "2-digit",
+      month: "short",
+    })
+    .replace(".", "")
+    .toLocaleUpperCase("tr-TR");
+}
+

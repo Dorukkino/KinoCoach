@@ -9,29 +9,59 @@ const statusClass: Record<string, string> = {
 };
 
 export function StudentStatusList({ students }: { students: StudentCardDto[] }) {
+  const statusCounts = students.reduce(
+    (acc, student) => {
+      acc[student.status] = (acc[student.status] ?? 0) + 1;
+      return acc;
+    },
+    { green: 0, yellow: 0, red: 0 } as Record<StudentCardDto["status"], number>
+  );
+
   return (
-    <div className="panel p-4">
-      <h3 className="font-semibold text-[15px] m-0 mb-3">Öğrenci durumları</h3>
-      <ul className="list-none m-0 p-0 flex flex-col gap-2">
+    <div className="panel dashboard-panel status-panel">
+      <div className="dashboard-panel-head">
+        <div>
+          <h3>Öğrenci Durumları</h3>
+          <p>Öğrencilerinizin durumunu buradan kontrol edin</p>
+        </div>
+        <div className="status-summary" aria-label="Öğrenci durum özeti">
+          <span>Tümü</span>
+          <span><i className="dot-st good" />{statusCounts.green}</span>
+          <span><i className="dot-st warn" />{statusCounts.yellow}</span>
+          <span><i className="dot-st risk" />{statusCounts.red}</span>
+        </div>
+      </div>
+      <ul className="student-status-list">
         {students.map((s) => (
           <li key={s.id}>
             <Link
               href={`/coach/students/${s.id}`}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg)]"
+              className="student-status-row"
             >
-              <UserAvatar name={s.name} size={36} />
-              <div className="flex-1 min-w-0">
-                <span className="font-medium text-sm block truncate">{s.name}</span>
-                <span className="text-xs text-[var(--muted)] block truncate">
-                  %{s.completionPercent} tamamlama · Son aktif: {s.lastActive ?? "—"}
+              <UserAvatar name={s.name} size={34} />
+              <div className="student-status-main">
+                <span className="student-name">{s.name}</span>
+                <span className="student-meta">
+                  {s.grade ?? "Seviye yok"} · {s.track ?? "Alan yok"} · {s.lastActive ?? "Aktivite yok"}
                 </span>
               </div>
-              <span className={`dot-st ${statusClass[s.status]}`} title={s.statusLabel} />
+              <div className="student-progress">
+                <div className="progress-line">
+                  <span
+                    className={`progress-fill ${statusClass[s.status]}`}
+                    style={{ width: `${Math.min(100, Math.max(0, s.completionPercent))}%` }}
+                  />
+                </div>
+                <span>%{s.completionPercent}</span>
+              </div>
+              <span className={`status-pill s-${s.status}`} title={s.statusLabel}>
+                {s.statusLabel}
+              </span>
             </Link>
           </li>
         ))}
         {students.length === 0 && (
-          <li className="text-sm text-[var(--muted)]">Henüz öğrenci yok.</li>
+          <li className="empty-copy">Henüz öğrenci yok.</li>
         )}
       </ul>
     </div>

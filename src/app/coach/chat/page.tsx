@@ -8,11 +8,11 @@ export default function CoachChatPage({
   searchParams: Promise<{ student?: string }>;
 }) {
   return (
-    <div className="screen">
+    <div className="screen coach-chat-screen">
       <div className="page-head">
         <div className="page-title">
           <h1>Chat</h1>
-          <p>Öğrencilerinizle mesajlaşın</p>
+          <p>Öğrencilerinizle gerçek zamanlı iletişim</p>
         </div>
       </div>
       <Suspense fallback={<LoadingScreen />}>

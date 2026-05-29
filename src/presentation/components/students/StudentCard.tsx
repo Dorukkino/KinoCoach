@@ -8,6 +8,12 @@ const statusClass: Record<string, string> = {
   red: "risk",
 };
 
+const statusTone: Record<string, string> = {
+  green: "green",
+  yellow: "yellow",
+  red: "red",
+};
+
 export function StudentCard({
   student,
   showStatus = true,
@@ -18,89 +24,83 @@ export function StudentCard({
   onDelete?: (id: string) => void;
 }) {
   const legacy = statusClass[student.status] ?? "warn";
+  const tone = statusTone[student.status] ?? "yellow";
+  const subtitle = [student.grade, student.track].filter(Boolean).join(" · ");
 
   return (
-    <div className="student-card" style={{ position: "relative" }}>
-      {/* Silme butonu */}
-      {onDelete && (
-        <button
-          type="button"
-          onClick={() => onDelete(student.id)}
-          title="Öğrenciyi sil"
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            width: 26,
-            height: 26,
-            borderRadius: "50%",
-            border: "1px solid var(--border)",
-            background: "var(--bg)",
-            color: "var(--muted)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 16,
-            cursor: "pointer",
-            zIndex: 1,
-            transition: "color 120ms, border-color 120ms",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--risk)";
-            e.currentTarget.style.borderColor = "var(--risk)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--muted)";
-            e.currentTarget.style.borderColor = "var(--border)";
-          }}
-        >
-          ×
-        </button>
-      )}
-
-      <div className="flex items-start gap-3 mb-3">
-        <UserAvatar name={student.name} size={44} />
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-[15px] m-0 truncate">{student.name}</h3>
-          {(student.grade || student.track) && (
-            <p className="text-xs text-[var(--muted)] m-0 mt-0.5">
-              {[student.grade, student.track].filter(Boolean).join(" · ")}
-            </p>
-          )}
-        </div>
-        {showStatus && (
-          <span className={`status-pill s-${student.status}`} style={{ marginRight: onDelete ? 28 : 0 }}>
-            <span className={`dot-st ${legacy}`} />
-            {student.statusLabel}
-          </span>
-        )}
+    <article className={`student-card student-card-${tone}`}>
+      <div className="student-card-menu" aria-hidden="true">
+        <span />
+        <span />
+        <span />
       </div>
-      <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-[var(--muted)]">Tamamlama</span>
-          <span className="font-semibold">%{student.completionPercent}</span>
+
+      <div className="student-card-head">
+        <UserAvatar name={student.name} size={42} />
+        <div className="student-card-title">
+          <h3>{student.name}</h3>
+          {subtitle && <p>{subtitle}</p>}
         </div>
-        <div className="h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
-          <div
-            className={`h-full rounded-full s-${student.status}`}
-            style={{
-              width: `${student.completionPercent}%`,
-              background: `var(--${legacy === "good" ? "good" : legacy === "warn" ? "warn" : "risk"})`,
-            }}
+      </div>
+
+      <div className="student-card-metrics">
+        <div>
+          <span>Son giriş</span>
+          <strong>{student.lastActive ?? "—"}</strong>
+        </div>
+      </div>
+
+      <div className="student-card-progress">
+        <div className="student-card-progress-label">
+          <span>Görev tamamlanma</span>
+          <strong>{student.completionPercent}%</strong>
+        </div>
+        <div className="student-progress-track">
+          <span
+            className={`student-progress-fill ${legacy}`}
+            style={{ width: `${student.completionPercent}%` }}
           />
         </div>
       </div>
-      <p className="text-xs text-[var(--muted)] m-0 mb-3">
-        Son aktif: {student.lastActive ?? "—"}
-      </p>
-      <div className="flex gap-2">
-        <Link href={`/coach/students/${student.id}`} className="btn btn-primary text-xs flex-1 justify-center">
-          Profil
+
+      {showStatus && (
+        <span className={`status-pill s-${student.status}`}>
+          <span className={`dot-st ${legacy}`} />
+          {student.statusLabel}
+        </span>
+      )}
+
+      <div className={`student-card-actions${onDelete ? "" : " no-delete"}`}>
+        <Link href={`/coach/students/${student.id}`} className="student-card-primary-action">
+          Profili Aç
         </Link>
-        <Link href={`/coach/chat?student=${student.id}`} className="btn btn-outline text-xs">
-          Mesaj
+        <Link
+          href={`/coach/chat?student=${student.id}`}
+          className="student-card-icon-action"
+          title="Mesaj gönder"
+          aria-label={`${student.name} için mesajları aç`}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 6h14v10H8l-3 3V6Z" />
+          </svg>
         </Link>
+        {onDelete && (
+          <button
+            type="button"
+            className="student-card-icon-action danger"
+            onClick={() => onDelete(student.id)}
+            title="Öğrenciyi sil"
+            aria-label={`${student.name} öğrencisini sil`}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 7h12" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M8 7l1 12h6l1-12" />
+              <path d="M10 7V5h4v2" />
+            </svg>
+          </button>
+        )}
       </div>
-    </div>
+    </article>
   );
 }

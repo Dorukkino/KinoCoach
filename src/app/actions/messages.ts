@@ -1,5 +1,6 @@
 "use server";
 
+import { Buffer } from "node:buffer";
 import { requireSession } from "./lib";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 import { SupabaseChatQuery } from "@/infrastructure/queries/SupabaseChatQuery";
@@ -32,44 +33,54 @@ export async function listMessagesAction(
   });
 }
 
-export async function sendMessageAction(receiverId: string, content: string) {
+const MAX_CHAT_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+
+function sanitizeFileName(name: string) {
+  return name
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 120);
+}
+
+export async function sendMessageAction(
+  receiverId: string,
+  content: string,
+  formData?: FormData
+) {
   return measureAction("sendMessageAction", async () => {
-    const { session } = await requireSession();
+    const { container, session } = await requireSession();
     const peerIds = await getAllowedChatPeerIds(session);
     if (!peerIds.includes(receiverId)) {
       throw new Error("Bu kullanıcıya mesaj gönderme yetkiniz yok.");
     }
 
     const trimmedContent = content.trim();
-    if (!trimmedContent) {
+    const attachment = formData?.get("attachment");
+    const file =
+      attachment instanceof File && attachment.size > 0 ? attachment : null;
+
+    if (!trimmedContent && !file) {
       throw new Error("Mesaj boş olamaz.");
     }
 
-    const admin = createSupabaseAdminClient();
-    const { data, error } = await admin
-      .from("messages")
-      .insert({
-        sender_id: session.userId,
-        receiver_id: receiverId,
-        content: trimmedContent,
-        attachment_url: null,
-      })
-      .select("id, sender_id, receiver_id, content, created_at, attachment_url")
-      .single();
-
-    if (error || !data) {
-      throw new Error(error?.message ?? "Mesaj gönderilemedi.");
+    if (file && file.size > MAX_CHAT_ATTACHMENT_SIZE) {
+      throw new Error("Dosya boyutu en fazla 10 MB olabilir.");
     }
 
-    return {
-      id: String(data.id),
-      senderId: String(data.sender_id),
-      receiverId: String(data.receiver_id),
-      content: String(data.content ?? ""),
-      createdAt: new Date(String(data.created_at)).toISOString(),
-      attachmentUrl: data.attachment_url ? String(data.attachment_url) : null,
-      isMine: true,
-    };
+    const filePayload = file
+      ? {
+          buffer: Buffer.from(await file.arrayBuffer()),
+          contentType: file.type || "application/octet-stream",
+          path: `${session.userId}/${Date.now()}-${sanitizeFileName(file.name)}`,
+        }
+      : undefined;
+
+    return container.sendMessage.execute({
+      senderId: session.userId,
+      receiverId,
+      content: trimmedContent || file?.name || "",
+      file: filePayload,
+    });
   });
 }
 
@@ -104,6 +115,28 @@ export async function markThreadMessagesReadAction(otherUserId: string) {
     .eq("receiver_id", session.userId)
     .eq("sender_id", otherUserId)
     .is("read_at", null);
+}
+
+export async function deleteThreadMessagesAction(otherUserId: string) {
+  return measureAction("deleteThreadMessagesAction", async () => {
+    const { session } = await requireSession();
+    const peerIds = await getAllowedChatPeerIds(session);
+    if (!peerIds.includes(otherUserId)) {
+      throw new Error("Bu sohbeti silme yetkiniz yok.");
+    }
+
+    const admin = createSupabaseAdminClient();
+    const { error } = await admin
+      .from("messages")
+      .delete()
+      .or(
+        `and(sender_id.eq.${session.userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${session.userId})`
+      );
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  });
 }
 
 export async function getLastMessageTimestampsAction(

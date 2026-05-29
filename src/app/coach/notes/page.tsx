@@ -10,12 +10,6 @@ export default function CoachNotesPage() {
         channelPrefix="coach-notes"
         tables={["coach_notes", "students", "coaching_engagements"]}
       />
-      <div className="page-head">
-        <div className="page-title">
-          <h1>Notlar</h1>
-          <p>Öğrenci bazlı özel koç notları</p>
-        </div>
-      </div>
       <Suspense fallback={<LoadingScreen />}>
         <CoachNotesContent />
       </Suspense>
