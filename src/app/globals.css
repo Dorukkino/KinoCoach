@@ -1729,6 +1729,197 @@ a {
   line-height: 1.35;
 }
 
+.coach-weekly-picker {
+  display: grid;
+  gap: 18px;
+}
+
+.coach-weekly-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.coach-weekly-summary > div {
+  min-height: 86px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(252, 250, 246, 0.92)),
+    var(--card);
+  box-shadow: 0 10px 24px rgba(26, 26, 23, 0.045);
+}
+
+.coach-weekly-summary span {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.coach-weekly-summary strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--ink);
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.coach-weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.coach-weekly-student-card {
+  --weekly-tone: var(--accent);
+  --weekly-tone-soft: var(--accent-soft);
+  position: relative;
+  min-height: 190px;
+  overflow: hidden;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--weekly-tone);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 10px 24px rgba(26, 26, 23, 0.045);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.coach-weekly-student-card:hover {
+  border-color: var(--border-strong);
+  border-top-color: var(--weekly-tone);
+  box-shadow: 0 16px 32px rgba(26, 26, 23, 0.08);
+  transform: translateY(-1px);
+}
+
+.coach-weekly-student-card::after {
+  content: "";
+  position: absolute;
+  top: -38px;
+  right: -28px;
+  width: 112px;
+  height: 112px;
+  border-radius: 999px;
+  background: var(--weekly-tone-soft);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.coach-weekly-student-green {
+  --weekly-tone: var(--good);
+  --weekly-tone-soft: var(--good-soft);
+}
+
+.coach-weekly-student-yellow {
+  --weekly-tone: var(--warn);
+  --weekly-tone-soft: var(--warn-soft);
+}
+
+.coach-weekly-student-red {
+  --weekly-tone: var(--risk);
+  --weekly-tone-soft: var(--risk-soft);
+}
+
+.coach-weekly-student-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-right: 22px;
+}
+
+.coach-weekly-student-head h2 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-weekly-student-head p {
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-weekly-student-progress {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+}
+
+.coach-weekly-student-progress > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.coach-weekly-student-progress span {
+  color: var(--muted-2);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.coach-weekly-student-progress strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.coach-weekly-student-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+
+.coach-weekly-open {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.coach-weekly-empty {
+  padding: 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .students-archive {
   display: grid;
   gap: 12px;
@@ -5094,6 +5285,7 @@ a {
   .coach-hero,
   .students-page-head,
   .students-toolbar,
+  .coach-weekly-student-footer,
   .attention-strip {
     align-items: flex-start;
     flex-direction: column;
@@ -5149,8 +5341,14 @@ a {
   }
 
   .students-grid,
-  .students-grid-list {
+  .students-grid-list,
+  .coach-weekly-summary,
+  .coach-weekly-grid {
     grid-template-columns: 1fr;
+  }
+
+  .coach-weekly-open {
+    width: 100%;
   }
 
   .dashboard-panel-head {
