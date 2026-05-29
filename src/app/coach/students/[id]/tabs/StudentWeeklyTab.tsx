@@ -84,7 +84,7 @@ export function StudentWeeklyTab({
   useSupabaseTableRealtime({
     channelName: `weekly-programs-${studentId}`,
     table: "weekly_programs",
-    pollIntervalMs: 3000,
+    filter: `student_id=eq.${studentId}`,
     onChange: refreshWeeklyProgram,
   });
 

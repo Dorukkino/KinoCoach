@@ -92,7 +92,6 @@ export function StudentExamsTab({
     channelName: `exam-results-${studentId}`,
     table: "exam_results",
     filter: `student_id=eq.${studentId}`,
-    pollIntervalMs: 5000,
     onChange: () => load(false),
   });
 
