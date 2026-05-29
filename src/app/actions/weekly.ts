@@ -53,6 +53,7 @@ export async function toggleWeeklyTaskAction(
   });
   revalidatePath("/student/weekly");
   revalidatePath("/coach/weekly");
+  revalidatePath(`/coach/students/${studentId}`);
   await revalidateCoachCacheForStudent(studentId);
   return result;
 }

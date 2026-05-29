@@ -38,6 +38,13 @@ function getEventTimestamp(payload?: RealtimePayload): string | null {
   return updated ? String(updated) : null;
 }
 
+function getEventDedupeKey(table: string, payload?: RealtimePayload): string | null {
+  const row = payload?.new ?? payload?.old;
+  const rowId = row?.id ? String(row.id) : null;
+  if (!rowId) return null;
+  return `${table}:${rowId}`;
+}
+
 export function RealtimeEventBusProvider({
   userId,
   children,
@@ -113,13 +120,13 @@ export function RealtimeEventBusProvider({
       payload: RealtimePayload
     ) {
       const ts = getEventTimestamp(payload);
-      const key = `${table}:${filter ?? "all"}`;
+      const key = getEventDedupeKey(table, payload);
       if (ts) {
-        const last = lastSeenRef.current.get(key);
+        const last = key ? lastSeenRef.current.get(key) : undefined;
         if (last && new Date(ts).getTime() < new Date(last).getTime()) {
           return;
         }
-        lastSeenRef.current.set(key, ts);
+        if (key) lastSeenRef.current.set(key, ts);
       }
 
       for (const sub of subscriptionsRef.current.values()) {

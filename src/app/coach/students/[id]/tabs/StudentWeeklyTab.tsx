@@ -85,6 +85,8 @@ export function StudentWeeklyTab({
     channelName: `weekly-programs-${studentId}`,
     table: "weekly_programs",
     filter: `student_id=eq.${studentId}`,
+    debounceMs: 0,
+    pollIntervalMs: 10000,
     onChange: refreshWeeklyProgram,
   });
 
