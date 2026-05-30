@@ -8,6 +8,12 @@ import {
 
 const PUBLIC = [
   "/",
+  "/hakkimizda",
+  "/iletisim",
+  "/gizlilik-politikasi",
+  "/kullanim-sartlari",
+  "/kvkk",
+  "/cerez-politikasi",
   "/login",
   "/admin/login",
   "/register",

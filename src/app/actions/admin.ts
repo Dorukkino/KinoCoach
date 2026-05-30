@@ -122,14 +122,14 @@ export async function createAdminUserAction(formData: FormData) {
 
   await createSmtpEmailService().send({
     to: email,
-    subject: "Kino hesabınız oluşturuldu",
+    subject: "KinoCoach hesabınız oluşturuldu",
     html: newUserInvitationHtml({
       fullName,
       role,
       actionLink,
       loginUrl: role === "admin" ? `${siteUrl}/admin/login` : `${siteUrl}/login`,
     }),
-    text: `Kino hesabınız oluşturuldu. Şifrenizi belirlemek için bağlantıyı açın: ${actionLink}`,
+    text: `KinoCoach hesabınız oluşturuldu. Şifrenizi belirlemek için bağlantıyı açın: ${actionLink}`,
   });
 
   await audit(session.userId, "create_user", "user", data.user.id, { role });
@@ -256,7 +256,7 @@ export async function resendInvitationAction(formData: FormData) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
     await createSmtpEmailService().send({
       to: studentEmail,
-      subject: "Kino Coach koçluk davetin yenilendi",
+      subject: "KinoCoach koçluk davetin yenilendi",
       html: refreshedInvitationHtml({
         studentName: String(student?.name ?? "Öğrenci"),
         coachName: String(coach?.full_name ?? "Koçun"),
@@ -363,9 +363,9 @@ function newUserInvitationHtml(input: {
 
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1a1a17;">
-      <h2>Kino hesabınız oluşturuldu</h2>
+      <h2>KinoCoach hesabınız oluşturuldu</h2>
       <p>Merhaba ${escapeHtml(input.fullName)},</p>
-      <p>Sizin için ${escapeHtml(roleLabel)} rolünde bir Kino hesabı oluşturuldu.</p>
+      <p>Sizin için ${escapeHtml(roleLabel)} rolünde bir KinoCoach hesabı oluşturuldu.</p>
       <p>Şifrenizi belirlemek ve hesabınızı aktifleştirmek için aşağıdaki bağlantıya tıklayın:</p>
       <p>
         <a href="${input.actionLink}" style="display: inline-block; padding: 10px 14px; background: #0f766e; color: #ffffff; text-decoration: none; border-radius: 8px;">

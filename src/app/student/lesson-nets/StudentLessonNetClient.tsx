@@ -207,6 +207,10 @@ export function StudentLessonNetClient({
   const [view, setView] = useState<View>("list");
   const [form, setForm] = useState<FormState>(emptyForm());
   const [newLessonName, setNewLessonName] = useState("");
+  const [isLessonComposerOpen, setIsLessonComposerOpen] = useState(false);
+  const [hiddenDefaultLessonNames, setHiddenDefaultLessonNames] = useState<Set<string>>(
+    () => new Set()
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [weekSaving, setWeekSaving] = useState(false);
@@ -215,9 +219,40 @@ export function StudentLessonNetClient({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const lessonInputRef = useRef<HTMLInputElement>(null);
+  const hiddenDefaultLessonsHydrated = useRef(false);
+  const hiddenDefaultLessonsStorageKey = useMemo(
+    () => `kinoCoachHiddenDefaultLessons:${studentId}`,
+    [studentId]
+  );
 
   const isPastWeek = selectedWeek < currentWeek;
   const effectiveReadOnly = readOnly || isPastWeek;
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(hiddenDefaultLessonsStorageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) {
+        setHiddenDefaultLessonNames(new Set(parsed.map((item) => String(item))));
+      }
+    } catch {
+      setHiddenDefaultLessonNames(new Set());
+    } finally {
+      hiddenDefaultLessonsHydrated.current = true;
+    }
+  }, [hiddenDefaultLessonsStorageKey]);
+
+  useEffect(() => {
+    if (!hiddenDefaultLessonsHydrated.current) return;
+    try {
+      window.localStorage.setItem(
+        hiddenDefaultLessonsStorageKey,
+        JSON.stringify(Array.from(hiddenDefaultLessonNames))
+      );
+    } catch {
+      // Local storage is only used to remember hidden built-in lessons.
+    }
+  }, [hiddenDefaultLessonNames, hiddenDefaultLessonsStorageKey]);
 
   const loadSessions = useCallback((week: string, showLoading = false) => {
     if (showLoading) setSessionsLoading(true);
@@ -292,7 +327,7 @@ export function StudentLessonNetClient({
     return c + w + b;
   };
 
-  const handleDeleteLesson = async (lesson: CoachLesson) => {
+  const handleDeleteLesson = async (lesson: Pick<CoachLesson, "name"> & { id?: string }) => {
     if (effectiveReadOnly) return;
     const hasCurrentWeekData =
       sessions.some((session) => session.lessonName === lesson.name) ||
@@ -306,11 +341,13 @@ export function StudentLessonNetClient({
     );
     if (!confirmed) return;
 
-    setDeletingId(lesson.id);
+    setDeletingId(lesson.id ?? null);
     setError("");
     setSaveMessage("");
     try {
-      await deleteCoachLessonAction(lesson.id);
+      if (lesson.id) {
+        await deleteCoachLessonAction(lesson.id);
+      }
       const matchingSessions = sessions.filter(
         (session) => session.lessonName === lesson.name
       );
@@ -319,6 +356,17 @@ export function StudentLessonNetClient({
       }
       const fresh = await getCoachLessonsAction();
       setLessons(fresh);
+      if (
+        DEFAULT_LESSON_NAMES.some(
+          (defaultName) => normalizeLessonName(defaultName) === normalizeLessonName(lesson.name)
+        )
+      ) {
+        setHiddenDefaultLessonNames((prev) => {
+          const next = new Set(prev);
+          next.add(normalizeLessonName(lesson.name));
+          return next;
+        });
+      }
       setSessions((prev) =>
         prev.filter((session) => session.lessonName !== lesson.name)
       );
@@ -359,8 +407,14 @@ export function StudentLessonNetClient({
       const lesson = await addCoachLessonAction(name);
       const fresh = await getCoachLessonsAction();
       setLessons(fresh);
+      setHiddenDefaultLessonNames((prev) => {
+        const next = new Set(prev);
+        next.delete(normalizeLessonName(lesson.name));
+        return next;
+      });
       setForm((prev) => ({ ...prev, lessonName: lesson.name }));
       setNewLessonName("");
+      if (nextView === null) setIsLessonComposerOpen(false);
       if (nextView) setView(nextView);
       setSaveMessage(`${lesson.name} dersi eklendi.`);
     } catch (e) {
@@ -512,11 +566,19 @@ export function StudentLessonNetClient({
   const detailWeekDays = useMemo(() => getWeekDays(selectedWeek), [selectedWeek]);
 
   const lessonNames = useMemo(() => {
-    const names = new Set(DEFAULT_LESSON_NAMES);
+    const names = new Set(
+      DEFAULT_LESSON_NAMES.filter(
+        (lessonName) => !hiddenDefaultLessonNames.has(normalizeLessonName(lessonName))
+      )
+    );
     lessons.forEach((lesson) => names.add(lesson.name));
-    sessions.forEach((session) => names.add(session.lessonName));
+    sessions.forEach((session) => {
+      if (!hiddenDefaultLessonNames.has(normalizeLessonName(session.lessonName))) {
+        names.add(session.lessonName);
+      }
+    });
     return Array.from(names);
-  }, [lessons, sessions]);
+  }, [hiddenDefaultLessonNames, lessons, sessions]);
 
   const lessonsByName = useMemo(() => {
     const map = new Map<string, CoachLesson>();
@@ -967,42 +1029,82 @@ export function StudentLessonNetClient({
                   <span>Yeni ders ekle, eklediğin dersleri tablodan kaldır.</span>
                 </div>
                 <div className="qz-lesson-manager-form">
-                  <input
-                    value={newLessonName}
-                    onChange={(e) => {
-                      setNewLessonName(e.target.value);
-                      setError("");
-                    }}
-                    placeholder="Ders adı yaz..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") void handleAddLesson(null);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={!newLessonName.trim() || saving}
-                    onClick={() => void handleAddLesson(null)}
-                  >
-                    {saving ? "Ekleniyor..." : "Ders Ekle"}
-                  </button>
+                  {isLessonComposerOpen ? (
+                    <div className="qz-lesson-composer">
+                      <input
+                        ref={lessonInputRef}
+                        value={newLessonName}
+                        onChange={(e) => {
+                          setNewLessonName(e.target.value);
+                          setError("");
+                        }}
+                        placeholder="Ders adı yaz..."
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") void handleAddLesson(null);
+                          if (e.key === "Escape") {
+                            setIsLessonComposerOpen(false);
+                            setNewLessonName("");
+                            setError("");
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="qz-lesson-add-submit"
+                        disabled={!newLessonName.trim() || saving}
+                        onClick={() => void handleAddLesson(null)}
+                      >
+                        {saving ? "Ekleniyor..." : "Ekle"}
+                      </button>
+                      <button
+                        type="button"
+                        className="qz-lesson-cancel"
+                        onClick={() => {
+                          setIsLessonComposerOpen(false);
+                          setNewLessonName("");
+                          setError("");
+                        }}
+                      >
+                        Vazgeç
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="qz-lesson-add-button"
+                      onClick={() => {
+                        setIsLessonComposerOpen(true);
+                        setError("");
+                        setTimeout(() => lessonInputRef.current?.focus(), 50);
+                      }}
+                    >
+                      <span aria-hidden="true">+</span>
+                      Ders Ekle
+                    </button>
+                  )}
                 </div>
-                {lessons.length > 0 && (
+                {lessonNames.length > 0 && (
                   <div className="qz-lesson-chips">
-                    {lessons.map((lesson) => (
-                      <span key={lesson.id} className="qz-lesson-chip">
-                        {lesson.name}
-                        <button
-                          type="button"
-                          title={`${lesson.name} dersini sil`}
-                          aria-label={`${lesson.name} dersini sil`}
-                          disabled={deletingId === lesson.id}
-                          onClick={() => void handleDeleteLesson(lesson)}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                    {lessonNames.map((lessonName) => {
+                      const lesson = lessonsByName.get(lessonName);
+
+                      return (
+                        <span key={lesson?.id ?? lessonName} className="qz-lesson-chip">
+                          {lessonName}
+                          <button
+                            type="button"
+                            title={`${lessonName} dersini sil`}
+                            aria-label={`${lessonName} dersini sil`}
+                            disabled={deletingId === lesson?.id}
+                            onClick={() =>
+                              void handleDeleteLesson(lesson ?? { name: lessonName })
+                            }
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </section>
@@ -1066,7 +1168,7 @@ export function StudentLessonNetClient({
                         <tr key={lessonName}>
                           <td className="qz-subj">
                             <span>{lessonName}</span>
-                            {!effectiveReadOnly && lessonsByName.has(lessonName) && (
+                            {!effectiveReadOnly && (
                               <button
                                 type="button"
                                 className="qz-subj-delete"
@@ -1075,7 +1177,7 @@ export function StudentLessonNetClient({
                                 disabled={deletingId === lessonsByName.get(lessonName)?.id}
                                 onClick={() => {
                                   const lesson = lessonsByName.get(lessonName);
-                                  if (lesson) void handleDeleteLesson(lesson);
+                                  void handleDeleteLesson(lesson ?? { name: lessonName });
                                 }}
                               >
                                 ×

@@ -36,7 +36,7 @@ function AdminLoginPageInner() {
         <div className="flex items-center gap-2 mb-6">
           <div className="brand-mark">k</div>
           <div>
-            <span className="font-semibold text-lg block">Kino Admin</span>
+            <span className="font-semibold text-lg block">KinoCoach Admin</span>
             <span className="text-xs text-[var(--muted)]">Yönetici erişimi</span>
           </div>
         </div>

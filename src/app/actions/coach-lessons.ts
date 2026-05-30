@@ -1,7 +1,6 @@
 "use server";
 
 import { requireSession } from "./lib";
-import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 
 export interface CoachLesson {
@@ -10,40 +9,41 @@ export interface CoachLesson {
 }
 
 /** Koçun userId'sini döner — koçsa kendisi, öğrenciyse aktif engagement'taki koç */
-async function resolveCoachId(
-  userId: string,
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>
-): Promise<string> {
-  const { data: userRow } = await supabase
+async function resolveCoachId(userId: string): Promise<string | null> {
+  const admin = createSupabaseAdminClient();
+  const { data: userRow, error: userError } = await admin
     .from("users")
     .select("role")
     .eq("id", userId)
-    .single();
-
-  if (userRow?.role === "coach") return userId;
-
-  const { data: studentRow } = await supabase
-    .from("students")
-    .select("id, coaching_engagements!inner(coach_id)")
-    .eq("user_id", userId)
-    .eq("coaching_engagements.status", "active")
     .maybeSingle();
 
-  if (!studentRow) return userId;
+  if (userError) throw new Error(userError.message);
+  if (userRow?.role === "coach") return userId;
 
-  const engagements = studentRow.coaching_engagements as
-    | { coach_id: string }
-    | { coach_id: string }[]
-    | null
-    | undefined;
-  const engagement = Array.isArray(engagements) ? engagements[0] : engagements;
-  return engagement?.coach_id ?? userId;
+  const { data: studentRow, error: studentError } = await admin
+    .from("students")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (studentError) throw new Error(studentError.message);
+  if (!studentRow) return null;
+
+  const { data: engagement, error: engagementError } = await admin
+    .from("coaching_engagements")
+    .select("coach_id")
+    .eq("student_id", studentRow.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (engagementError) throw new Error(engagementError.message);
+  return engagement?.coach_id ?? null;
 }
 
 export async function getCoachLessonsAction(): Promise<CoachLesson[]> {
   const { session } = await requireSession();
-  const supabase = await createSupabaseServerClient();
-  const coachId = await resolveCoachId(session.userId, supabase);
+  const coachId = await resolveCoachId(session.userId);
+  if (!coachId) return [];
   // Admin client ile çek — RLS SELECT kısıtlamalarını bypass et
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
@@ -57,8 +57,10 @@ export async function getCoachLessonsAction(): Promise<CoachLesson[]> {
 
 export async function addCoachLessonAction(name: string): Promise<CoachLesson> {
   const { session } = await requireSession();
-  const supabase = await createSupabaseServerClient();
-  const coachId = await resolveCoachId(session.userId, supabase);
+  const coachId = await resolveCoachId(session.userId);
+  if (!coachId) {
+    throw new Error("Aktif koçluk ilişkisi olmadan ders eklenemez.");
+  }
   // Admin client ile ekle — RLS INSERT kısıtlamalarını bypass et
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
@@ -72,11 +74,12 @@ export async function addCoachLessonAction(name: string): Promise<CoachLesson> {
 
 export async function updateCoachLessonAction(id: string, name: string): Promise<CoachLesson> {
   const { session } = await requireSession();
-  const supabase = await createSupabaseServerClient();
-  const coachId = await resolveCoachId(session.userId, supabase);
+  const coachId = await resolveCoachId(session.userId);
+  if (!coachId) throw new Error("Aktif koçluk ilişkisi bulunamadı.");
+  const admin = createSupabaseAdminClient();
 
   // Önce bu dersin gerçekten bu koça ait olduğunu doğrula
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("coach_lessons")
     .select("id")
     .eq("id", id)
@@ -85,7 +88,7 @@ export async function updateCoachLessonAction(id: string, name: string): Promise
   if (!existing) throw new Error("Ders bulunamadı veya yetkiniz yok");
 
   // Update — select zinciri olmadan
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("coach_lessons")
     .update({ name: name.trim() })
     .eq("id", id)
@@ -97,8 +100,8 @@ export async function updateCoachLessonAction(id: string, name: string): Promise
 
 export async function deleteCoachLessonAction(id: string): Promise<void> {
   const { session } = await requireSession();
-  const server = await createSupabaseServerClient();
-  const coachId = await resolveCoachId(session.userId, server);
+  const coachId = await resolveCoachId(session.userId);
+  if (!coachId) throw new Error("Aktif koçluk ilişkisi bulunamadı.");
   const admin = createSupabaseAdminClient();
 
   const { data: existing, error: lookupError } = await admin

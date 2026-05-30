@@ -118,7 +118,7 @@ function UpdatePasswordPageInner() {
       <div className="login-card">
         <div className="flex items-center gap-2 mb-6">
           <div className="brand-mark">k</div>
-          <span className="font-semibold text-lg">Kino</span>
+          <span className="font-semibold text-lg">KinoCoach</span>
         </div>
         <h1 className="text-xl font-bold m-0 mb-1">{title}</h1>
         <p className="text-sm text-[var(--muted)] mb-6">{description}</p>

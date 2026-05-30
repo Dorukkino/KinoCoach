@@ -111,13 +111,13 @@ export class InviteStudentByEmailUseCase {
       });
       await this.emailService.send({
         to: existingUser.email,
-        subject: "Kino Coach koçluk davetin var",
+        subject: "KinoCoach koçluk davetin var",
         html: existingStudentInvitationHtml({
           studentName: studentProfile.name,
           coachName,
           dashboardUrl: `${siteUrl}/student/dashboard`,
         }),
-        text: `${coachName} seni Kino Coach'ta öğrencisi olmaya davet etti. Daveti görmek için giriş yap: ${siteUrl}/student/dashboard`,
+        text: `${coachName} seni KinoCoach'ta öğrencisi olmaya davet etti. Daveti görmek için giriş yap: ${siteUrl}/student/dashboard`,
       });
       if (this.sendNotification) {
         try {
@@ -166,13 +166,13 @@ export class InviteStudentByEmailUseCase {
     });
     await this.emailService.send({
       to: email.value,
-      subject: "Kino Coach davetin",
+      subject: "KinoCoach davetin",
       html: newStudentInvitationHtml({
         studentName: input.name,
         coachName,
         actionLink: authResult.actionLink,
       }),
-      text: `${coachName} seni Kino Coach'a davet etti. Şifreni belirlemek ve giriş yapmak için bağlantıyı aç: ${authResult.actionLink}`,
+      text: `${coachName} seni KinoCoach'a davet etti. Şifreni belirlemek ve giriş yapmak için bağlantıyı aç: ${authResult.actionLink}`,
     });
     return {
       studentId: student.id,
@@ -203,9 +203,9 @@ function newStudentInvitationHtml(input: {
 }): string {
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1a1a17;">
-      <h2>Kino Coach davetin</h2>
+      <h2>KinoCoach davetin</h2>
       <p>Merhaba ${escapeHtml(input.studentName)},</p>
-      <p>${escapeHtml(input.coachName)} seni Kino Coach'a davet etti.</p>
+      <p>${escapeHtml(input.coachName)} seni KinoCoach'a davet etti.</p>
       <p>Hesabını aktifleştirmek ve şifreni belirlemek için aşağıdaki bağlantıya tıkla:</p>
       <p>
         <a href="${input.actionLink}" style="display: inline-block; padding: 10px 14px; background: #0f766e; color: #ffffff; text-decoration: none; border-radius: 8px;">
@@ -226,7 +226,7 @@ function existingStudentInvitationHtml(input: {
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1a1a17;">
       <h2>Yeni koçluk davetin var</h2>
       <p>Merhaba ${escapeHtml(input.studentName)},</p>
-      <p>${escapeHtml(input.coachName)} seni Kino Coach'ta öğrencisi olmaya davet etti.</p>
+      <p>${escapeHtml(input.coachName)} seni KinoCoach'ta öğrencisi olmaya davet etti.</p>
       <p>Daveti görüntülemek ve yanıtlamak için paneline giriş yap:</p>
       <p>
         <a href="${input.dashboardUrl}" style="display: inline-block; padding: 10px 14px; background: #0f766e; color: #ffffff; text-decoration: none; border-radius: 8px;">

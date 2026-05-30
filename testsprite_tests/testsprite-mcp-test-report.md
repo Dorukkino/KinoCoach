@@ -3,7 +3,7 @@
 ---
 
 ## 1️⃣ Document Metadata
-- **Project Name:** LearnToTeach
+- **Project Name:** KinoCoach
 - **Date:** 2026-05-29
 - **Prepared by:** TestSprite AI Team, completed by Cursor agent
 - **Execution Target:** `http://localhost:3001`

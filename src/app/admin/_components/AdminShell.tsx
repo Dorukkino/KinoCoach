@@ -39,7 +39,7 @@ export function AdminShell({
           <div className="brand-mark">k</div>
           {!collapsed && (
             <div>
-              <span className="brand-name">Kino Admin</span>
+              <span className="brand-name">KinoCoach Admin</span>
               <span className="brand-sub">SaaS yönetimi</span>
             </div>
           )}

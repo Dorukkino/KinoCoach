@@ -1,4 +1,4 @@
-# LearnToTeach (Kino)
+# KinoCoach
 
 YKS koçluk SaaS — OOP Clean Architecture ile Next.js + Supabase.
 

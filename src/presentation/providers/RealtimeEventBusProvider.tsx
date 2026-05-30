@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
@@ -26,6 +27,7 @@ type Subscription = {
 
 interface RealtimeEventBusContextValue {
   subscribe: (subscription: Omit<Subscription, "id">) => () => void;
+  isConnected: boolean;
 }
 
 const RealtimeEventBusContext =
@@ -57,6 +59,7 @@ export function RealtimeEventBusProvider({
   const channelRef = useRef<ReturnType<
     ReturnType<typeof createSupabaseBrowserClient>["channel"]
   > | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   const subscribe = useCallback((subscription: Omit<Subscription, "id">) => {
     const id =
@@ -110,7 +113,9 @@ export function RealtimeEventBusProvider({
         (payload) =>
           dispatch("coaching_engagements", undefined, payload as RealtimePayload)
       )
-      .subscribe();
+      .subscribe((status) => {
+        setIsConnected(status === "SUBSCRIBED");
+      });
 
     channelRef.current = channel;
 
@@ -137,12 +142,16 @@ export function RealtimeEventBusProvider({
     }
 
     return () => {
+      setIsConnected(false);
       void supabase.removeChannel(channel);
       channelRef.current = null;
     };
   }, [userId]);
 
-  const value = useMemo(() => ({ subscribe }), [subscribe]);
+  const value = useMemo(
+    () => ({ subscribe, isConnected }),
+    [isConnected, subscribe]
+  );
 
   return (
     <RealtimeEventBusContext.Provider value={value}>

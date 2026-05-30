@@ -1,0 +1,189 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 76% 4%, rgba(50, 119, 103, 0.1), transparent 30%),
+    linear-gradient(180deg, #f7f5f0 0%, #fbfaf7 55%, #f5f3ee 100%);
+  color: #1f1e1a;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid rgba(228, 224, 216, 0.86);
+  background: rgba(248, 247, 244, 0.82);
+  backdrop-filter: blur(18px);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  width: min(100%, 1120px);
+  height: 58px;
+  margin: 0 auto;
+  padding: 0 26px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #191916;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.logoImage {
+  width: 34px;
+  height: 31px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.darkButton,
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
+}
+
+.darkButton {
+  background: #151511;
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(20, 20, 16, 0.14);
+}
+
+.ghostButton {
+  color: #4f4b43;
+}
+
+.darkButton:hover {
+  background: #000;
+  box-shadow: 0 16px 30px rgba(20, 20, 16, 0.18);
+  transform: translateY(-1px);
+}
+
+.hero {
+  width: min(100%, 920px);
+  margin: 0 auto;
+  padding: 86px 26px 44px;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin: 0 0 15px;
+  color: #2f7b6c;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  margin: 0;
+  color: #22211d;
+  font-family: var(--font-serif);
+  font-size: clamp(44px, 5.4vw, 72px);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+}
+
+.hero p {
+  max-width: 700px;
+  margin: 22px auto 0;
+  color: #747066;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.7;
+}
+
+.contentShell {
+  display: grid;
+  gap: 16px;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 0 26px 90px;
+}
+
+.legalCard {
+  padding: 28px 30px;
+  border: 1px solid #e9e5dc;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 16px 36px rgba(31, 29, 24, 0.035);
+}
+
+.legalCard h2 {
+  margin: 0 0 12px;
+  color: #22211d;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.legalCard p,
+.legalCard li {
+  color: #6f695f;
+  font-size: 14px;
+  font-weight: 620;
+  line-height: 1.78;
+}
+
+.legalCard p {
+  margin: 0;
+}
+
+.legalCard p + p {
+  margin-top: 12px;
+}
+
+.legalCard ul {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 640px) {
+  .nav {
+    height: auto;
+    padding: 16px 20px;
+  }
+
+  .ghostButton {
+    display: none;
+  }
+
+  .hero {
+    padding: 58px 20px 34px;
+  }
+
+  .contentShell {
+    padding: 0 20px 60px;
+  }
+
+  .legalCard {
+    padding: 22px;
+  }
+}

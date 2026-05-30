@@ -53,7 +53,7 @@ export async function requestPasswordResetAction(email: string) {
 
   await createSmtpEmailService().send({
     to: email.trim(),
-    subject: "Kino Coach şifre sıfırlama bağlantın",
+    subject: "KinoCoach şifre sıfırlama bağlantın",
     html: passwordRecoveryHtml(actionLink),
     text: `Şifreni sıfırlamak için bağlantıyı aç: ${actionLink}`,
   });
@@ -73,7 +73,7 @@ function passwordRecoveryHtml(actionLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1a1a17;">
       <h2>Şifre sıfırlama</h2>
-      <p>Kino Coach hesabın için şifre sıfırlama bağlantısı istendi.</p>
+      <p>KinoCoach hesabın için şifre sıfırlama bağlantısı istendi.</p>
       <p>Yeni şifreni belirlemek için aşağıdaki bağlantıya tıkla:</p>
       <p>
         <a href="${actionLink}" style="display: inline-block; padding: 10px 14px; background: #0f766e; color: #ffffff; text-decoration: none; border-radius: 8px;">

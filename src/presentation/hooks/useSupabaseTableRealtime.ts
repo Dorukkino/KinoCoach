@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { useRealtimeEventBus } from "@/presentation/providers/RealtimeEventBusProvider";
 
@@ -42,8 +42,11 @@ export function useSupabaseTableRealtime({
 }: UseSupabaseTableRealtimeOptions) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onChangeRef = useRef(onChange);
+  const [channelConnected, setChannelConnected] = useState(false);
   onChangeRef.current = onChange;
   const eventBus = useRealtimeEventBus();
+  const eventBusSubscribe = eventBus?.subscribe;
+  const realtimeConnected = eventBus ? eventBus.isConnected : channelConnected;
 
   useEffect(() => {
     if (!enabled) return;
@@ -66,8 +69,8 @@ export function useSupabaseTableRealtime({
       );
     };
 
-    if (eventBus) {
-      const unsubscribe = eventBus.subscribe({
+    if (eventBusSubscribe) {
+      const unsubscribe = eventBusSubscribe({
         table,
         onChange: (payload) => {
           const row = payload?.new ?? payload?.old;
@@ -83,19 +86,9 @@ export function useSupabaseTableRealtime({
       };
       document.addEventListener("visibilitychange", handleVisibilityChange);
 
-      const pollInterval =
-        pollIntervalMs && pollIntervalMs > 0
-          ? window.setInterval(() => {
-              if (document.visibilityState === "visible") {
-                onChangeRef.current();
-              }
-            }, pollIntervalMs)
-          : null;
-
       return () => {
         unsubscribe();
         if (debounceRef.current) clearTimeout(debounceRef.current);
-        if (pollInterval) window.clearInterval(pollInterval);
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       };
     }
@@ -113,7 +106,9 @@ export function useSupabaseTableRealtime({
         },
         debouncedOnChange
       )
-      .subscribe();
+      .subscribe((status) => {
+        setChannelConnected(status === "SUBSCRIBED");
+      });
 
     const handleVisibilityChange = () => {
       if (reloadOnVisible && document.visibilityState === "visible") {
@@ -122,29 +117,33 @@ export function useSupabaseTableRealtime({
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    const pollInterval =
-      pollIntervalMs && pollIntervalMs > 0
-        ? window.setInterval(() => {
-            if (document.visibilityState === "visible") {
-              onChangeRef.current();
-            }
-          }, pollIntervalMs)
-        : null;
-
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (pollInterval) window.clearInterval(pollInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      setChannelConnected(false);
       void supabase.removeChannel(channel);
     };
   }, [
     channelName,
     debounceMs,
     enabled,
-    eventBus,
+    eventBusSubscribe,
     filter,
-    pollIntervalMs,
     reloadOnVisible,
     table,
   ]);
+
+  useEffect(() => {
+    if (!enabled || !pollIntervalMs || pollIntervalMs <= 0 || realtimeConnected) {
+      return;
+    }
+
+    const pollInterval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        onChangeRef.current();
+      }
+    }, pollIntervalMs);
+
+    return () => window.clearInterval(pollInterval);
+  }, [enabled, pollIntervalMs, realtimeConnected]);
 }

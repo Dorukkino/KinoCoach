@@ -239,8 +239,7 @@ export function Sidebar({
         <div className="brand-mark">k</div>
         {!collapsed && (
           <div>
-            <span className="brand-name">Kino</span>
-            <span className="brand-sub">{role === "coach" ? "Coach" : "Student"}</span>
+            <span className="brand-name">KinoCoach</span>
           </div>
         )}
         <button
