@@ -293,6 +293,17 @@ export function StudentDashboardOverview({
               ))
             )}
           </div>
+
+          <div className="student-overview-progress-foot">
+            <div aria-hidden="true">
+              <span style={{ width: `${todayPercent}%` }} />
+            </div>
+            <small>
+              {todayTasks.length > 0
+                ? `%${todayPercent} bugün tamamlandı`
+                : "Bugün görev yok"}
+            </small>
+          </div>
         </section>
 
         <section className="student-overview-panel">

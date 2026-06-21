@@ -44,12 +44,15 @@ export function WeeklyGrid({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 p-4 panel">
+      <div className="coach-detail-weekly-progress mb-4">
         <div>
-          <span className="text-2xl font-bold">%{pct}</span>
-          <span className="text-sm text-[var(--muted)] ml-2">
-            {done} / {total} görev
+          <span className="coach-detail-weekly-pct">%{pct}</span>
+          <span className="coach-detail-weekly-count">
+            {done} / {total} görev tamamlandı
           </span>
+        </div>
+        <div className="coach-detail-weekly-bar" aria-hidden="true">
+          <span style={{ width: `${pct}%` }} />
         </div>
       </div>
       <div className="overflow-x-auto pb-2">
