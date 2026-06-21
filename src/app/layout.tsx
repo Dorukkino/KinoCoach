@@ -21,6 +21,12 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "KinoCoach — Eğitim Koçluğu",
   description: "YKS koçluk platformu",
+  icons: {
+    icon: [
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
