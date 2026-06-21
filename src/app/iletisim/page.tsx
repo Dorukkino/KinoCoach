@@ -50,7 +50,7 @@ export default async function ContactPage({
         <nav className={styles.nav} aria-label="İletişim navigasyonu">
           <Link href="/" className={styles.logo}>
             <Image
-              src="/logo2.png"
+              src="/logo.png"
               alt=""
               width={34}
               height={31}

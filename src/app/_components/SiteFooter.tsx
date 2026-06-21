@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className={styles.footerBrand}>
         <Link href="/" className={styles.logo}>
           <Image
-            src="/logo2.png"
+            src="/logo.png"
             alt=""
             width={34}
             height={31}

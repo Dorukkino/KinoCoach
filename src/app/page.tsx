@@ -108,7 +108,7 @@ export default function LandingPage() {
         <nav className={styles.nav} aria-label="Ana navigasyon">
           <Link href="/" className={styles.logo}>
             <Image
-              src="/logo2.png"
+              src="/logo.png"
               alt=""
               width={34}
               height={31}
@@ -276,7 +276,7 @@ export default function LandingPage() {
         <div className={styles.footerBrand}>
           <Link href="/" className={styles.logo}>
             <Image
-              src="/logo2.png"
+              src="/logo.png"
               alt=""
               width={34}
               height={31}

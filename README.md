@@ -240,7 +240,7 @@ Production ortamında Vercel Environment Variables bölümüne `.env.local` içi
 
 - `Kino Saas/`: İlk arayüz prototipi ve referans ekranlar.
 - `KinoCoachTasarım/`: PNG formatındaki tasarım referansları.
-- `public/logo.png` ve `public/logo2.png`: Uygulama logoları.
+- `public/logo.png`: Uygulama logosu (favicon, header, footer, panel).
 
 ## Geliştirme Notları
 

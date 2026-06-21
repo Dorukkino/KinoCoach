@@ -42,7 +42,7 @@ export default function AboutPage() {
         <nav className={styles.nav} aria-label="Hakkımızda navigasyonu">
           <Link href="/" className={styles.logo}>
             <Image
-              src="/logo2.png"
+              src="/logo.png"
               alt=""
               width={34}
               height={31}

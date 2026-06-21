@@ -28,7 +28,7 @@ export function LegalPage({
         <nav className={styles.nav} aria-label={`${title} navigasyonu`}>
           <Link href="/" className={styles.logo}>
             <Image
-              src="/logo2.png"
+              src="/logo.png"
               alt=""
               width={34}
               height={31}
