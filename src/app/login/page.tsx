@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useTransition } from "react";
 import { signInAction } from "@/app/actions/auth";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 function LoginPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
   const [error, setError] = useState(urlError ?? "");
@@ -29,20 +28,12 @@ function LoginPageInner() {
     setError("");
     startTransition(async () => {
       try {
-        const { role } = await signInAction(email, password);
         if (rememberMe) {
           window.localStorage.setItem("kinoCoachLoginEmail", email);
         } else {
           window.localStorage.removeItem("kinoCoachLoginEmail");
         }
-        const target =
-          role === "admin"
-            ? "/admin/dashboard"
-            : role === "student"
-              ? "/student/dashboard"
-              : "/coach/dashboard";
-        router.push(target);
-        router.refresh();
+        await signInAction(email, password);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Giriş başarısız");
       }

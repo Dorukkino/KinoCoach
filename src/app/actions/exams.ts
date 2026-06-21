@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import { revalidateCoachCacheForStudent } from "@/infrastructure/cache/revalidate-coach-cache";
 
 export async function listExamResultsAction(studentId: string) {
-  const { container } = await requireSession();
+  const { container } = await assertCanAccessStudentExams(studentId);
   return container.listExamResults.execute(studentId);
 }
 
@@ -16,7 +16,7 @@ export async function createExamResultAction(
   scores: { turkish: number; math: number; science: number; social: number; english?: number | null },
   note = ""
 ) {
-  const { container, session } = await requireSession();
+  const { container, session } = await assertCanAccessStudentExams(studentId);
   const createdBy = session.role.isCoach() ? "coach" : "student";
   await container.updateExamResult.create(
     studentId,
@@ -29,6 +29,31 @@ export async function createExamResultAction(
   revalidatePath(`/coach/students/${studentId}`);
   revalidatePath("/student/exams");
   await revalidateCoachCacheForStudent(studentId);
+}
+
+async function assertCanAccessStudentExams(studentId: string) {
+  const { container, session } = await requireSession();
+
+  if (session.role.isCoach()) {
+    const engagement = await container.engagements.findActiveByCoachAndStudent(
+      session.userId,
+      studentId
+    );
+    if (!engagement) {
+      throw new Error("Bu öğrenciye erişim yetkiniz yok.");
+    }
+    return { container, session };
+  }
+
+  if (session.role.isStudent()) {
+    const student = await container.students.findByUserId(session.userId);
+    if (!student || student.id !== studentId) {
+      throw new Error("Bu işlem için yetkiniz yok.");
+    }
+    return { container, session };
+  }
+
+  throw new Error("Forbidden");
 }
 
 async function assertCanMutateExamResult(examResultId: string) {
@@ -44,23 +69,8 @@ async function assertCanMutateExamResult(examResultId: string) {
   if (!existing) throw new Error("Kayıt bulunamadı.");
 
   const studentId = String(existing.student_id);
-
-  if (session.role.isCoach()) {
-    const engagement = await container.engagements.findActiveByCoachAndStudent(
-      session.userId,
-      studentId
-    );
-    if (!engagement) throw new Error("Forbidden");
-    return { container, session, studentId };
-  }
-
-  if (session.role.isStudent()) {
-    const student = await container.students.findByUserId(session.userId);
-    if (!student || student.id !== studentId) throw new Error("Forbidden");
-    return { container, session, studentId };
-  }
-
-  throw new Error("Forbidden");
+  await assertCanAccessStudentExams(studentId);
+  return { container, session, studentId };
 }
 
 export async function updateExamResultAction(

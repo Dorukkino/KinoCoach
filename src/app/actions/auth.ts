@@ -1,15 +1,25 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import type { AuthSession } from "@/application/ports/IAuthService";
 import { createSupabaseAdminClient } from "@/infrastructure/supabase/admin";
 import { SupabaseAdminAuthService } from "@/infrastructure/auth/SupabaseAdminAuthService";
 import { createSmtpEmailService } from "@/infrastructure/email/SmtpEmailService";
 import { getContainer } from "./lib";
 
+function redirectAfterAuth(session: AuthSession): never {
+  revalidatePath("/", "layout");
+  if (session.role.isAdmin()) redirect("/admin/dashboard");
+  if (session.role.isStudent()) redirect("/student/dashboard");
+  redirect("/coach/dashboard");
+}
+
 export async function signInAction(email: string, password: string) {
   const container = await getContainer();
   const session = await container.auth.signIn(email, password);
-  return { role: session.role.value };
+  redirectAfterAuth(session);
 }
 
 export async function adminSignInAction(email: string, password: string) {
@@ -19,7 +29,8 @@ export async function adminSignInAction(email: string, password: string) {
     await container.auth.signOut();
     throw new Error("Bu giriş ekranı yalnızca admin kullanıcılar içindir.");
   }
-  return { role: session.role.value };
+  revalidatePath("/", "layout");
+  redirect("/admin/dashboard");
 }
 
 export async function signUpCoachAction(
@@ -33,7 +44,7 @@ export async function signUpCoachAction(
     password,
     fullName,
   });
-  return { role: session.role.value };
+  redirectAfterAuth(session);
 }
 
 export async function signOutAction() {

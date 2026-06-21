@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { signUpCoachAction } from "@/app/actions/auth";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -20,8 +18,6 @@ export default function RegisterPage() {
           String(fd.get("password")),
           String(fd.get("fullName"))
         );
-        router.push("/coach/dashboard");
-        router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Kayıt başarısız");
       }

@@ -23,6 +23,13 @@ const PUBLIC = [
 ];
 
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // Cron route'ları kendi CRON_SECRET doğrulamasını yapar; oturum cookie'si gerekmez.
+  if (path.startsWith("/api/cron/")) {
+    return NextResponse.next({ request: { headers: request.headers } });
+  }
+
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
@@ -48,8 +55,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
 
   if (PUBLIC.some((p) => path === p)) {
     if (user && path === "/admin/login") {

@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
 import { adminSignInAction } from "@/app/actions/auth";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 function AdminLoginPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
   const [error, setError] = useState(urlError ?? "");
@@ -22,8 +21,6 @@ function AdminLoginPageInner() {
     startTransition(async () => {
       try {
         await adminSignInAction(email, password);
-        router.push("/admin/dashboard");
-        router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Admin girişi başarısız");
       }

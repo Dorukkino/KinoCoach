@@ -105,6 +105,7 @@ SMTP_SECURE=
 SMTP_USER=
 SMTP_PASS=
 EMAIL_FROM=
+CRON_SECRET=
 ```
 
 Önerilen veya opsiyonel değişkenler:
