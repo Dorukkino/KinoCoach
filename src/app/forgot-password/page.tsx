@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { requestPasswordResetAction } from "@/app/actions/auth";
+import { BrandMark } from "@/presentation/components/ui/BrandMark";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export default function ForgotPasswordPage() {
     <div className="login-wrap">
       <div className="login-card">
         <div className="flex items-center gap-2 mb-6">
-          <div className="brand-mark">k</div>
+          <BrandMark />
           <span className="font-semibold text-lg">KinoCoach</span>
         </div>
         <h1 className="text-xl font-bold m-0 mb-1">Şifremi unuttum</h1>

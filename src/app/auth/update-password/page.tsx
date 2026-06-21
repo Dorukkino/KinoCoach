@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState, useTransition } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { mapAuthError } from "@/infrastructure/auth/authErrors";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
+import { BrandMark } from "@/presentation/components/ui/BrandMark";
 
 function UpdatePasswordPageInner() {
   const router = useRouter();
@@ -117,7 +118,7 @@ function UpdatePasswordPageInner() {
     <div className="login-wrap">
       <div className="login-card">
         <div className="flex items-center gap-2 mb-6">
-          <div className="brand-mark">k</div>
+          <BrandMark />
           <span className="font-semibold text-lg">KinoCoach</span>
         </div>
         <h1 className="text-xl font-bold m-0 mb-1">{title}</h1>

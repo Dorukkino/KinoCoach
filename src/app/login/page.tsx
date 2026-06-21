@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useTransition } from "react";
 import { signInAction } from "@/app/actions/auth";
+import { BrandMark } from "@/presentation/components/ui/BrandMark";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 function LoginPageInner() {
@@ -50,7 +51,7 @@ function LoginPageInner() {
     >
       <header className="relative z-10 flex items-center justify-between text-[11px]">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <div className="brand-mark">k</div>
+          <BrandMark />
           <span>KinoCoach</span>
         </Link>
         <p className="m-0 text-[var(--muted)]">

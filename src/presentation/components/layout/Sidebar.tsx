@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { Icons, NavIconKey } from "../icons";
+import { BrandMark } from "@/presentation/components/ui/BrandMark";
 import { useChatUnreadCount } from "@/presentation/hooks/useChatUnreadCounts";
 import { useOptionalCoachClientCache } from "@/presentation/providers/CoachClientCacheProvider";
 
@@ -236,7 +237,7 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-head">
-        <div className="brand-mark">k</div>
+        <BrandMark />
         {!collapsed && (
           <div>
             <span className="brand-name">KinoCoach</span>

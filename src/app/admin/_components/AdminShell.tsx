@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { signOutAction } from "@/app/actions/auth";
+import { BrandMark } from "@/presentation/components/ui/BrandMark";
 
 const NAV = [
   { label: "Dashboard", href: "/admin/dashboard" },
@@ -36,7 +37,7 @@ export function AdminShell({
     <div className="app" data-collapsed={collapsed}>
       <aside className="sidebar">
         <div className="sidebar-head">
-          <div className="brand-mark">k</div>
+          <BrandMark />
           {!collapsed && (
             <div>
               <span className="brand-name">KinoCoach Admin</span>

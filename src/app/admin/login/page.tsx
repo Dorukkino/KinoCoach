@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
 import { adminSignInAction } from "@/app/actions/auth";
+import { BrandMark } from "@/presentation/components/ui/BrandMark";
 import { LoadingScreen } from "@/presentation/components/ui/LoadingScreen";
 
 function AdminLoginPageInner() {
@@ -31,7 +32,7 @@ function AdminLoginPageInner() {
     <div className="login-wrap">
       <div className="login-card">
         <div className="flex items-center gap-2 mb-6">
-          <div className="brand-mark">k</div>
+          <BrandMark />
           <div>
             <span className="font-semibold text-lg block">KinoCoach Admin</span>
             <span className="text-xs text-[var(--muted)]">Yönetici erişimi</span>

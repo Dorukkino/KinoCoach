@@ -94,13 +94,9 @@ a {
 .brand-mark {
   width: 32px;
   height: 32px;
-  border-radius: 9px;
-  background: url("/icon.png") center / contain no-repeat;
-  color: transparent;
+  object-fit: contain;
   display: block;
-  font-size: 0;
   flex-shrink: 0;
-  overflow: hidden;
 }
 
 .brand-name {
