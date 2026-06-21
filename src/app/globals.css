@@ -95,7 +95,7 @@ a {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: #fff url("/icon.png") center / cover no-repeat;
+  background: url("/icon.png") center / contain no-repeat;
   color: transparent;
   display: block;
   font-size: 0;
